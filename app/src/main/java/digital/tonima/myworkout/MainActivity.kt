@@ -25,7 +25,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.ui.history.HistoryScreen
 import digital.tonima.myworkout.ui.history.HistoryViewModel
 import digital.tonima.myworkout.ui.navigation.*
+import digital.tonima.myworkout.ui.navigation.Destination.History
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
+import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
 import digital.tonima.myworkout.ui.workout.WorkoutEditScreen
 import digital.tonima.myworkout.ui.workout.WorkoutListScreen
@@ -52,9 +54,9 @@ class MainActivity : ComponentActivity() {
 )
 @Composable
 fun AppNavigation() {
-    val topLevelRoutes = remember { setOf(Destination.WorkoutList as NavKey, Destination.History as NavKey) }
+    val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey) }
     val navigationState = rememberNavigationState(
-        startRoute = Destination.WorkoutList,
+        startRoute = WorkoutList,
         topLevelRoutes = topLevelRoutes
     )
     val navigator = remember { Navigator(navigationState) }
@@ -62,7 +64,7 @@ fun AppNavigation() {
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
     val entryProvider = entryProvider<NavKey> {
-        entry<Destination.WorkoutList>(
+        entry<WorkoutList>(
             metadata = ListDetailSceneStrategy.listPane()
         ) {
             val viewModel: WorkoutViewModel = hiltViewModel()
@@ -118,7 +120,7 @@ fun AppNavigation() {
             )
         }
 
-        entry<Destination.History> {
+        entry<History> {
             val viewModel: HistoryViewModel = hiltViewModel()
             val sessions by viewModel.sessions.collectAsState()
             HistoryScreen(sessions = sessions)
@@ -130,14 +132,14 @@ fun AppNavigation() {
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             item(
-                selected = navigationState.topLevelRoute == Destination.WorkoutList,
-                onClick = { navigator.navigate(Destination.WorkoutList) },
+                selected = navigationState.topLevelRoute == WorkoutList,
+                onClick = { navigator.navigate(WorkoutList) },
                 icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.nav_workouts)) },
                 label = { Text(stringResource(R.string.nav_workouts)) }
             )
             item(
-                selected = navigationState.topLevelRoute == Destination.History,
-                onClick = { navigator.navigate(Destination.History) },
+                selected = navigationState.topLevelRoute == History,
+                onClick = { navigator.navigate(History) },
                 icon = { Icon(Icons.Default.History, contentDescription = stringResource(R.string.nav_history)) },
                 label = { Text(stringResource(R.string.nav_history)) }
             )
@@ -146,7 +148,7 @@ fun AppNavigation() {
         NavDisplay(
             entries = entries,
             onBack = { navigator.goBack() },
-            sceneStrategy = listDetailStrategy
+            sceneStrategies = listOf(listDetailStrategy)
         )
     }
 }

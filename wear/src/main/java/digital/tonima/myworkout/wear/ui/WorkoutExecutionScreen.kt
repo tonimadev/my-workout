@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material3.*
-import digital.tonima.myworkout.wear.R
+import digital.tonima.myworkout.R
 import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
 

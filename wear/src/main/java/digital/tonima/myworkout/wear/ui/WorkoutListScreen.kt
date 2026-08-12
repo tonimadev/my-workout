@@ -10,7 +10,7 @@ import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.material3.*
 import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
-import digital.tonima.myworkout.wear.R
+import digital.tonima.myworkout.R
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
 @Composable

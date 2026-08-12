@@ -7,22 +7,24 @@ plugins {
 }
 
 android {
-    namespace = "digital.tonima.myworkout.wear"
+    namespace = "digital.tonima.myworkout"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "digital.tonima.myworkout.wear"
+        applicationId = "digital.tonima.myworkout"
         minSdk = 30
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            optimization {
+                enable = true
+            }
         }
     }
     compileOptions {
@@ -44,7 +46,7 @@ dependencies {
     implementation(libs.androidx.wear.compose.navigation3)
     implementation(libs.androidx.navigation3.ui)
     implementation(libs.androidx.navigation3.runtime)
-    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
+    implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.ui)
