@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">Meu Treino Watch</string>
+    <string name="finish_workout">Finalizar Treino</string>
+    <string name="swipe_next_hint">Deslize para o próximo exercício</string>
+    <string name="reps_count">%1$d reps</string>
+    <string name="weight_unit">%1$s kg</string>
+    <string name="action_complete">Concluir</string>
+    <string name="rest_interval_label">Intervalo de Descanso</string>
+    <string name="workout_list_title">Meus Treinos</string>
+    <string name="set_info">Série %1$d de %2$d</string>
+    <string name="exercise_finished">%1$s Finalizado!</string>
+    <string name="timer_seconds">%1$ds</string>
+    <string name="content_description_increase">Aumentar</string>
+    <string name="content_description_decrease">Diminuir</string>
+    <string name="content_description_increase_weight">Aumentar Peso</string>
+    <string name="content_description_decrease_weight">Diminuir Peso</string>
+    <string name="content_description_complete">Concluir</string>
+    <string name="exercises_count">%1$d Exercícios</string>
+</resources>

@@ -1,0 +1,31 @@
+# Configurações locais e chaves
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# Arquivos de compilação (Builds)
+build/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+.externalNativeBuild
+.cxx
+
+# Gradle e IDE
+.gradle
+*.iml
+.idea/
+captures/
+
+# Logs
+*.log
+*.hprof
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+.artifacts/
+.agent/
