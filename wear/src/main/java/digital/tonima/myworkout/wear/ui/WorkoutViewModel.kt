@@ -5,13 +5,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.myworkout.data.model.*
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.data.util.AlertManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
-    private val repository: WorkoutRepository
+    private val repository: WorkoutRepository,
+    private val alertManager: AlertManager
 ) : ViewModel() {
 
     val workouts = repository.getAllWorkouts()
@@ -66,6 +68,7 @@ class WorkoutViewModel @Inject constructor(
                 kotlinx.coroutines.delay(1000)
                 _restTimeRemaining.value -= 1
             }
+            alertManager.triggerCompletionAlert()
         }
     }
 

@@ -16,6 +16,9 @@
     <string name="label_reps">Reps</string>
     <string name="label_rest_interval">Rest Interval (seconds)</string>
     <string name="action_save">Save</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_delete_set">Delete Set</string>
     <string name="workout_list_title">My Workouts</string>
     <string name="no_workouts_message">No workouts yet. Add one!</string>
     <string name="dialog_add_workout_title">Add Workout</string>
@@ -36,4 +39,5 @@
     <string name="set_summary">Set %1$d: %2$.1fkg x %3$d (%4$ds rest)</string>
     <string name="exercises_count">%1$d exercises</string>
     <string name="timer_seconds">%1$ds</string>
+    <string name="rest_interval_label">Rest Interval</string>
 </resources>

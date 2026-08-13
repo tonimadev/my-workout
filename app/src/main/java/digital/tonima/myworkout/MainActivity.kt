@@ -90,7 +90,10 @@ fun AppNavigation() {
                 onAddSet = { workoutId, exerciseId -> viewModel.addSet(workoutId, exerciseId) },
                 onUpdateSet = { wId, eId, sId, weight, reps, rest ->
                     viewModel.updateSet(wId, eId, sId, weight, reps, rest)
-                }
+                },
+                onDeleteSet = { wId, eId, sId -> viewModel.deleteSet(wId, eId, sId) },
+                onDuplicateExercise = { wId, eId -> viewModel.duplicateExercise(wId, eId) },
+                onDeleteExercise = { wId, eId -> viewModel.deleteExercise(wId, eId) }
             )
         }
 
@@ -98,6 +101,7 @@ fun AppNavigation() {
             val viewModel: WorkoutViewModel = hiltViewModel()
             val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
             val activeSession by viewModel.activeSession.collectAsState()
+            val restTimeLeft by viewModel.restTimeRemaining.collectAsState()
 
             // Start workout if not already started
             LaunchedEffect(key.workoutId) {
@@ -107,8 +111,9 @@ fun AppNavigation() {
             WorkoutTrackingScreen(
                 workout = workout,
                 activeSession = activeSession,
-                onLogSet = { sessionId, exerciseId, setId, weight, reps ->
-                    viewModel.logSet(sessionId, exerciseId, setId, weight, reps)
+                restTimeLeft = restTimeLeft,
+                onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
+                    viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
                 },
                 onFinish = {
                     viewModel.finishWorkout()
