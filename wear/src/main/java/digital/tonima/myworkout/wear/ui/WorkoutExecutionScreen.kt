@@ -39,7 +39,8 @@ fun WorkoutExecutionScreen(
             val sets = exerciseWithSets.sets
 
             // Find current set for this exercise in the session
-            val logs = activeSession?.logs?.filter { it.exerciseId == exercise.id } ?: emptyList()
+            val exerciseSetIds = remember(sets) { sets.map { it.id }.toSet() }
+            val logs = activeSession?.logs?.filter { it.setId in exerciseSetIds } ?: emptyList()
             val currentSetIndex = logs.size
             val totalSets = sets.size
 
