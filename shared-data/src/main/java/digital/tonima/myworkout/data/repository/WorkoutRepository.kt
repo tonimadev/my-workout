@@ -20,6 +20,15 @@ interface WorkoutRepository {
 
     suspend fun deleteWorkout(workout: WorkoutEntity)
 
+    fun getAllMasterExercises(): Flow<List<MasterExerciseEntity>>
+
+    suspend fun addMasterExercise(
+        name: String,
+        description: String = "",
+    ): Long
+
+    fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>>
+
     fun getAllSessions(): Flow<List<SessionWithLogs>>
 
     fun getSessionById(id: Long): Flow<SessionWithLogs?>
@@ -64,6 +73,18 @@ class WorkoutRepositoryImpl
             workoutDao.deleteWorkout(workout)
             syncWorkoutsToWearable()
         }
+
+        override fun getAllMasterExercises(): Flow<List<MasterExerciseEntity>> = workoutDao.getAllMasterExercises()
+
+        override suspend fun addMasterExercise(
+            name: String,
+            description: String,
+        ): Long {
+            return workoutDao.insertMasterExercise(MasterExerciseEntity(name = name, description = description))
+        }
+
+        override fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>> =
+            workoutSessionDao.getLogsForMasterExercise(masterExerciseId)
 
         override fun getAllSessions(): Flow<List<SessionWithLogs>> = workoutSessionDao.getAllSessionsWithLogs()
 

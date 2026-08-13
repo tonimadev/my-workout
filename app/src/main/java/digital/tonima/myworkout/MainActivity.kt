@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -26,8 +27,11 @@ import digital.tonima.myworkout.ui.history.HistoryScreen
 import digital.tonima.myworkout.ui.history.HistoryViewModel
 import digital.tonima.myworkout.ui.navigation.*
 import digital.tonima.myworkout.ui.navigation.Destination.History
+import digital.tonima.myworkout.ui.navigation.Destination.Stats
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
+import digital.tonima.myworkout.ui.stats.StatsScreen
+import digital.tonima.myworkout.ui.stats.StatsViewModel
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
 import digital.tonima.myworkout.ui.workout.WorkoutEditScreen
 import digital.tonima.myworkout.ui.workout.WorkoutListScreen
@@ -54,7 +58,7 @@ class MainActivity : ComponentActivity() {
 )
 @Composable
 fun AppNavigation() {
-    val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey) }
+    val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey, Stats as NavKey) }
     val navigationState =
         rememberNavigationState(
             startRoute = WorkoutList,
@@ -133,6 +137,19 @@ fun AppNavigation() {
                 val sessions by viewModel.sessions.collectAsState()
                 HistoryScreen(sessions = sessions)
             }
+
+            entry<Stats> {
+                val viewModel: StatsViewModel = hiltViewModel()
+                val masterExercises by viewModel.masterExercises.collectAsState()
+                val selectedExerciseId by viewModel.selectedExerciseId.collectAsState()
+                val logs by viewModel.exerciseLogs.collectAsState()
+                StatsScreen(
+                    masterExercises = masterExercises,
+                    selectedExerciseId = selectedExerciseId,
+                    logs = logs,
+                    onSelectExercise = { viewModel.selectExercise(it) },
+                )
+            }
         }
 
     val entries = navigationState.toEntries(entryProvider)
@@ -155,6 +172,17 @@ fun AppNavigation() {
                 onClick = { navigator.navigate(History) },
                 icon = { Icon(Icons.Default.History, contentDescription = stringResource(R.string.nav_history)) },
                 label = { Text(stringResource(R.string.nav_history)) },
+            )
+            item(
+                selected = navigationState.topLevelRoute == Stats,
+                onClick = { navigator.navigate(Stats) },
+                icon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ShowChart,
+                        contentDescription = stringResource(R.string.nav_stats),
+                    )
+                },
+                label = { Text(stringResource(R.string.nav_stats)) },
             )
         },
     ) {

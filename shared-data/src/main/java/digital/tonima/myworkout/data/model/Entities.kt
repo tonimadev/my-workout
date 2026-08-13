@@ -8,6 +8,14 @@ import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
 @Serializable
+@Entity(tableName = "master_exercises")
+data class MasterExerciseEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val description: String = "",
+)
+
+@Serializable
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -25,11 +33,18 @@ data class WorkoutEntity(
             childColumns = ["workoutId"],
             onDelete = ForeignKey.CASCADE,
         ),
+        ForeignKey(
+            entity = MasterExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["masterExerciseId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
 )
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val workoutId: Long,
+    val masterExerciseId: Long = 0, // Default for migration
     val name: String,
     val order: Int,
 )
@@ -86,9 +101,9 @@ data class WorkoutSessionEntity(
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
-            entity = ExerciseEntity::class,
+            entity = MasterExerciseEntity::class,
             parentColumns = ["id"],
-            childColumns = ["exerciseId"],
+            childColumns = ["masterExerciseId"],
             onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
@@ -102,7 +117,7 @@ data class WorkoutSessionEntity(
 data class WorkoutLogEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val sessionId: Long,
-    val exerciseId: Long,
+    val masterExerciseId: Long = 0, // Default for migration
     val setId: Long,
     val actualWeight: Double,
     val actualReps: Int,

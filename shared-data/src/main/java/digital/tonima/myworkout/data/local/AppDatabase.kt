@@ -7,12 +7,13 @@ import digital.tonima.myworkout.data.model.*
 @Database(
     entities = [
         WorkoutEntity::class,
+        MasterExerciseEntity::class,
         ExerciseEntity::class,
         SetEntity::class,
         WorkoutSessionEntity::class,
         WorkoutLogEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

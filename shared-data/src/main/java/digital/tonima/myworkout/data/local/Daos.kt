@@ -10,6 +10,12 @@ interface WorkoutDao {
     suspend fun insertWorkout(workout: WorkoutEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMasterExercise(exercise: MasterExerciseEntity): Long
+
+    @Query("SELECT * FROM master_exercises")
+    fun getAllMasterExercises(): Flow<List<MasterExerciseEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercise(exercise: ExerciseEntity): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -64,6 +70,9 @@ interface WorkoutSessionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLog(log: WorkoutLogEntity): Long
+
+    @Query("SELECT * FROM workout_logs WHERE masterExerciseId = :masterExerciseId ORDER BY timestamp ASC")
+    fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>>
 
     @Transaction
     @Query("SELECT * FROM workout_sessions ORDER BY startTime DESC")

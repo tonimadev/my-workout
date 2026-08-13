@@ -2,7 +2,9 @@
     <string name="app_name">Meu Treino</string>
     <string name="nav_workouts">Treinos</string>
     <string name="nav_history">Histórico</string>
+    <string name="nav_stats">Evolução</string>
     <string name="history_title">Histórico de Treinos</string>
+    <string name="stats_title">Evolução de Carga</string>
     <string name="workout_details">Detalhes do Treino</string>
     <string name="action_start">Iniciar</string>
     <string name="action_add_set">Adicionar Série</string>

@@ -2,7 +2,9 @@
     <string name="app_name">My Workout</string>
     <string name="nav_workouts">Workouts</string>
     <string name="nav_history">History</string>
+    <string name="nav_stats">Stats</string>
     <string name="history_title">Workout History</string>
+    <string name="stats_title">Weight Evolution</string>
     <string name="workout_details">Workout Details</string>
     <string name="action_start">Start</string>
     <string name="action_add_set">Add Set</string>

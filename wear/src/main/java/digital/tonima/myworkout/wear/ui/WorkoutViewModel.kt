@@ -56,10 +56,14 @@ class WorkoutViewModel
         ) {
             val session = _activeSession.value ?: return
             viewModelScope.launch {
+                val masterExerciseId =
+                    _currentWorkout.value?.exercises
+                        ?.find { it.exercise.id == exerciseId }?.exercise?.masterExerciseId ?: 0L
+
                 val log =
                     WorkoutLogEntity(
                         sessionId = session.session.id,
-                        exerciseId = exerciseId,
+                        masterExerciseId = masterExerciseId,
                         setId = setId,
                         actualWeight = weight.toDouble(),
                         actualReps = reps,

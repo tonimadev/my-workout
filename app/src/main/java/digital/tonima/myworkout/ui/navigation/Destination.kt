@@ -16,4 +16,7 @@ sealed interface Destination : NavKey {
 
     @Serializable
     data object History : Destination
+
+    @Serializable
+    data object Stats : Destination
 }

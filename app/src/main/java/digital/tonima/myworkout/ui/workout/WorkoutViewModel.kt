@@ -72,10 +72,19 @@ class WorkoutViewModel
             restInterval: Int,
         ) {
             viewModelScope.launch {
+                val workoutId = _activeSession.value?.session?.workoutId
+                val masterExerciseId =
+                    if (workoutId != null) {
+                        repository.getWorkoutById(workoutId).first()?.exercises
+                            ?.find { it.exercise.id == exerciseId }?.exercise?.masterExerciseId ?: 0L
+                    } else {
+                        0L
+                    }
+
                 repository.addLog(
                     WorkoutLogEntity(
                         sessionId = sessionId,
-                        exerciseId = exerciseId,
+                        masterExerciseId = masterExerciseId,
                         setId = setId,
                         actualWeight = weight,
                         actualReps = reps,
@@ -114,11 +123,17 @@ class WorkoutViewModel
             name: String,
         ) {
             viewModelScope.launch {
+                val masterExercises = repository.getAllMasterExercises().first()
+                val masterId =
+                    masterExercises.find { it.name.equals(name, ignoreCase = true) }?.id
+                        ?: repository.addMasterExercise(name)
+
                 val workoutWithEx = repository.getWorkoutById(workoutId).first()
                 if (workoutWithEx != null) {
                     val newExercise =
                         ExerciseEntity(
                             workoutId = workoutId,
+                            masterExerciseId = masterId,
                             name = name,
                             order = workoutWithEx.exercises.size,
                         )
