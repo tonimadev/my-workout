@@ -13,7 +13,5 @@ import javax.inject.Singleton
 abstract class MainModule {
     @Binds
     @Singleton
-    abstract fun bindAlertManager(
-        phoneAlertManager: PhoneAlertManager
-    ): AlertManager
+    abstract fun bindAlertManager(phoneAlertManager: PhoneAlertManager): AlertManager
 }

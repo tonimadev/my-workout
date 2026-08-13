@@ -12,7 +12,7 @@ import kotlinx.serialization.Serializable
 data class WorkoutEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    val description: String = ""
+    val description: String = "",
 )
 
 @Serializable
@@ -23,15 +23,15 @@ data class WorkoutEntity(
             entity = WorkoutEntity::class,
             parentColumns = ["id"],
             childColumns = ["workoutId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val workoutId: Long,
     val name: String,
-    val order: Int
+    val order: Int,
 )
 
 @Serializable
@@ -42,9 +42,9 @@ data class ExerciseEntity(
             entity = ExerciseEntity::class,
             parentColumns = ["id"],
             childColumns = ["exerciseId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class SetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -53,7 +53,7 @@ data class SetEntity(
     val targetReps: Int,
     val restInterval: Int = 60,
     val notes: String = "",
-    val order: Int
+    val order: Int,
 )
 
 @Serializable
@@ -64,15 +64,15 @@ data class SetEntity(
             entity = WorkoutEntity::class,
             parentColumns = ["id"],
             childColumns = ["workoutId"],
-            onDelete = ForeignKey.SET_NULL
-        )
-    ]
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
 )
 data class WorkoutSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val workoutId: Long?,
     val startTime: Long,
-    val endTime: Long? = null
+    val endTime: Long? = null,
 )
 
 @Serializable
@@ -83,21 +83,21 @@ data class WorkoutSessionEntity(
             entity = WorkoutSessionEntity::class,
             parentColumns = ["id"],
             childColumns = ["sessionId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = ExerciseEntity::class,
             parentColumns = ["id"],
             childColumns = ["exerciseId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.CASCADE,
         ),
         ForeignKey(
             entity = SetEntity::class,
             parentColumns = ["id"],
             childColumns = ["setId"],
-            onDelete = ForeignKey.CASCADE
-        )
-    ]
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
 )
 data class WorkoutLogEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -107,7 +107,7 @@ data class WorkoutLogEntity(
     val actualWeight: Double,
     val actualReps: Int,
     val actualNotes: String = "",
-    val timestamp: Long
+    val timestamp: Long,
 )
 
 @Serializable
@@ -116,9 +116,9 @@ data class WorkoutWithExercises(
     @Relation(
         entity = ExerciseEntity::class,
         parentColumn = "id",
-        entityColumn = "workoutId"
+        entityColumn = "workoutId",
     )
-    val exercises: List<ExerciseWithSets>
+    val exercises: List<ExerciseWithSets>,
 )
 
 @Serializable
@@ -126,9 +126,9 @@ data class ExerciseWithSets(
     @Embedded val exercise: ExerciseEntity,
     @Relation(
         parentColumn = "id",
-        entityColumn = "exerciseId"
+        entityColumn = "exerciseId",
     )
-    val sets: List<SetEntity>
+    val sets: List<SetEntity>,
 )
 
 @Serializable
@@ -136,7 +136,7 @@ data class SessionWithLogs(
     @Embedded val session: WorkoutSessionEntity,
     @Relation(
         parentColumn = "id",
-        entityColumn = "sessionId"
+        entityColumn = "sessionId",
     )
-    val logs: List<WorkoutLogEntity>
+    val logs: List<WorkoutLogEntity>,
 )

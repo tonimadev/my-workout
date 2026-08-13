@@ -13,33 +13,37 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class WatchWearableSyncManager @Inject constructor(
-    @ApplicationContext private val context: Context
-) : WearableSyncManager {
+class WatchWearableSyncManager
+    @Inject
+    constructor(
+        @ApplicationContext private val context: Context,
+    ) : WearableSyncManager {
+        private val messageClient by lazy { Wearable.getMessageClient(context) }
 
-    private val messageClient by lazy { Wearable.getMessageClient(context) }
-
-    override suspend fun syncWorkouts(workouts: List<WorkoutWithExercises>) {
-        // Watch doesn't sync definitions to Phone
-    }
-
-    override suspend fun syncLog(log: WorkoutLogEntity) {
-        try {
-            val json = Json.encodeToString(log)
-            sendMessage("/workout/log", json.toByteArray())
-        } catch (e: Exception) {
-            e.printStackTrace()
+        override suspend fun syncWorkouts(workouts: List<WorkoutWithExercises>) {
+            // Watch doesn't sync definitions to Phone
         }
-    }
 
-    override suspend fun sendMessage(path: String, data: ByteArray) {
-        try {
-            val nodes = Wearable.getNodeClient(context).connectedNodes.await()
-            nodes.forEach { node ->
-                messageClient.sendMessage(node.id, path, data).await()
+        override suspend fun syncLog(log: WorkoutLogEntity) {
+            try {
+                val json = Json.encodeToString(log)
+                sendMessage("/workout/log", json.toByteArray())
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+        }
+
+        override suspend fun sendMessage(
+            path: String,
+            data: ByteArray,
+        ) {
+            try {
+                val nodes = Wearable.getNodeClient(context).connectedNodes.await()
+                nodes.forEach { node ->
+                    messageClient.sendMessage(node.id, path, data).await()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
-}

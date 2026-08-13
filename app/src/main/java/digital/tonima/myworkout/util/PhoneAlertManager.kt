@@ -7,10 +7,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class PhoneAlertManager @Inject constructor() : AlertManager {
-    private val toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
+class PhoneAlertManager
+    @Inject
+    constructor() : AlertManager {
+        private val toneGenerator = ToneGenerator(AudioManager.STREAM_NOTIFICATION, 100)
 
-    override fun triggerCompletionAlert() {
-        toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+        override fun triggerCompletionAlert() {
+            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 200)
+        }
     }
-}

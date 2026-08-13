@@ -10,12 +10,13 @@ import digital.tonima.myworkout.data.model.*
         ExerciseEntity::class,
         SetEntity::class,
         WorkoutSessionEntity::class,
-        WorkoutLogEntity::class
+        WorkoutLogEntity::class,
     ],
     version = 1,
-    exportSchema = false
+    exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
+
     abstract fun workoutSessionDao(): WorkoutSessionDao
 }

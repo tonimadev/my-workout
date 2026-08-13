@@ -17,7 +17,7 @@ import java.util.*
 @Composable
 fun HistoryScreen(
     sessions: List<SessionWithLogs>,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val dateFormat = SimpleDateFormat("MMM dd, yyyy HH:mm", Locale.getDefault())
 
@@ -25,31 +25,35 @@ fun HistoryScreen(
         topBar = {
             TopAppBar(title = { Text(stringResource(R.string.history_title)) })
         },
-        modifier = modifier
+        modifier = modifier,
     ) { padding ->
         if (sessions.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                 Text(
                     stringResource(R.string.no_history_message),
-                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center)
+                    modifier = Modifier.align(androidx.compose.ui.Alignment.Center),
                 )
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 items(sessions) { session ->
                     Card(modifier = Modifier.fillMaxWidth()) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
-                                text = stringResource(R.string.session_at, dateFormat.format(Date(session.session.startTime))),
-                                style = MaterialTheme.typography.titleMedium
+                                text =
+                                    stringResource(
+                                        R.string.session_at,
+                                        dateFormat.format(Date(session.session.startTime)),
+                                    ),
+                                style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
                                 text = stringResource(R.string.sets_logged_count, session.logs.size),
-                                style = MaterialTheme.typography.bodySmall
+                                style = MaterialTheme.typography.bodySmall,
                             )
                         }
                     }

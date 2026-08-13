@@ -9,10 +9,12 @@ import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
-class HistoryViewModel @Inject constructor(
-    private val repository: WorkoutRepository
-) : ViewModel() {
-
-    val sessions = repository.getAllSessions()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
-}
+class HistoryViewModel
+    @Inject
+    constructor(
+        private val repository: WorkoutRepository,
+    ) : ViewModel() {
+        val sessions =
+            repository.getAllSessions()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    }

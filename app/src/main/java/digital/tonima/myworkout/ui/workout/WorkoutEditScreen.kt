@@ -36,7 +36,7 @@ fun WorkoutEditScreen(
     onDeleteSet: (Long, Long, Long) -> Unit,
     onDuplicateExercise: (Long, Long) -> Unit,
     onDeleteExercise: (Long, Long) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
@@ -45,15 +45,18 @@ fun WorkoutEditScreen(
     Scaffold(
         topBar = {
             MediumTopAppBar(
-                title = { 
+                title = {
                     Text(
                         workout?.workout?.name ?: stringResource(R.string.workout_details),
-                        fontWeight = FontWeight.Bold
-                    ) 
+                        fontWeight = FontWeight.Bold,
+                    )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.content_description_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.content_description_back),
+                        )
                     }
                 },
                 actions = {
@@ -61,7 +64,7 @@ fun WorkoutEditScreen(
                         Button(
                             onClick = { onStartWorkout(workout.workout.id) },
                             shape = MaterialTheme.shapes.medium,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         ) {
                             Icon(Icons.Default.PlayArrow, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
@@ -69,10 +72,10 @@ fun WorkoutEditScreen(
                         }
                         Spacer(Modifier.width(8.dp))
                     }
-                }
+                },
             )
         },
-        modifier = modifier
+        modifier = modifier,
     ) { padding ->
         if (workout == null) {
             Box(modifier = Modifier.fillMaxSize().padding(padding)) {
@@ -82,25 +85,25 @@ fun WorkoutEditScreen(
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 items(workout.exercises) { exercise ->
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     text = "${exercise.exercise.order + 1}. ${exercise.exercise.name}".uppercase(),
                                     style = MaterialTheme.typography.labelLarge,
                                     fontWeight = FontWeight.ExtraBold,
                                     color = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.weight(1f)
+                                    modifier = Modifier.weight(1f),
                                 )
                                 var showExerciseMenu by remember { mutableStateOf(false) }
                                 Box {
@@ -109,7 +112,7 @@ fun WorkoutEditScreen(
                                     }
                                     DropdownMenu(
                                         expanded = showExerciseMenu,
-                                        onDismissRequest = { showExerciseMenu = false }
+                                        onDismissRequest = { showExerciseMenu = false },
                                     ) {
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.action_duplicate)) },
@@ -117,7 +120,9 @@ fun WorkoutEditScreen(
                                                 onDuplicateExercise(workout.workout.id, exercise.exercise.id)
                                                 showExerciseMenu = false
                                             },
-                                            leadingIcon = { Icon(Icons.Default.ContentCopy, contentDescription = null) }
+                                            leadingIcon = {
+                                                Icon(Icons.Default.ContentCopy, contentDescription = null)
+                                            },
                                         )
                                         DropdownMenuItem(
                                             text = { Text(stringResource(R.string.action_delete)) },
@@ -125,7 +130,7 @@ fun WorkoutEditScreen(
                                                 onDeleteExercise(workout.workout.id, exercise.exercise.id)
                                                 showExerciseMenu = false
                                             },
-                                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
+                                            leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) },
                                         )
                                     }
                                 }
@@ -133,40 +138,45 @@ fun WorkoutEditScreen(
                             exercise.sets.forEachIndexed { index, set ->
                                 HorizontalDivider(
                                     modifier = Modifier.padding(vertical = 4.dp),
-                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                                 )
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clickable { editingSet = exercise.exercise.id to set }
-                                        .padding(vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
+                                    modifier =
+                                        Modifier
+                                            .fillMaxWidth()
+                                            .clickable { editingSet = exercise.exercise.id to set }
+                                            .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Surface(
                                         modifier = Modifier.size(24.dp),
                                         shape = androidx.compose.foundation.shape.CircleShape,
-                                        color = MaterialTheme.colorScheme.surfaceVariant
+                                        color = MaterialTheme.colorScheme.surfaceVariant,
                                     ) {
                                         Box(contentAlignment = Alignment.Center) {
                                             Text(
                                                 text = (index + 1).toString(),
                                                 style = MaterialTheme.typography.labelSmall,
-                                                fontWeight = FontWeight.Bold
+                                                fontWeight = FontWeight.Bold,
                                             )
                                         }
                                     }
                                     Spacer(Modifier.width(12.dp))
                                     Text(
-                                        text = "${set.targetWeight}kg x ${set.targetReps} reps (${set.restInterval}s rest)",
+                                        text =
+                                            "${set.targetWeight}kg x ${set.targetReps} reps" +
+                                                " (${set.restInterval}s rest)",
                                         style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.weight(1f),
                                     )
-                                    IconButton(onClick = { onDeleteSet(workout.workout.id, exercise.exercise.id, set.id) }) {
+                                    IconButton(
+                                        onClick = { onDeleteSet(workout.workout.id, exercise.exercise.id, set.id) },
+                                    ) {
                                         Icon(
                                             Icons.Default.Delete,
                                             contentDescription = stringResource(R.string.action_delete_set),
                                             modifier = Modifier.size(20.dp),
-                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                                         )
                                     }
                                 }
@@ -175,7 +185,10 @@ fun WorkoutEditScreen(
                             TextButton(
                                 onClick = { onAddSet(workout.workout.id, exercise.exercise.id) },
                                 modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary)
+                                colors =
+                                    ButtonDefaults.textButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.primary,
+                                    ),
                             ) {
                                 Icon(Icons.Default.Add, contentDescription = null)
                                 Text(stringResource(R.string.action_add_set), fontWeight = FontWeight.Bold)
@@ -187,7 +200,7 @@ fun WorkoutEditScreen(
                     OutlinedButton(
                         onClick = { showAddExerciseDialog = true },
                         modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = MaterialTheme.shapes.medium
+                        shape = MaterialTheme.shapes.medium,
                     ) {
                         Icon(Icons.Default.Add, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
@@ -206,7 +219,7 @@ fun WorkoutEditScreen(
                 TextField(
                     value = newExerciseName,
                     onValueChange = { newExerciseName = it },
-                    label = { Text(stringResource(R.string.label_exercise_name)) }
+                    label = { Text(stringResource(R.string.label_exercise_name)) },
                 )
             },
             confirmButton = {
@@ -224,7 +237,7 @@ fun WorkoutEditScreen(
                 TextButton(onClick = { showAddExerciseDialog = false }) {
                     Text(stringResource(R.string.action_cancel))
                 }
-            }
+            },
         )
     }
 
@@ -243,21 +256,21 @@ fun WorkoutEditScreen(
                         onValueChange = { weight = it },
                         label = { Text(stringResource(R.string.label_weight_kg)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = reps,
                         onValueChange = { reps = it },
                         label = { Text(stringResource(R.string.label_reps)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = rest,
                         onValueChange = { rest = it },
                         label = { Text(stringResource(R.string.label_rest_interval)) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             },
@@ -278,7 +291,7 @@ fun WorkoutEditScreen(
                 TextButton(onClick = { editingSet = null }) {
                     Text(stringResource(R.string.action_cancel))
                 }
-            }
+            },
         )
     }
 }

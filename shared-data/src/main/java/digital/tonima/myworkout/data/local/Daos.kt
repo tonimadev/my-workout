@@ -40,7 +40,7 @@ interface WorkoutDao {
     @Transaction
     suspend fun upsertWorkoutWithExercises(
         workout: WorkoutEntity,
-        exercises: List<ExerciseWithSets>
+        exercises: List<ExerciseWithSets>,
     ) {
         val workoutId = insertWorkout(workout)
         // Note: CASCADE DELETE should handle removing old exercises if workout was replaced.

@@ -13,7 +13,5 @@ import javax.inject.Singleton
 abstract class WearableModule {
     @Binds
     @Singleton
-    abstract fun bindWearableSyncManager(
-        phoneWearableSyncManager: PhoneWearableSyncManager
-    ): WearableSyncManager
+    abstract fun bindWearableSyncManager(phoneWearableSyncManager: PhoneWearableSyncManager): WearableSyncManager
 }

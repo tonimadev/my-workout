@@ -14,7 +14,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class WearableSyncService : WearableListenerService() {
-
     @Inject
     lateinit var repository: WorkoutRepository
 

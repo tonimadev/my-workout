@@ -1,8 +1,8 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.google.devtools.ksp)
-    alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.jetbrains.kotlin.plugin.serialization)
 }
 
 android {
@@ -27,12 +27,13 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
-    implementation(libs.play.services.wearable)
-    implementation(libs.kotlinx.serialization.json)
-    "ksp"(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.runtime)
     implementation(libs.hilt.android)
-    "ksp"(libs.hilt.compiler)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.play.services.wearable)
+
+    "ksp"(libs.androidx.room.compiler)
+    "ksp"(libs.hilt.compiler)
 }

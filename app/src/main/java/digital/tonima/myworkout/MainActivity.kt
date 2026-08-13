@@ -50,110 +50,118 @@ class MainActivity : ComponentActivity() {
 @OptIn(
     ExperimentalMaterial3AdaptiveApi::class,
     ExperimentalMaterial3AdaptiveNavigationSuiteApi::class,
-    ExperimentalMaterial3Api::class
+    ExperimentalMaterial3Api::class,
 )
 @Composable
 fun AppNavigation() {
     val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey) }
-    val navigationState = rememberNavigationState(
-        startRoute = WorkoutList,
-        topLevelRoutes = topLevelRoutes
-    )
+    val navigationState =
+        rememberNavigationState(
+            startRoute = WorkoutList,
+            topLevelRoutes = topLevelRoutes,
+        )
     val navigator = remember { Navigator(navigationState) }
 
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
-    val entryProvider = entryProvider<NavKey> {
-        entry<WorkoutList>(
-            metadata = ListDetailSceneStrategy.listPane()
-        ) {
-            val viewModel: WorkoutViewModel = hiltViewModel()
-            val workouts by viewModel.workouts.collectAsState()
-            WorkoutListScreen(
-                workouts = workouts,
-                onWorkoutClick = { id -> navigator.navigate(WorkoutEdit(id)) },
-                onAddWorkout = { name -> viewModel.addWorkout(name) },
-                onDeleteWorkout = { workout -> viewModel.deleteWorkout(workout.workout) }
-            )
-        }
-
-        entry<WorkoutEdit>(
-            metadata = ListDetailSceneStrategy.detailPane()
-        ) { key ->
-            val viewModel: WorkoutViewModel = hiltViewModel()
-            val workout by viewModel.getWorkout(key.workoutId ?: -1).collectAsState(null)
-            WorkoutEditScreen(
-                workout = workout,
-                onBack = { navigator.goBack() },
-                onStartWorkout = { id -> navigator.navigate(Destination.WorkoutTracking(id)) },
-                onAddExercise = { id, name -> viewModel.addExercise(id, name) },
-                onAddSet = { workoutId, exerciseId -> viewModel.addSet(workoutId, exerciseId) },
-                onUpdateSet = { wId, eId, sId, weight, reps, rest ->
-                    viewModel.updateSet(wId, eId, sId, weight, reps, rest)
-                },
-                onDeleteSet = { wId, eId, sId -> viewModel.deleteSet(wId, eId, sId) },
-                onDuplicateExercise = { wId, eId -> viewModel.duplicateExercise(wId, eId) },
-                onDeleteExercise = { wId, eId -> viewModel.deleteExercise(wId, eId) }
-            )
-        }
-
-        entry<Destination.WorkoutTracking> { key ->
-            val viewModel: WorkoutViewModel = hiltViewModel()
-            val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
-            val activeSession by viewModel.activeSession.collectAsState()
-            val restTimeLeft by viewModel.restTimeRemaining.collectAsState()
-
-            // Start workout if not already started
-            LaunchedEffect(key.workoutId) {
-                viewModel.startWorkout(key.workoutId)
+    val entryProvider =
+        entryProvider<NavKey> {
+            entry<WorkoutList>(
+                metadata = ListDetailSceneStrategy.listPane(),
+            ) {
+                val viewModel: WorkoutViewModel = hiltViewModel()
+                val workouts by viewModel.workouts.collectAsState()
+                WorkoutListScreen(
+                    workouts = workouts,
+                    onWorkoutClick = { id -> navigator.navigate(WorkoutEdit(id)) },
+                    onAddWorkout = { name -> viewModel.addWorkout(name) },
+                    onDeleteWorkout = { workout -> viewModel.deleteWorkout(workout.workout) },
+                    onSyncWearable = { viewModel.syncWorkouts() },
+                )
             }
 
-            WorkoutTrackingScreen(
-                workout = workout,
-                activeSession = activeSession,
-                restTimeLeft = restTimeLeft,
-                onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
-                    viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
-                },
-                onFinish = {
-                    viewModel.finishWorkout()
-                    navigator.goBack()
-                },
-                onCancel = {
-                    navigator.goBack()
-                }
-            )
-        }
+            entry<WorkoutEdit>(
+                metadata = ListDetailSceneStrategy.detailPane(),
+            ) { key ->
+                val viewModel: WorkoutViewModel = hiltViewModel()
+                val workout by viewModel.getWorkout(key.workoutId ?: -1).collectAsState(null)
+                WorkoutEditScreen(
+                    workout = workout,
+                    onBack = { navigator.goBack() },
+                    onStartWorkout = { id -> navigator.navigate(Destination.WorkoutTracking(id)) },
+                    onAddExercise = { id, name -> viewModel.addExercise(id, name) },
+                    onAddSet = { workoutId, exerciseId -> viewModel.addSet(workoutId, exerciseId) },
+                    onUpdateSet = { wId, eId, sId, weight, reps, rest ->
+                        viewModel.updateSet(wId, eId, sId, weight, reps, rest)
+                    },
+                    onDeleteSet = { wId, eId, sId -> viewModel.deleteSet(wId, eId, sId) },
+                    onDuplicateExercise = { wId, eId -> viewModel.duplicateExercise(wId, eId) },
+                    onDeleteExercise = { wId, eId -> viewModel.deleteExercise(wId, eId) },
+                )
+            }
 
-        entry<History> {
-            val viewModel: HistoryViewModel = hiltViewModel()
-            val sessions by viewModel.sessions.collectAsState()
-            HistoryScreen(sessions = sessions)
+            entry<Destination.WorkoutTracking> { key ->
+                val viewModel: WorkoutViewModel = hiltViewModel()
+                val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
+                val activeSession by viewModel.activeSession.collectAsState()
+                val restTimeLeft by viewModel.restTimeRemaining.collectAsState()
+
+                // Start workout if not already started
+                LaunchedEffect(key.workoutId) {
+                    viewModel.startWorkout(key.workoutId)
+                }
+
+                WorkoutTrackingScreen(
+                    workout = workout,
+                    activeSession = activeSession,
+                    restTimeLeft = restTimeLeft,
+                    onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
+                        viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
+                    },
+                    onFinish = {
+                        viewModel.finishWorkout()
+                        navigator.goBack()
+                    },
+                    onCancel = {
+                        navigator.goBack()
+                    },
+                )
+            }
+
+            entry<History> {
+                val viewModel: HistoryViewModel = hiltViewModel()
+                val sessions by viewModel.sessions.collectAsState()
+                HistoryScreen(sessions = sessions)
+            }
         }
-    }
 
     val entries = navigationState.toEntries(entryProvider)
-    
+
     NavigationSuiteScaffold(
         navigationSuiteItems = {
             item(
                 selected = navigationState.topLevelRoute == WorkoutList,
                 onClick = { navigator.navigate(WorkoutList) },
-                icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.nav_workouts)) },
-                label = { Text(stringResource(R.string.nav_workouts)) }
+                icon = {
+                    Icon(
+                        Icons.AutoMirrored.Filled.List,
+                        contentDescription = stringResource(R.string.nav_workouts),
+                    )
+                },
+                label = { Text(stringResource(R.string.nav_workouts)) },
             )
             item(
                 selected = navigationState.topLevelRoute == History,
                 onClick = { navigator.navigate(History) },
                 icon = { Icon(Icons.Default.History, contentDescription = stringResource(R.string.nav_history)) },
-                label = { Text(stringResource(R.string.nav_history)) }
+                label = { Text(stringResource(R.string.nav_history)) },
             )
-        }
+        },
     ) {
         NavDisplay(
             entries = entries,
             onBack = { navigator.goBack() },
-            sceneStrategies = listOf(listDetailStrategy)
+            sceneStrategies = listOf(listDetailStrategy),
         )
     }
 }

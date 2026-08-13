@@ -18,21 +18,20 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
-
     @Binds
     @Singleton
-    abstract fun bindWorkoutRepository(
-        workoutRepositoryImpl: WorkoutRepositoryImpl
-    ): WorkoutRepository
+    abstract fun bindWorkoutRepository(workoutRepositoryImpl: WorkoutRepositoryImpl): WorkoutRepository
 
     companion object {
         @Provides
         @Singleton
-        fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
+        fun provideDatabase(
+            @ApplicationContext context: Context,
+        ): AppDatabase {
             return Room.databaseBuilder(
                 context,
                 AppDatabase::class.java,
-                "my_workout_db"
+                "my_workout_db",
             ).fallbackToDestructiveMigration().build()
         }
 

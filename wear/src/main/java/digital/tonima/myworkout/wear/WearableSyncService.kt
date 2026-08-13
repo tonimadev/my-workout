@@ -1,5 +1,8 @@
 package digital.tonima.myworkout.wear
 
+import com.google.android.gms.wearable.DataEvent
+import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
@@ -14,28 +17,42 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class WearableSyncService : WearableListenerService() {
-
     @Inject
     lateinit var repository: WorkoutRepository
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    override fun onDataChanged(dataEvents: DataEventBuffer) {
+        dataEvents.forEach { event ->
+            if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout/definitions") {
+                val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
+                val workoutsJson = dataMap.getString("workouts_json")
+                if (workoutsJson != null) {
+                    processWorkoutsJson(workoutsJson)
+                }
+            }
+        }
+    }
+
     override fun onMessageReceived(messageEvent: MessageEvent) {
         if (messageEvent.path == "/workout/definitions") {
             val workoutsJson = String(messageEvent.data)
-            scope.launch {
-                try {
-                    val workouts = Json.decodeFromString<List<WorkoutWithExercises>>(workoutsJson)
-                    // Update local DB
-                    workouts.forEach { workoutWithExercises ->
-                        repository.addWorkout(
-                            workoutWithExercises.workout,
-                            workoutWithExercises.exercises
-                        )
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace()
+            processWorkoutsJson(workoutsJson)
+        }
+    }
+
+    private fun processWorkoutsJson(json: String) {
+        scope.launch {
+            try {
+                val workouts = Json.decodeFromString<List<WorkoutWithExercises>>(json)
+                workouts.forEach { workoutWithExercises ->
+                    repository.addWorkout(
+                        workoutWithExercises.workout,
+                        workoutWithExercises.exercises,
+                    )
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
     }
