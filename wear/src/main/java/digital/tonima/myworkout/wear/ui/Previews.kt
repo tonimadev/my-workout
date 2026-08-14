@@ -109,6 +109,7 @@ fun WorkoutExecutionScreenPreview() {
             restTimeRemaining = 0,
             totalRestTime = 0,
             isResting = false,
+            isAmbientMode = false,
             onCompleteSet = { _, _, _, _, _ -> },
             onFinishSession = {},
         )
@@ -130,6 +131,6 @@ fun WorkoutExecutionScreenPreview() {
 @Composable
 fun RestTimerOverlayPreview() {
     MaterialTheme {
-        RestTimerOverlay(remaining = 30, total = 60)
+        RestTimerOverlay(remaining = 30, total = 60, isAmbientMode = false)
     }
 }

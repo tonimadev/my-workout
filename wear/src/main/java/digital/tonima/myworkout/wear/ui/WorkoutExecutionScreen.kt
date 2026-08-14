@@ -12,6 +12,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -31,6 +32,7 @@ fun WorkoutExecutionScreen(
     restTimeRemaining: Long,
     totalRestTime: Long,
     isResting: Boolean,
+    isAmbientMode: Boolean,
     onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
     onFinishSession: () -> Unit,
 ) {
@@ -48,6 +50,10 @@ fun WorkoutExecutionScreen(
         Box(modifier = Modifier.fillMaxSize()) {
             HorizontalPager(
                 state = pagerState,
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .background(if (isAmbientMode) Color.Black else MaterialTheme.colorScheme.background),
             ) { pageIndex ->
                 val exerciseWithSets = workout.exercises[pageIndex]
                 val exercise = exerciseWithSets.exercise
@@ -71,6 +77,7 @@ fun WorkoutExecutionScreen(
                         setInfo = stringResource(R.string.set_info, currentSetIndex + 1, totalSets),
                         weight = weight,
                         reps = reps,
+                        isAmbientMode = isAmbientMode,
                         onWeightChange = { newWeight -> weight = newWeight },
                         onRepsChange = { newReps -> reps = newReps },
                         onCompleteSet = {
@@ -115,10 +122,10 @@ fun WorkoutExecutionScreen(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .background(MaterialTheme.colorScheme.background),
+                            .background(if (isAmbientMode) Color.Black else MaterialTheme.colorScheme.background),
                     contentAlignment = Alignment.Center,
                 ) {
-                    RestTimerOverlay(restTimeRemaining, totalRestTime)
+                    RestTimerOverlay(restTimeRemaining, totalRestTime, isAmbientMode)
                 }
             }
         }
@@ -131,6 +138,7 @@ fun ExerciseDetails(
     setInfo: String,
     weight: Float,
     reps: Int,
+    isAmbientMode: Boolean,
     onWeightChange: (Float) -> Unit,
     onRepsChange: (Int) -> Unit,
     onCompleteSet: () -> Unit,
@@ -164,38 +172,61 @@ fun ExerciseDetails(
 
             // Reps Stepper
             item {
-                Stepper(
-                    value = reps,
-                    onValueChange = onRepsChange,
-                    valueProgression = 1..100,
-                    increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.content_description_increase)) },
-                    decreaseIcon = {
-                        Icon(
-                            Icons.Default.Remove,
-                            stringResource(R.string.content_description_decrease),
-                        )
-                    },
-                ) {
-                    Text(stringResource(R.string.reps_count, reps))
+                if (isAmbientMode) {
+                    Text(
+                        text = stringResource(R.string.reps_count, reps),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Stepper(
+                        value = reps,
+                        onValueChange = onRepsChange,
+                        valueProgression = 1..100,
+                        increaseIcon = {
+                            Icon(
+                                Icons.Default.Add,
+                                stringResource(R.string.content_description_increase),
+                            )
+                        },
+                        decreaseIcon = {
+                            Icon(
+                                Icons.Default.Remove,
+                                stringResource(R.string.content_description_decrease),
+                            )
+                        },
+                    ) {
+                        Text(stringResource(R.string.reps_count, reps))
+                    }
                 }
             }
 
             // Weight
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
-                        Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
-                    }
+                if (isAmbientMode) {
                     Text(
                         text = stringResource(R.string.weight_unit, weight.toString()),
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
-                    IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
-                        Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+                } else {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center,
+                    ) {
+                        IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
+                            Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
+                        }
+                        Text(
+                            text = stringResource(R.string.weight_unit, weight.toString()),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                        IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
+                            Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+                        }
                     }
                 }
             }
@@ -203,13 +234,15 @@ fun ExerciseDetails(
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
             item {
-                Button(
-                    onClick = onCompleteSet,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(stringResource(R.string.action_complete))
+                if (!isAmbientMode) {
+                    Button(
+                        onClick = onCompleteSet,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(stringResource(R.string.action_complete))
+                    }
                 }
             }
         }
@@ -220,6 +253,7 @@ fun ExerciseDetails(
 fun RestTimerOverlay(
     remaining: Long,
     total: Long,
+    isAmbientMode: Boolean,
 ) {
     val progressTarget = if (total > 0) (total - remaining).toFloat() / total.toFloat() else 0f
     val animatedProgress by animateFloatAsState(
@@ -244,8 +278,15 @@ fun RestTimerOverlay(
             gapSize = 0.dp,
             colors =
                 ProgressIndicatorDefaults.colors(
-                    indicatorColor = indicatorColor,
-                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                    indicatorColor = if (isAmbientMode) Color.White else indicatorColor,
+                    trackColor =
+                        if (isAmbientMode) {
+                            Color.Transparent
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(
+                                alpha = 0.1f,
+                            )
+                        },
                 ),
         )
         Column(
@@ -261,7 +302,7 @@ fun RestTimerOverlay(
             Text(
                 text = stringResource(R.string.timer_seconds, remaining),
                 style = MaterialTheme.typography.displayMedium,
-                color = indicatorColor,
+                color = if (isAmbientMode) Color.White else indicatorColor,
             )
         }
     }

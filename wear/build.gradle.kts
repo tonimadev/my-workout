@@ -14,8 +14,8 @@ android {
         applicationId = "digital.tonima.myworkout"
         minSdk = 30
         targetSdk = 37
-        versionCode = 118
-        versionName = "2.8"
+        versionCode = 120
+        versionName = "2.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -62,6 +62,7 @@ dependencies {
     implementation(libs.androidx.wear.compose.foundation)
     implementation(libs.androidx.wear.compose.material3)
     implementation(libs.androidx.wear.compose.navigation3)
+    implementation(libs.androidx.wear.ongoing)
     implementation(libs.androidx.wear.tooling.preview)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

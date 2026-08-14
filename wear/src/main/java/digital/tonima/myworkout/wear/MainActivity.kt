@@ -8,6 +8,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
+import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.navigation3.SwipeDismissableSceneStrategy
@@ -21,17 +22,32 @@ import digital.tonima.myworkout.wear.ui.navigation.Screen.WorkoutList
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val ambientCallback =
+        object : AmbientLifecycleObserver.AmbientLifecycleCallback {
+            override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+                isAmbientMode = true
+            }
+
+            override fun onExitAmbient() {
+                isAmbientMode = false
+            }
+        }
+
+    private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
+    private var isAmbientMode by mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+        lifecycle.addObserver(ambientObserver)
         setContent {
-            WearApp()
+            WearApp(isAmbientMode)
         }
     }
 }
 
 @Composable
-fun WearApp() {
+fun WearApp(isAmbientMode: Boolean) {
     MaterialTheme {
         AppScaffold {
             val backStack = remember { mutableStateListOf<Screen>(WorkoutList) }
@@ -72,6 +88,7 @@ fun WearApp() {
                                     restTimeRemaining = restTime,
                                     totalRestTime = totalRestTime,
                                     isResting = isResting,
+                                    isAmbientMode = isAmbientMode,
                                     onCompleteSet = { exerciseId, setId, weight, reps, rest ->
                                         viewModel.completeSet(exerciseId, setId, weight, reps, rest)
                                     },

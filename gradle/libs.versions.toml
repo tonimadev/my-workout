@@ -10,16 +10,16 @@ lifecycleViewmodelCompose = "2.11.0"
 lifecycleRuntimeCompose = "2.11.0"
 activityCompose = "1.13.0"
 kotlin = "2.4.10"
-composeBom = "2026.06.01"
+composeBom = "2026.08.00"
 googleDevtoolsKsp = "2.3.11"
 jetbrainsKotlinPluginSerialization = "2.4.10"
 kotlinxSerializationCore = "1.11.0"
-navigation3Ui = "1.1.5"
-navigation3Runtime = "1.1.5"
-material3AdaptiveNav3 = "1.3.0-rc01"
+navigation3Ui = "1.1.6"
+navigation3Runtime = "1.1.6"
+material3AdaptiveNav3 = "1.3.0"
 adaptiveNavigationSuite = "1.4.0"
-adaptive = "1.3.0-rc01"
-adaptiveLayout = "1.3.0-rc01"
+adaptive = "1.3.0"
+adaptiveLayout = "1.3.0"
 lifecycleViewmodelNavigation3 = "2.11.0"
 roomRuntime = "2.8.4"
 roomKtx = "2.8.4"
@@ -37,6 +37,7 @@ accompanistPermissions = "0.37.3"
 playServicesLocation = "21.4.0"
 playServicesWearable = "20.0.1"
 wear = "1.4.0"
+wearOngoing = "1.1.0"
 wearCompose = "1.6.2"
 wearToolingPreview = "1.0.0"
 cameraCamera2 = "1.6.1"
@@ -52,8 +53,8 @@ material = "1.4.+"
 coreSplashScreen = "1.2.0"
 detekt = "1.23.8"
 spotless = "8.9.0"
-mockk = "1.13.17"
-turbine = "1.2.0"
+mockk = "1.14.11"
+turbine = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -100,6 +101,7 @@ accompanist-permissions = { group = "com.google.accompanist", name = "accompanis
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 androidx-wear = { group = "androidx.wear", name = "wear", version.ref = "wear" }
+androidx-wear-ongoing = { group = "androidx.wear", name = "wear-ongoing", version.ref = "wearOngoing" }
 androidx-wear-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wearCompose" }
 androidx-wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearCompose" }
 androidx-wear-compose-navigation = { group = "androidx.wear.compose", name = "compose-navigation", version.ref = "wearCompose" }

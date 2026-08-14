@@ -1,12 +1,16 @@
 package digital.tonima.myworkout.wear.ui
 
+import android.content.Context
+import android.content.Intent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.myworkout.BuildConfig
 import digital.tonima.myworkout.data.model.*
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.wear.WorkoutService
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
@@ -20,6 +24,7 @@ class WorkoutViewModel
     constructor(
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
+        @ApplicationContext private val context: Context,
     ) : ViewModel() {
         init {
             viewModelScope.launch {
@@ -127,9 +132,15 @@ class WorkoutViewModel
         fun startSession(workoutId: Long) {
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
-                repository.getSessionById(sessionId).collect { session ->
-                    _activeSession.value = session
-                }
+                val session = repository.getSessionById(sessionId).filterNotNull().first()
+                _activeSession.value = session
+
+                val workout = currentWorkout.filterNotNull().first()
+                val intent =
+                    Intent(context, WorkoutService::class.java).apply {
+                        putExtra("workout_name", workout.workout.name)
+                    }
+                context.startForegroundService(intent)
             }
         }
 
@@ -184,6 +195,12 @@ class WorkoutViewModel
                 repository.finishSession(session.session)
                 _activeSession.value = null
                 _currentWorkout.value = null
+
+                val intent =
+                    Intent(context, WorkoutService::class.java).apply {
+                        action = WorkoutService.ACTION_STOP
+                    }
+                context.startService(intent)
             }
         }
     }
