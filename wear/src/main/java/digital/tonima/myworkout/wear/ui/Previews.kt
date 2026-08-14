@@ -108,6 +108,7 @@ fun WorkoutExecutionScreenPreview() {
             activeSession = null,
             restTimeRemaining = 0,
             totalRestTime = 0,
+            isResting = false,
             onCompleteSet = { _, _, _, _, _ -> },
             onFinishSession = {},
         )

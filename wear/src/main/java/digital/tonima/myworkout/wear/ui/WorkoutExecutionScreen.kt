@@ -3,6 +3,7 @@ package digital.tonima.myworkout.wear.ui
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +30,7 @@ fun WorkoutExecutionScreen(
     activeSession: SessionWithLogs?,
     restTimeRemaining: Long,
     totalRestTime: Long,
+    isResting: Boolean,
     onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
     onFinishSession: () -> Unit,
 ) {
@@ -36,70 +38,84 @@ fun WorkoutExecutionScreen(
 
     HorizontalPagerScaffold(
         pagerState = pagerState,
+        pageIndicator =
+            if (isResting) {
+                null
+            } else {
+                { HorizontalPageIndicator(pagerState = pagerState) }
+            },
     ) {
-        HorizontalPager(
-            state = pagerState,
-        ) { pageIndex ->
-            val exerciseWithSets = workout.exercises[pageIndex]
-            val exercise = exerciseWithSets.exercise
-            val sets = exerciseWithSets.sets
+        Box(modifier = Modifier.fillMaxSize()) {
+            HorizontalPager(
+                state = pagerState,
+            ) { pageIndex ->
+                val exerciseWithSets = workout.exercises[pageIndex]
+                val exercise = exerciseWithSets.exercise
+                val sets = exerciseWithSets.sets
 
-            // Find current set for this exercise in the session
-            val exerciseSetIds = remember(sets) { sets.map { it.id }.toSet() }
-            val logs = activeSession?.logs?.filter { it.setId in exerciseSetIds } ?: emptyList()
-            val currentSetIndex = logs.size
-            val totalSets = sets.size
+                // Find current set for this exercise in the session
+                val exerciseSetIds = remember(sets) { sets.map { it.id }.toSet() }
+                val logs = activeSession?.logs?.filter { it.setId in exerciseSetIds } ?: emptyList()
+                val currentSetIndex = logs.size
+                val totalSets = sets.size
 
-            if (currentSetIndex < totalSets) {
-                val currentSet = sets[currentSetIndex]
-                var weight by remember(currentSet.id) { mutableFloatStateOf(currentSet.targetWeight.toFloat()) }
-                var reps by remember(currentSet.id) { mutableIntStateOf(currentSet.targetReps) }
+                if (currentSetIndex < totalSets) {
+                    val currentSet = sets[currentSetIndex]
+                    var weight by remember(currentSet.id) { mutableFloatStateOf(currentSet.targetWeight.toFloat()) }
+                    var reps by remember(currentSet.id) { mutableIntStateOf(currentSet.targetReps) }
 
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    if (restTimeRemaining > 0) {
-                        RestTimerOverlay(restTimeRemaining, totalRestTime)
-                    } else {
-                        ExerciseDetails(
-                            exerciseName = exercise.name,
-                            setInfo = stringResource(R.string.set_info, currentSetIndex + 1, totalSets),
-                            weight = weight,
-                            reps = reps,
-                            onWeightChange = { newWeight -> weight = newWeight },
-                            onRepsChange = { newReps -> reps = newReps },
-                            onCompleteSet = {
-                                if (activeSession != null) {
-                                    onCompleteSet(
-                                        exercise.id,
-                                        currentSet.id,
-                                        weight,
-                                        reps,
-                                        currentSet.restInterval,
-                                    )
-                                }
-                            },
+                    ExerciseDetails(
+                        exerciseName = exercise.name,
+                        setInfo = stringResource(R.string.set_info, currentSetIndex + 1, totalSets),
+                        weight = weight,
+                        reps = reps,
+                        onWeightChange = { newWeight -> weight = newWeight },
+                        onRepsChange = { newReps -> reps = newReps },
+                        onCompleteSet = {
+                            if (activeSession != null) {
+                                onCompleteSet(
+                                    exercise.id,
+                                    currentSet.id,
+                                    weight,
+                                    reps,
+                                    currentSet.restInterval,
+                                )
+                            }
+                        },
+                    )
+                } else {
+                    // Exercise finished
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.exercise_finished, exercise.name),
+                            style = MaterialTheme.typography.titleMedium,
+                            textAlign = TextAlign.Center,
                         )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        if (pageIndex == workout.exercises.size - 1) {
+                            Button(onClick = onFinishSession) {
+                                Text(stringResource(R.string.finish_workout))
+                            }
+                        } else {
+                            Text(stringResource(R.string.swipe_next_hint), style = MaterialTheme.typography.bodySmall)
+                        }
                     }
                 }
-            } else {
-                // Exercise finished
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally,
+            }
+
+            if (isResting) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(R.string.exercise_finished, exercise.name),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    if (pageIndex == workout.exercises.size - 1) {
-                        Button(onClick = onFinishSession) {
-                            Text(stringResource(R.string.finish_workout))
-                        }
-                    } else {
-                        Text(stringResource(R.string.swipe_next_hint), style = MaterialTheme.typography.bodySmall)
-                    }
+                    RestTimerOverlay(restTimeRemaining, totalRestTime)
                 }
             }
         }
@@ -216,6 +232,8 @@ fun RestTimerOverlay(
         CircularProgressIndicator(
             progress = { animatedProgress },
             modifier = Modifier.fillMaxSize(),
+            startAngle = 270f,
+            endAngle = 270f,
             strokeWidth = 6.dp,
             gapSize = 0.dp,
             colors =
