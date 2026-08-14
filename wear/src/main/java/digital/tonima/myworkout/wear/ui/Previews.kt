@@ -3,7 +3,10 @@ package digital.tonima.myworkout.wear.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.tooling.preview.devices.WearDevices.LARGE_ROUND
+import androidx.wear.tooling.preview.devices.WearDevices.RECT
 import androidx.wear.tooling.preview.devices.WearDevices.SMALL_ROUND
+import androidx.wear.tooling.preview.devices.WearDevices.SQUARE
 import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
 import digital.tonima.myworkout.data.model.SetEntity
@@ -12,6 +15,15 @@ import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
 @Preview(
     device = SMALL_ROUND,
+)
+@Preview(
+    device = LARGE_ROUND,
+)
+@Preview(
+    device = RECT,
+)
+@Preview(
+    device = SQUARE,
 )
 @Composable
 fun WorkoutListScreenPreview() {
@@ -52,6 +64,15 @@ fun WorkoutListScreenPreview() {
 
 @Preview(
     device = SMALL_ROUND,
+)
+@Preview(
+    device = LARGE_ROUND,
+)
+@Preview(
+    device = RECT,
+)
+@Preview(
+    device = SQUARE,
 )
 @Composable
 fun WorkoutExecutionScreenPreview() {
@@ -95,6 +116,15 @@ fun WorkoutExecutionScreenPreview() {
 
 @Preview(
     device = SMALL_ROUND,
+)
+@Preview(
+    device = LARGE_ROUND,
+)
+@Preview(
+    device = RECT,
+)
+@Preview(
+    device = SQUARE,
 )
 @Composable
 fun RestTimerOverlayPreview() {

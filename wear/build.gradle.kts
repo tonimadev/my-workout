@@ -44,7 +44,6 @@ dependencies {
 
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.wear.tooling.preview)
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material.icons.extended)
@@ -62,6 +61,7 @@ dependencies {
     implementation(libs.androidx.wear.compose.foundation)
     implementation(libs.androidx.wear.compose.material3)
     implementation(libs.androidx.wear.compose.navigation3)
+    implementation(libs.androidx.wear.tooling.preview)
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.kotlinx.coroutines.play.services)
