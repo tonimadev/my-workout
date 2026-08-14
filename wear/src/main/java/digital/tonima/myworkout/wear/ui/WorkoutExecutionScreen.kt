@@ -113,76 +113,81 @@ fun ExerciseDetails(
     onCompleteSet: () -> Unit,
 ) {
     val columnState = rememberTransformingLazyColumnState()
-    TransformingLazyColumn(
-        state = columnState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 32.dp),
-    ) {
-        item {
-            Text(
-                text = exerciseName,
-                style = MaterialTheme.typography.titleSmall,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        item {
-            Text(
-                text = setInfo,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.secondary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-
-        item { Spacer(modifier = Modifier.height(8.dp)) }
-
-        // Reps Stepper
-        item {
-            Stepper(
-                value = reps,
-                onValueChange = onRepsChange,
-                valueProgression = 1..100,
-                increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.content_description_increase)) },
-                decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease)) },
-            ) {
-                Text(stringResource(R.string.reps_count, reps))
-            }
-        }
-
-        item { Spacer(modifier = Modifier.height(4.dp)) }
-
-        // Weight
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
-                    Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
-                }
+    ScreenScaffold(scrollState = columnState) {
+        TransformingLazyColumn(
+            state = columnState,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 24.dp),
+        ) {
+            item {
                 Text(
-                    text = stringResource(R.string.weight_unit, weight.toString()),
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = exerciseName,
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-                IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
-                    Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+            }
+            item {
+                Text(
+                    text = setInfo,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+
+            // Reps Stepper
+            item {
+                Stepper(
+                    value = reps,
+                    onValueChange = onRepsChange,
+                    valueProgression = 1..100,
+                    increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.content_description_increase)) },
+                    decreaseIcon = {
+                        Icon(
+                            Icons.Default.Remove,
+                            stringResource(R.string.content_description_decrease),
+                        )
+                    },
+                ) {
+                    Text(stringResource(R.string.reps_count, reps))
                 }
             }
-        }
 
-        item { Spacer(modifier = Modifier.height(8.dp)) }
+            // Weight
+            item {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
+                        Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
+                    }
+                    Text(
+                        text = stringResource(R.string.weight_unit, weight.toString()),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
+                        Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+                    }
+                }
+            }
 
-        item {
-            Button(
-                onClick = onCompleteSet,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(stringResource(R.string.action_complete))
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+
+            item {
+                Button(
+                    onClick = onCompleteSet,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(stringResource(R.string.action_complete))
+                }
             }
         }
     }

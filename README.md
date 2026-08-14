@@ -14,16 +14,14 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 - **Data Synchronization**: Automatic two-way synchronization between the mobile app and Wear OS using the Wearable Data Layer API.
 - **Rest Timer**: Integrated rest timer during workout tracking to ensure optimal recovery between sets.
 - **Workout History**: Review past sessions and track your consistency over time.
-- **Evolution Stats**: Visualize your weight progress with interactive charts for every exercise.
-- **Onboarding Flow**: Guided introduction for new users to get the most out of the app.
 - **Localization**: Full support for English and Portuguese (pt-BR).
 
 ## Screens
 
 ### Mobile App
-| Onboarding | Workout List | Stats |
-| :---: | :---: | :---: |
-| ![Onboarding Placeholder](https://via.placeholder.com/200x400?text=Onboarding+Screen) | ![Workout List Placeholder](https://via.placeholder.com/200x400?text=Workout+List) | ![Stats Placeholder](https://via.placeholder.com/200x400?text=Evolution+Stats) |
+| Workout Tracking | Workout Details |
+| :---: | :---: |
+| ![Workout Tracking](screenshots/1.jpeg) | ![Workout Details](screenshots/2.jpeg) |
 
 ### Wear OS
 | Workout List | Execution | Rest Timer |
