@@ -1,0 +1,43 @@
+package digital.tonima.myworkout.data.preferences
+
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
+
+@Singleton
+class UserPreferencesRepository
+    @Inject
+    constructor(
+        private val dataStore: DataStore<Preferences>,
+    ) {
+        private object PreferencesKeys {
+            val ONBOARDING_COMPLETED = booleanPreferencesKey("onboarding_completed")
+        }
+
+        val onboardingCompleted: Flow<Boolean> =
+            dataStore.data
+                .catch { exception ->
+                    if (exception is IOException) {
+                        emit(emptyPreferences())
+                    } else {
+                        throw exception
+                    }
+                }
+                .map { preferences ->
+                    preferences[PreferencesKeys.ONBOARDING_COMPLETED] ?: false
+                }
+
+        suspend fun setOnboardingCompleted(completed: Boolean) {
+            dataStore.edit { preferences ->
+                preferences[PreferencesKeys.ONBOARDING_COMPLETED] = completed
+            }
+        }
+    }

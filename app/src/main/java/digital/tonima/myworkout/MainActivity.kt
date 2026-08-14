@@ -30,6 +30,8 @@ import digital.tonima.myworkout.ui.navigation.Destination.History
 import digital.tonima.myworkout.ui.navigation.Destination.Stats
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
+import digital.tonima.myworkout.ui.onboarding.OnboardingScreen
+import digital.tonima.myworkout.ui.onboarding.OnboardingViewModel
 import digital.tonima.myworkout.ui.stats.StatsScreen
 import digital.tonima.myworkout.ui.stats.StatsViewModel
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
@@ -58,6 +60,23 @@ class MainActivity : ComponentActivity() {
 )
 @Composable
 fun AppNavigation() {
+    val onboardingViewModel: OnboardingViewModel = hiltViewModel()
+    val onboardingCompleted by onboardingViewModel.onboardingCompleted.collectAsState()
+
+    if (!onboardingCompleted) {
+        OnboardingScreen(onComplete = { onboardingViewModel.completeOnboarding() })
+    } else {
+        MainAppContent()
+    }
+}
+
+@OptIn(
+    ExperimentalMaterial3AdaptiveApi::class,
+    ExperimentalMaterial3AdaptiveNavigationSuiteApi::class,
+    ExperimentalMaterial3Api::class,
+)
+@Composable
+fun MainAppContent() {
     val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey, Stats as NavKey) }
     val navigationState =
         rememberNavigationState(

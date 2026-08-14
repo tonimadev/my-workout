@@ -11,6 +11,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
 import androidx.wear.compose.material3.*
@@ -53,21 +55,23 @@ fun WorkoutExecutionScreen(
                     if (restTimeRemaining > 0) {
                         RestTimerOverlay(restTimeRemaining)
                     } else {
-                        ExerciseCard(
+                        ExerciseDetails(
                             exerciseName = exercise.name,
                             setInfo = stringResource(R.string.set_info, currentSetIndex + 1, totalSets),
                             weight = weight,
                             reps = reps,
-                            onWeightChange = { weight = it },
-                            onRepsChange = { reps = it },
+                            onWeightChange = { newWeight -> weight = newWeight },
+                            onRepsChange = { newReps -> reps = newReps },
                             onCompleteSet = {
-                                onCompleteSet(
-                                    exercise.id,
-                                    currentSet.id,
-                                    weight,
-                                    reps,
-                                    currentSet.restInterval,
-                                )
+                                if (activeSession != null) {
+                                    onCompleteSet(
+                                        exercise.id,
+                                        currentSet.id,
+                                        weight,
+                                        reps,
+                                        currentSet.restInterval,
+                                    )
+                                }
                             },
                         )
                     }
@@ -99,7 +103,7 @@ fun WorkoutExecutionScreen(
 }
 
 @Composable
-fun ExerciseCard(
+fun ExerciseDetails(
     exerciseName: String,
     setInfo: String,
     weight: Float,
@@ -108,63 +112,78 @@ fun ExerciseCard(
     onRepsChange: (Int) -> Unit,
     onCompleteSet: () -> Unit,
 ) {
-    Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .padding(horizontal = 8.dp, vertical = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    val columnState = rememberTransformingLazyColumnState()
+    TransformingLazyColumn(
+        state = columnState,
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 32.dp),
     ) {
-        Text(
-            text = exerciseName,
-            style = MaterialTheme.typography.titleSmall,
-            textAlign = TextAlign.Center,
-            maxLines = 1,
-        )
-        Text(
-            text = setInfo,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.secondary,
-        )
+        item {
+            Text(
+                text = exerciseName,
+                style = MaterialTheme.typography.titleSmall,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        item {
+            Text(
+                text = setInfo,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.secondary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
 
-        Spacer(modifier = Modifier.height(2.dp))
+        item { Spacer(modifier = Modifier.height(8.dp)) }
 
         // Reps Stepper
-        Stepper(
-            value = reps,
-            onValueChange = onRepsChange,
-            valueProgression = 1..100,
-            increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.content_description_increase)) },
-            decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease)) },
-        ) {
-            Text(stringResource(R.string.reps_count, reps))
+        item {
+            Stepper(
+                value = reps,
+                onValueChange = onRepsChange,
+                valueProgression = 1..100,
+                increaseIcon = { Icon(Icons.Default.Add, stringResource(R.string.content_description_increase)) },
+                decreaseIcon = { Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease)) },
+            ) {
+                Text(stringResource(R.string.reps_count, reps))
+            }
         }
+
+        item { Spacer(modifier = Modifier.height(4.dp)) }
 
         // Weight
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
-                Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
-            }
-            Text(
-                text = stringResource(R.string.weight_unit, weight.toString()),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
-                Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
+                    Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
+                }
+                Text(
+                    text = stringResource(R.string.weight_unit, weight.toString()),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
+                    Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+                }
             }
         }
 
-        Button(
-            onClick = onCompleteSet,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text(stringResource(R.string.action_complete))
+        item { Spacer(modifier = Modifier.height(8.dp)) }
+
+        item {
+            Button(
+                onClick = onCompleteSet,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Check, stringResource(R.string.content_description_complete))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(stringResource(R.string.action_complete))
+            }
         }
     }
 }
