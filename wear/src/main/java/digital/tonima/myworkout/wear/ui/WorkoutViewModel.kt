@@ -109,6 +109,30 @@ class WorkoutViewModel
                             ),
                         )
                     repository.addWorkout(workout, exercises)
+                    repository.addWorkout(
+                        workout.copy(
+                            name = "Debug Workout 2",
+                        ),
+                        exercises,
+                    )
+                    repository.addWorkout(
+                        workout.copy(
+                            name = "Debug Workout 3",
+                        ),
+                        exercises,
+                    )
+                    repository.addWorkout(
+                        workout.copy(
+                            name = "Debug Workout 4",
+                        ),
+                        exercises,
+                    )
+                    repository.addWorkout(
+                        workout.copy(
+                            name = "Debug Workout 5",
+                        ),
+                        exercises,
+                    )
                 }
             }
         }
