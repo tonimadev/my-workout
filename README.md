@@ -19,14 +19,14 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 ## Screens
 
 ### Mobile App
-| Workout Tracking | Workout Details |
-| :---: | :---: |
+|            Workout Tracking             |            Workout Details             |
+|:---------------------------------------:|:--------------------------------------:|
 | ![Workout Tracking](screenshots/1.jpeg) | ![Workout Details](screenshots/2.jpeg) |
 
 ### Wear OS
-| Workout List | Execution | Rest Timer |
-| :---: | :---: | :---: |
-| ![Watch List](screenshots/watch.jpeg) | ![Set Logging](screenshots/watch2.jpeg) | ![Rest Timer](screenshots/watch3.jpeg) |
+|             Workout List              |                Execution                |              Rest Timer               |
+|:-------------------------------------:|:---------------------------------------:|:-------------------------------------:|
+| ![Watch List](screenshots/watch.jpeg) | ![Set Logging](screenshots/watch2.jpeg) | ![Rest Timer](screenshots/watch3.png) |
 
 ## Download
 

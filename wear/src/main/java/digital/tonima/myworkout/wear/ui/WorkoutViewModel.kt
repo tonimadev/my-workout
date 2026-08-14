@@ -2,18 +2,29 @@ package digital.tonima.myworkout.wear.ui
 
 import android.content.Context
 import android.content.Intent
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.myworkout.BuildConfig
-import digital.tonima.myworkout.data.model.*
+import digital.tonima.myworkout.data.model.ExerciseEntity
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.wear.WorkoutService
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
@@ -57,14 +68,14 @@ class WorkoutViewModel
                                         SetEntity(
                                             targetWeight = 60.0,
                                             targetReps = 10,
-                                            restInterval = 10,
+                                            restInterval = 20,
                                             order = 0,
                                             exerciseId = 0,
                                         ),
                                         SetEntity(
                                             targetWeight = 60.0,
                                             targetReps = 10,
-                                            restInterval = 10,
+                                            restInterval = 20,
                                             order = 1,
                                             exerciseId = 0,
                                         ),
@@ -83,14 +94,14 @@ class WorkoutViewModel
                                         SetEntity(
                                             targetWeight = 80.0,
                                             targetReps = 8,
-                                            restInterval = 10,
+                                            restInterval = 20,
                                             order = 0,
                                             exerciseId = 0,
                                         ),
                                         SetEntity(
                                             targetWeight = 80.0,
                                             targetReps = 8,
-                                            restInterval = 10,
+                                            restInterval = 20,
                                             order = 1,
                                             exerciseId = 0,
                                         ),
@@ -130,17 +141,23 @@ class WorkoutViewModel
         }
 
         fun startSession(workoutId: Long) {
+            if (_activeSession.value?.session?.workoutId == workoutId) return
+
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
-                val session = repository.getSessionById(sessionId).filterNotNull().first()
-                _activeSession.value = session
+                repository.getSessionById(sessionId).collect { session ->
+                    _activeSession.value = session
 
-                val workout = currentWorkout.filterNotNull().first()
-                val intent =
-                    Intent(context, WorkoutService::class.java).apply {
-                        putExtra("workout_name", workout.workout.name)
+                    val workout = _currentWorkout.value
+                    if (session != null && workout != null) {
+                        val intent =
+                            Intent(context, WorkoutService::class.java).apply {
+                                putExtra("workout_name", workout.workout.name)
+                                putExtra("workout_id", workout.workout.id)
+                            }
+                        context.startForegroundService(intent)
                     }
-                context.startForegroundService(intent)
+                }
             }
         }
 
@@ -168,6 +185,14 @@ class WorkoutViewModel
                     )
                 repository.addLog(log)
                 if (restInterval > 0) {
+                    val endTime = SystemClock.elapsedRealtime() + (restInterval * 1000L)
+                    val intent =
+                        Intent(context, WorkoutService::class.java).apply {
+                            action = WorkoutService.ACTION_UPDATE_TIMER
+                            putExtra("rest_end_time", endTime)
+                        }
+                    context.startService(intent)
+
                     startRestTimer(restInterval)
                 }
             }
@@ -185,6 +210,14 @@ class WorkoutViewModel
                 // Wait for the last second of animation to complete on screen
                 delay(1100.milliseconds)
                 _isResting.value = false
+
+                val resetIntent =
+                    Intent(context, WorkoutService::class.java).apply {
+                        action = WorkoutService.ACTION_UPDATE_TIMER
+                        putExtra("rest_end_time", 0L)
+                    }
+                context.startService(resetIntent)
+
                 alertManager.triggerCompletionAlert()
             }
         }

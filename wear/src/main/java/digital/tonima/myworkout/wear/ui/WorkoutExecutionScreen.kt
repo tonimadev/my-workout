@@ -4,12 +4,27 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -20,7 +35,17 @@ import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberTransformingLazyColumnState
 import androidx.wear.compose.foundation.pager.HorizontalPager
 import androidx.wear.compose.foundation.pager.rememberPagerState
-import androidx.wear.compose.material3.*
+import androidx.wear.compose.material3.Button
+import androidx.wear.compose.material3.CircularProgressIndicator
+import androidx.wear.compose.material3.HorizontalPageIndicator
+import androidx.wear.compose.material3.HorizontalPagerScaffold
+import androidx.wear.compose.material3.Icon
+import androidx.wear.compose.material3.IconButton
+import androidx.wear.compose.material3.MaterialTheme
+import androidx.wear.compose.material3.ProgressIndicatorDefaults
+import androidx.wear.compose.material3.ScreenScaffold
+import androidx.wear.compose.material3.Stepper
+import androidx.wear.compose.material3.Text
 import digital.tonima.myworkout.R
 import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
@@ -37,6 +62,19 @@ fun WorkoutExecutionScreen(
     onFinishSession: () -> Unit,
 ) {
     val pagerState = rememberPagerState(pageCount = { workout.exercises.size })
+
+    val currentExerciseIndex = pagerState.currentPage
+    val currentExercise = workout.exercises.getOrNull(currentExerciseIndex)
+
+    LaunchedEffect(isResting, currentExerciseIndex, activeSession?.logs) {
+        if (!isResting && currentExercise != null) {
+            val exerciseSetIds = currentExercise.sets.map { it.id }.toSet()
+            val logsCount = activeSession?.logs?.count { it.setId in exerciseSetIds } ?: 0
+            if (logsCount >= currentExercise.sets.size && currentExerciseIndex < workout.exercises.size - 1) {
+                pagerState.animateScrollToPage(currentExerciseIndex + 1)
+            }
+        }
+    }
 
     HorizontalPagerScaffold(
         pagerState = pagerState,

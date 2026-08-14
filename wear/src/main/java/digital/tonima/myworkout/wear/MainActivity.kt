@@ -1,14 +1,28 @@
 package digital.tonima.myworkout.wear
 
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import androidx.wear.ambient.AmbientLifecycleObserver
+import androidx.wear.ambient.AmbientLifecycleObserver.AmbientDetails
+import androidx.wear.ambient.AmbientLifecycleObserver.AmbientLifecycleCallback
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.navigation3.SwipeDismissableSceneStrategy
@@ -23,8 +37,8 @@ import digital.tonima.myworkout.wear.ui.navigation.Screen.WorkoutList
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val ambientCallback =
-        object : AmbientLifecycleObserver.AmbientLifecycleCallback {
-            override fun onEnterAmbient(ambientDetails: AmbientLifecycleObserver.AmbientDetails) {
+        object : AmbientLifecycleCallback {
+            override fun onEnterAmbient(ambientDetails: AmbientDetails) {
                 isAmbientMode = true
             }
 
@@ -35,22 +49,65 @@ class MainActivity : ComponentActivity() {
 
     private val ambientObserver = AmbientLifecycleObserver(this, ambientCallback)
     private var isAmbientMode by mutableStateOf(false)
+    private var workoutIdFromIntent by mutableLongStateOf(-1L)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        workoutIdFromIntent = intent.getLongExtra("workout_id", -1L)
+
         lifecycle.addObserver(ambientObserver)
         setContent {
-            WearApp(isAmbientMode)
+            WearApp(isAmbientMode, workoutIdFromIntent)
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        val id = intent.getLongExtra("workout_id", -1L)
+        if (id != -1L) {
+            workoutIdFromIntent = id
         }
     }
 }
 
 @Composable
-fun WearApp(isAmbientMode: Boolean) {
+fun WearApp(
+    isAmbientMode: Boolean,
+    initialWorkoutId: Long,
+) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher =
+            rememberLauncherForActivityResult(
+                ActivityResultContracts.RequestPermission(),
+            ) { _ -> }
+
+        LaunchedEffect(Unit) {
+            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
+
     MaterialTheme {
         AppScaffold {
-            val backStack = remember { mutableStateListOf<Screen>(WorkoutList) }
+            val backStack =
+                remember {
+                    val list = mutableStateListOf<Screen>(WorkoutList)
+                    if (initialWorkoutId != -1L) {
+                        list.add(WorkoutExecution(initialWorkoutId))
+                    }
+                    list
+                }
+
+            LaunchedEffect(initialWorkoutId) {
+                if (initialWorkoutId != -1L &&
+                    backStack.none {
+                        it is WorkoutExecution && it.workoutId == initialWorkoutId
+                    }
+                ) {
+                    backStack.add(WorkoutExecution(initialWorkoutId))
+                }
+            }
 
             NavDisplay(
                 backStack = backStack,
