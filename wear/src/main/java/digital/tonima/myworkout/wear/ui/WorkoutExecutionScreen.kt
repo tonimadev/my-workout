@@ -216,9 +216,8 @@ fun RestTimerOverlay(
         CircularProgressIndicator(
             progress = { animatedProgress },
             modifier = Modifier.fillMaxSize(),
-            startAngle = 270f,
-            endAngle = 270f,
             strokeWidth = 6.dp,
+            gapSize = 0.dp,
             colors =
                 ProgressIndicatorDefaults.colors(
                     trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
