@@ -26,7 +26,7 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 ### Wear OS
 | Workout List | Execution | Rest Timer |
 | :---: | :---: | :---: |
-| ![Watch List Placeholder](https://via.placeholder.com/200x200?text=Watch+List) | ![Execution Placeholder](https://via.placeholder.com/200x200?text=Set+Logging) | ![Timer Placeholder](https://via.placeholder.com/200x200?text=Rest+Timer) |
+| ![Watch List](screenshots/watch.jpeg) | ![Set Logging](screenshots/watch2.jpeg) | ![Rest Timer](screenshots/watch3.jpeg) |
 
 ## Download
 
