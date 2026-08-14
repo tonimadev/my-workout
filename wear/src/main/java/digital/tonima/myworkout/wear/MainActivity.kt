@@ -57,6 +57,7 @@ fun WearApp() {
                             val workout by viewModel.currentWorkout.collectAsState()
                             val activeSession by viewModel.activeSession.collectAsState()
                             val restTime by viewModel.restTimeRemaining.collectAsState()
+                            val totalRestTime by viewModel.totalRestTime.collectAsState()
 
                             LaunchedEffect(key.workoutId) {
                                 viewModel.loadWorkout(key.workoutId)
@@ -68,6 +69,7 @@ fun WearApp() {
                                     workout = it,
                                     activeSession = activeSession,
                                     restTimeRemaining = restTime,
+                                    totalRestTime = totalRestTime,
                                     onCompleteSet = { exerciseId, setId, weight, reps, rest ->
                                         viewModel.completeSet(exerciseId, setId, weight, reps, rest)
                                     },

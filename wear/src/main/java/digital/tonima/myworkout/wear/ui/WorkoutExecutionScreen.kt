@@ -1,5 +1,8 @@
 package digital.tonima.myworkout.wear.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -25,6 +28,7 @@ fun WorkoutExecutionScreen(
     workout: WorkoutWithExercises,
     activeSession: SessionWithLogs?,
     restTimeRemaining: Long,
+    totalRestTime: Long,
     onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
     onFinishSession: () -> Unit,
 ) {
@@ -53,7 +57,7 @@ fun WorkoutExecutionScreen(
 
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     if (restTimeRemaining > 0) {
-                        RestTimerOverlay(restTimeRemaining)
+                        RestTimerOverlay(restTimeRemaining, totalRestTime)
                     } else {
                         ExerciseDetails(
                             exerciseName = exercise.name,
@@ -194,20 +198,47 @@ fun ExerciseDetails(
 }
 
 @Composable
-fun RestTimerOverlay(remaining: Long) {
-    Column(
+fun RestTimerOverlay(
+    remaining: Long,
+    total: Long,
+) {
+    val progressTarget = if (total > 0) remaining.toFloat() / total.toFloat() else 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = progressTarget,
+        animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
+        label = "RestTimerProgress",
+    )
+
+    Box(
         modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally,
+        contentAlignment = Alignment.Center,
     ) {
-        Text(stringResource(R.string.rest_interval_label), style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = stringResource(R.string.timer_seconds, remaining),
-            style = MaterialTheme.typography.displayMedium,
-            color = MaterialTheme.colorScheme.primary,
+        CircularProgressIndicator(
+            progress = { animatedProgress },
+            modifier = Modifier.fillMaxSize(),
+            startAngle = 270f,
+            endAngle = 270f,
+            strokeWidth = 6.dp,
+            colors =
+                ProgressIndicatorDefaults.colors(
+                    trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                ),
         )
-        Spacer(modifier = Modifier.height(8.dp))
-        CircularProgressIndicator()
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = stringResource(R.string.rest_interval_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.timer_seconds, remaining),
+                style = MaterialTheme.typography.displayMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
