@@ -58,6 +58,8 @@ fun WorkoutExecutionScreen(
                 val logs = activeSession?.logs?.filter { it.setId in exerciseSetIds } ?: emptyList()
                 val currentSetIndex = logs.size
                 val totalSets = sets.size
+                val isLastExercise = pageIndex == workout.exercises.size - 1
+                val isLastSet = currentSetIndex == totalSets - 1
 
                 if (currentSetIndex < totalSets) {
                     val currentSet = sets[currentSetIndex]
@@ -73,12 +75,13 @@ fun WorkoutExecutionScreen(
                         onRepsChange = { newReps -> reps = newReps },
                         onCompleteSet = {
                             if (activeSession != null) {
+                                val rest = if (isLastExercise && isLastSet) 0 else currentSet.restInterval
                                 onCompleteSet(
                                     exercise.id,
                                     currentSet.id,
                                     weight,
                                     reps,
-                                    currentSet.restInterval,
+                                    rest,
                                 )
                             }
                         },
@@ -218,12 +221,15 @@ fun RestTimerOverlay(
     remaining: Long,
     total: Long,
 ) {
-    val progressTarget = if (total > 0) remaining.toFloat() / total.toFloat() else 0f
+    val progressTarget = if (total > 0) (total - remaining).toFloat() / total.toFloat() else 0f
     val animatedProgress by animateFloatAsState(
         targetValue = progressTarget,
         animationSpec = tween(durationMillis = 1000, easing = LinearEasing),
         label = "RestTimerProgress",
     )
+
+    val isLowTime = total > 0 && remaining <= (total * 0.1f)
+    val indicatorColor = if (isLowTime) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -233,11 +239,12 @@ fun RestTimerOverlay(
             progress = { animatedProgress },
             modifier = Modifier.fillMaxSize(),
             startAngle = 270f,
-            endAngle = 270f,
+            endAngle = -90f,
             strokeWidth = 6.dp,
             gapSize = 0.dp,
             colors =
                 ProgressIndicatorDefaults.colors(
+                    indicatorColor = indicatorColor,
                     trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
                 ),
         )
@@ -254,7 +261,7 @@ fun RestTimerOverlay(
             Text(
                 text = stringResource(R.string.timer_seconds, remaining),
                 style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = indicatorColor,
             )
         }
     }

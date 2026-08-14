@@ -1,8 +1,9 @@
 package digital.tonima.myworkout.ui.workout
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
@@ -28,6 +29,7 @@ fun WorkoutTrackingScreen(
     workout: WorkoutWithExercises?,
     activeSession: SessionWithLogs?,
     restTimeLeft: Int,
+    totalRestTime: Int,
     onLogSet: (Long, Long, Long, Double, Int, Int) -> Unit,
     onFinish: () -> Unit,
     onCancel: () -> Unit,
@@ -64,10 +66,28 @@ fun WorkoutTrackingScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     if (restTimeLeft > 0) {
+                        val progressTarget =
+                            if (totalRestTime > 0) {
+                                (totalRestTime - restTimeLeft).toFloat() / totalRestTime.toFloat()
+                            } else {
+                                0f
+                            }
+                        val animatedProgress by animateFloatAsState(
+                            targetValue = progressTarget,
+                            label = "RestTimerProgress",
+                        )
+                        val isLowTime = totalRestTime > 0 && restTimeLeft <= (totalRestTime * 0.1f)
+                        val indicatorColor =
+                            if (isLowTime) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.primary
+                            }
+
                         LinearProgressIndicator(
-                            progress = { 1f }, // Logic for progress can be added if max rest is known
+                            progress = { animatedProgress },
                             modifier = Modifier.fillMaxWidth().height(8.dp),
-                            color = MaterialTheme.colorScheme.primary,
+                            color = indicatorColor,
                         )
                         Spacer(Modifier.height(8.dp))
                         Text(
@@ -78,7 +98,7 @@ fun WorkoutTrackingScreen(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = indicatorColor,
                         )
                         Spacer(Modifier.height(16.dp))
                     }
@@ -108,7 +128,8 @@ fun WorkoutTrackingScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                items(workout.exercises) { exercise ->
+                itemsIndexed(workout.exercises) { exerciseIndex, exercise ->
+                    val isLastExercise = exerciseIndex == workout.exercises.size - 1
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors =
@@ -132,24 +153,26 @@ fun WorkoutTrackingScreen(
                                 )
                             }
                             Spacer(Modifier.height(12.dp))
-                            exercise.sets.forEach { set ->
+                            exercise.sets.forEachIndexed { setIndex, set ->
                                 val log = activeSession.logs.find { it.setId == set.id }
                                 val isLogged = log != null
+                                val isLastSet = setIndex == exercise.sets.size - 1
                                 SetRow(
-                                    setNum = exercise.sets.indexOf(set) + 1,
+                                    setNum = setIndex + 1,
                                     targetWeight = set.targetWeight,
                                     targetReps = set.targetReps,
                                     isLogged = isLogged,
                                     actualWeight = log?.actualWeight,
                                     actualReps = log?.actualReps,
                                     onLog = { weight, reps ->
+                                        val rest = if (isLastExercise && isLastSet) 0 else set.restInterval
                                         onLogSet(
                                             activeSession.session.id,
                                             exercise.exercise.id,
                                             set.id,
                                             weight,
                                             reps,
-                                            set.restInterval,
+                                            rest,
                                         )
                                     },
                                 )

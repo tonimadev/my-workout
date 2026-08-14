@@ -128,6 +128,7 @@ fun MainAppContent() {
                 val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
                 val activeSession by viewModel.activeSession.collectAsState()
                 val restTimeLeft by viewModel.restTimeRemaining.collectAsState()
+                val totalRestTime by viewModel.totalRestTime.collectAsState()
 
                 // Start workout if not already started
                 LaunchedEffect(key.workoutId) {
@@ -138,6 +139,7 @@ fun MainAppContent() {
                     workout = workout,
                     activeSession = activeSession,
                     restTimeLeft = restTimeLeft,
+                    totalRestTime = totalRestTime,
                     onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
                         viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
                     },

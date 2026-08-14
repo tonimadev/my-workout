@@ -54,6 +54,9 @@ class WorkoutViewModel
         private val _restTimeRemaining = MutableStateFlow(0)
         val restTimeRemaining: StateFlow<Int> = _restTimeRemaining.asStateFlow()
 
+        private val _totalRestTime = MutableStateFlow(0)
+        val totalRestTime: StateFlow<Int> = _totalRestTime.asStateFlow()
+
         fun startWorkout(workoutId: Long) {
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
@@ -91,12 +94,15 @@ class WorkoutViewModel
                         timestamp = System.currentTimeMillis(),
                     ),
                 )
-                startRestTimer(restInterval)
+                if (restInterval > 0) {
+                    startRestTimer(restInterval)
+                }
             }
         }
 
         private fun startRestTimer(seconds: Int) {
             viewModelScope.launch {
+                _totalRestTime.value = seconds
                 _restTimeRemaining.value = seconds
                 while (_restTimeRemaining.value > 0) {
                     delay(1000)

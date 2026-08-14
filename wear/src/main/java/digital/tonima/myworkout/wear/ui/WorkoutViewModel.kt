@@ -52,14 +52,14 @@ class WorkoutViewModel
                                         SetEntity(
                                             targetWeight = 60.0,
                                             targetReps = 10,
-                                            restInterval = 60,
+                                            restInterval = 10,
                                             order = 0,
                                             exerciseId = 0,
                                         ),
                                         SetEntity(
                                             targetWeight = 60.0,
                                             targetReps = 10,
-                                            restInterval = 60,
+                                            restInterval = 10,
                                             order = 1,
                                             exerciseId = 0,
                                         ),
@@ -78,14 +78,14 @@ class WorkoutViewModel
                                         SetEntity(
                                             targetWeight = 80.0,
                                             targetReps = 8,
-                                            restInterval = 90,
+                                            restInterval = 10,
                                             order = 0,
                                             exerciseId = 0,
                                         ),
                                         SetEntity(
                                             targetWeight = 80.0,
                                             targetReps = 8,
-                                            restInterval = 90,
+                                            restInterval = 10,
                                             order = 1,
                                             exerciseId = 0,
                                         ),
@@ -156,7 +156,9 @@ class WorkoutViewModel
                         timestamp = System.currentTimeMillis(),
                     )
                 repository.addLog(log)
-                startRestTimer(restInterval)
+                if (restInterval > 0) {
+                    startRestTimer(restInterval)
+                }
             }
         }
 
