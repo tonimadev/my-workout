@@ -20,14 +20,21 @@ class WearableSyncService : WearableListenerService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
-        if (messageEvent.path == "/workout/log") {
-            val logJson = String(messageEvent.data)
-            scope.launch {
-                try {
-                    val log = Json.decodeFromString<WorkoutLogEntity>(logJson)
-                    repository.addLog(log)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+        when (messageEvent.path) {
+            "/workout/log" -> {
+                val logJson = String(messageEvent.data)
+                scope.launch {
+                    try {
+                        val log = Json.decodeFromString<WorkoutLogEntity>(logJson)
+                        repository.addLog(log)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+            "/workout/request_sync" -> {
+                scope.launch {
+                    repository.forceSync()
                 }
             }
         }

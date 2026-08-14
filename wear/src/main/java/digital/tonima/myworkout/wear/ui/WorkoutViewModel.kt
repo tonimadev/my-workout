@@ -17,6 +17,12 @@ class WorkoutViewModel
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
     ) : ViewModel() {
+        init {
+            viewModelScope.launch {
+                repository.requestSync()
+            }
+        }
+
         val workouts =
             repository.getAllWorkouts()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())

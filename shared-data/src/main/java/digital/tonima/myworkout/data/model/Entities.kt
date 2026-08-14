@@ -155,3 +155,9 @@ data class SessionWithLogs(
     )
     val logs: List<WorkoutLogEntity>,
 )
+
+@Serializable
+data class SyncData(
+    val workouts: List<WorkoutWithExercises>,
+    val masterExercises: List<MasterExerciseEntity>,
+)

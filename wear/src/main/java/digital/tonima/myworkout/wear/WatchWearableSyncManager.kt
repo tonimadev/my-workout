@@ -3,8 +3,8 @@ package digital.tonima.myworkout.wear
 import android.content.Context
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.encodeToString
@@ -20,7 +20,7 @@ class WatchWearableSyncManager
     ) : WearableSyncManager {
         private val messageClient by lazy { Wearable.getMessageClient(context) }
 
-        override suspend fun syncWorkouts(workouts: List<WorkoutWithExercises>) {
+        override suspend fun syncWorkouts(syncData: SyncData) {
             // Watch doesn't sync definitions to Phone
         }
 

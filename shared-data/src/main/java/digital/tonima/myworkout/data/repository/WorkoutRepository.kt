@@ -5,6 +5,7 @@ import digital.tonima.myworkout.data.local.WorkoutSessionDao
 import digital.tonima.myworkout.data.model.*
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +28,8 @@ interface WorkoutRepository {
         description: String = "",
     ): Long
 
+    suspend fun upsertMasterExercise(masterExercise: MasterExerciseEntity)
+
     fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>>
 
     fun getAllSessions(): Flow<List<SessionWithLogs>>
@@ -38,6 +41,10 @@ interface WorkoutRepository {
     suspend fun finishSession(session: WorkoutSessionEntity)
 
     suspend fun addLog(log: WorkoutLogEntity)
+
+    suspend fun requestSync()
+
+    suspend fun forceSync()
 }
 
 @Singleton
@@ -63,7 +70,8 @@ class WorkoutRepositoryImpl
         private suspend fun syncWorkoutsToWearable() {
             try {
                 val workouts = workoutDao.getAllWorkoutsWithExercisesSync()
-                wearableSyncManager.syncWorkouts(workouts)
+                val masters = workoutDao.getAllMasterExercises().first()
+                wearableSyncManager.syncWorkouts(SyncData(workouts, masters))
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -81,6 +89,10 @@ class WorkoutRepositoryImpl
             description: String,
         ): Long {
             return workoutDao.insertMasterExercise(MasterExerciseEntity(name = name, description = description))
+        }
+
+        override suspend fun upsertMasterExercise(masterExercise: MasterExerciseEntity) {
+            workoutDao.insertMasterExercise(masterExercise)
         }
 
         override fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>> =
@@ -106,5 +118,13 @@ class WorkoutRepositoryImpl
         override suspend fun addLog(log: WorkoutLogEntity) {
             workoutSessionDao.insertLog(log)
             wearableSyncManager.syncLog(log)
+        }
+
+        override suspend fun forceSync() {
+            syncWorkoutsToWearable()
+        }
+
+        override suspend fun requestSync() {
+            wearableSyncManager.sendMessage("/workout/request_sync", byteArrayOf())
         }
     }

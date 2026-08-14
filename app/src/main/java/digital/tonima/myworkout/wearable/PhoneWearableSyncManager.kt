@@ -4,8 +4,8 @@ import android.content.Context
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.tasks.await
 import kotlinx.serialization.encodeToString
@@ -22,9 +22,9 @@ class PhoneWearableSyncManager
         private val messageClient by lazy { Wearable.getMessageClient(context) }
         private val dataClient by lazy { Wearable.getDataClient(context) }
 
-        override suspend fun syncWorkouts(workouts: List<WorkoutWithExercises>) {
+        override suspend fun syncWorkouts(syncData: SyncData) {
             try {
-                val json = Json.encodeToString(workouts)
+                val json = Json.encodeToString(syncData)
                 val putDataMapReq =
                     PutDataMapRequest.create("/workout/definitions").apply {
                         dataMap.putString("workouts_json", json)

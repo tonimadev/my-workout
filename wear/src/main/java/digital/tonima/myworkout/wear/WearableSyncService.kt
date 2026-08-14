@@ -6,7 +6,7 @@ import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,8 +44,12 @@ class WearableSyncService : WearableListenerService() {
     private fun processWorkoutsJson(json: String) {
         scope.launch {
             try {
-                val workouts = Json.decodeFromString<List<WorkoutWithExercises>>(json)
-                workouts.forEach { workoutWithExercises ->
+                val syncData = Json.decodeFromString<SyncData>(json)
+                // Save master exercises first to satisfy foreign keys
+                syncData.masterExercises.forEach { master ->
+                    repository.upsertMasterExercise(master)
+                }
+                syncData.workouts.forEach { workoutWithExercises ->
                     repository.addWorkout(
                         workoutWithExercises.workout,
                         workoutWithExercises.exercises,
