@@ -18,6 +18,7 @@ import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.wear.WorkoutService
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
@@ -156,6 +157,8 @@ class WorkoutViewModel
         private val _isResting = MutableStateFlow(false)
         val isResting: StateFlow<Boolean> = _isResting.asStateFlow()
 
+        private var restJob: Job? = null
+
         fun loadWorkout(workoutId: Long) {
             viewModelScope.launch {
                 repository.getWorkoutById(workoutId).collect { workout ->
@@ -223,27 +226,42 @@ class WorkoutViewModel
         }
 
         private fun startRestTimer(seconds: Int) {
-            viewModelScope.launch {
-                _totalRestTime.value = seconds.toLong()
-                _restTimeRemaining.value = seconds.toLong()
-                _isResting.value = true
-                while (_restTimeRemaining.value > 0) {
-                    delay(1000.milliseconds)
-                    _restTimeRemaining.value -= 1
-                }
-                // Wait for the last second of animation to complete on screen
-                delay(1100.milliseconds)
-                _isResting.value = false
-
-                val resetIntent =
-                    Intent(context, WorkoutService::class.java).apply {
-                        action = WorkoutService.ACTION_UPDATE_TIMER
-                        putExtra("rest_end_time", 0L)
+            restJob?.cancel()
+            restJob =
+                viewModelScope.launch {
+                    _totalRestTime.value = seconds.toLong()
+                    _restTimeRemaining.value = seconds.toLong()
+                    _isResting.value = true
+                    while (_restTimeRemaining.value > 0) {
+                        delay(1000.milliseconds)
+                        _restTimeRemaining.value -= 1
                     }
-                context.startService(resetIntent)
+                    // Wait for the last second of animation to complete on screen
+                    delay(1100.milliseconds)
+                    _isResting.value = false
 
-                alertManager.triggerCompletionAlert()
-            }
+                    val resetIntent =
+                        Intent(context, WorkoutService::class.java).apply {
+                            action = WorkoutService.ACTION_UPDATE_TIMER
+                            putExtra("rest_end_time", 0L)
+                        }
+                    context.startService(resetIntent)
+
+                    alertManager.triggerCompletionAlert()
+                }
+        }
+
+        fun skipRest() {
+            restJob?.cancel()
+            _restTimeRemaining.value = 0
+            _isResting.value = false
+
+            val resetIntent =
+                Intent(context, WorkoutService::class.java).apply {
+                    action = WorkoutService.ACTION_UPDATE_TIMER
+                    putExtra("rest_end_time", 0L)
+                }
+            context.startService(resetIntent)
         }
 
         fun finishSession() {

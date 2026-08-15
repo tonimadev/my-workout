@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.myworkout.data.model.*
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -57,6 +58,8 @@ class WorkoutViewModel
         private val _totalRestTime = MutableStateFlow(0)
         val totalRestTime: StateFlow<Int> = _totalRestTime.asStateFlow()
 
+        private var restJob: Job? = null
+
         fun startWorkout(workoutId: Long) {
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
@@ -101,15 +104,23 @@ class WorkoutViewModel
         }
 
         private fun startRestTimer(seconds: Int) {
-            viewModelScope.launch {
-                _totalRestTime.value = seconds
-                _restTimeRemaining.value = seconds
-                while (_restTimeRemaining.value > 0) {
-                    delay(1000)
-                    _restTimeRemaining.value -= 1
+            restJob?.cancel()
+            restJob =
+                viewModelScope.launch {
+                    _totalRestTime.value = seconds
+                    _restTimeRemaining.value = seconds
+                    while (_restTimeRemaining.value > 0) {
+                        delay(1000)
+                        _restTimeRemaining.value -= 1
+                    }
+                    alertManager.triggerCompletionAlert()
                 }
-                alertManager.triggerCompletionAlert()
-            }
+        }
+
+        fun skipRest() {
+            restJob?.cancel()
+            _restTimeRemaining.value = 0
+            _totalRestTime.value = 0
         }
 
         fun finishWorkout() {

@@ -149,6 +149,7 @@ fun WearApp(
                                     onCompleteSet = { exerciseId, setId, weight, reps, rest ->
                                         viewModel.completeSet(exerciseId, setId, weight, reps, rest)
                                     },
+                                    onSkipRest = { viewModel.skipRest() },
                                     onFinishSession = {
                                         viewModel.finishSession()
                                         if (backStack.size > 1) backStack.removeAt(backStack.lastIndex)

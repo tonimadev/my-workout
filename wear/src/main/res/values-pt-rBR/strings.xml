@@ -5,7 +5,9 @@
     <string name="reps_count">%1$d reps</string>
     <string name="weight_unit">%1$s kg</string>
     <string name="action_complete">Concluir</string>
+    <string name="action_skip">Pular</string>
     <string name="rest_interval_label">Intervalo de Descanso</string>
+    <string name="next_set_label">Próximo: %1$s</string>
     <string name="workout_list_title">Meus Treinos</string>
     <string name="set_info">Série %1$d de %2$d</string>
     <string name="exercise_finished">%1$s Finalizado!</string>

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -28,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,6 +61,7 @@ fun WorkoutExecutionScreen(
     isResting: Boolean,
     isAmbientMode: Boolean,
     onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
+    onSkipRest: () -> Unit,
     onFinishSession: () -> Unit,
 ) {
     val pagerState = rememberPagerState(pageCount = { workout.exercises.size })
@@ -130,6 +133,7 @@ fun WorkoutExecutionScreen(
                                 )
                             }
                         },
+                        onFinishSession = onFinishSession,
                     )
                 } else {
                     // Exercise finished
@@ -156,14 +160,40 @@ fun WorkoutExecutionScreen(
             }
 
             if (isResting) {
+                val nextSetInfo =
+                    remember(workout, activeSession) {
+                        if (activeSession != null) {
+                            var foundNext = ""
+                            for (ex in workout.exercises) {
+                                val loggedSetIds = activeSession.logs.map { it.setId }
+                                val nextSet = ex.sets.find { it.id !in loggedSetIds }
+                                if (nextSet != null) {
+                                    val setIndex = ex.sets.indexOf(nextSet) + 1
+                                    foundNext = "${ex.exercise.name} ($setIndex/${ex.sets.size})"
+                                    break
+                                }
+                            }
+                            foundNext
+                        } else {
+                            ""
+                        }
+                    }
+
                 Box(
                     modifier =
                         Modifier
                             .fillMaxSize()
-                            .background(if (isAmbientMode) Color.Black else MaterialTheme.colorScheme.background),
+                            .background(if (isAmbientMode) Color.Black else MaterialTheme.colorScheme.background)
+                            .pointerInput(Unit) {},
                     contentAlignment = Alignment.Center,
                 ) {
-                    RestTimerOverlay(restTimeRemaining, totalRestTime, isAmbientMode)
+                    RestTimerOverlay(
+                        remaining = restTimeRemaining,
+                        total = totalRestTime,
+                        nextSetInfo = nextSetInfo,
+                        isAmbientMode = isAmbientMode,
+                        onSkip = onSkipRest,
+                    )
                 }
             }
         }
@@ -180,6 +210,7 @@ fun ExerciseDetails(
     onWeightChange: (Float) -> Unit,
     onRepsChange: (Int) -> Unit,
     onCompleteSet: () -> Unit,
+    onFinishSession: () -> Unit,
 ) {
     val columnState = rememberTransformingLazyColumnState()
     ScreenScaffold(scrollState = columnState) {
@@ -283,6 +314,22 @@ fun ExerciseDetails(
                     }
                 }
             }
+
+            item {
+                if (!isAmbientMode) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.wear.compose.material3.TextButton(
+                        onClick = onFinishSession,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.finish_workout),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -291,7 +338,9 @@ fun ExerciseDetails(
 fun RestTimerOverlay(
     remaining: Long,
     total: Long,
+    nextSetInfo: String,
     isAmbientMode: Boolean,
+    onSkip: () -> Unit,
 ) {
     val progressTarget = if (total > 0) (total - remaining).toFloat() / total.toFloat() else 0f
     val animatedProgress by animateFloatAsState(
@@ -336,12 +385,31 @@ fun RestTimerOverlay(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            if (nextSetInfo.isNotEmpty()) {
+                Text(
+                    text = stringResource(R.string.next_set_label, nextSetInfo),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = stringResource(R.string.timer_seconds, remaining),
                 style = MaterialTheme.typography.displayMedium,
                 color = if (isAmbientMode) Color.White else indicatorColor,
             )
+            if (!isAmbientMode) {
+                Spacer(modifier = Modifier.height(4.dp))
+                androidx.wear.compose.material3.TextButton(onClick = onSkip) {
+                    Text(
+                        text = stringResource(R.string.action_skip),
+                        style = MaterialTheme.typography.labelSmall,
+                    )
+                }
+            }
         }
     }
 }

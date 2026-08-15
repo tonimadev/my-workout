@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +32,7 @@ fun WorkoutTrackingScreen(
     restTimeLeft: Int,
     totalRestTime: Int,
     onLogSet: (Long, Long, Long, Double, Int, Int) -> Unit,
+    onSkipRest: () -> Unit,
     onFinish: () -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
@@ -65,43 +67,6 @@ fun WorkoutTrackingScreen(
                 shadowElevation = 8.dp,
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    if (restTimeLeft > 0) {
-                        val progressTarget =
-                            if (totalRestTime > 0) {
-                                (totalRestTime - restTimeLeft).toFloat() / totalRestTime.toFloat()
-                            } else {
-                                0f
-                            }
-                        val animatedProgress by animateFloatAsState(
-                            targetValue = progressTarget,
-                            label = "RestTimerProgress",
-                        )
-                        val isLowTime = totalRestTime > 0 && restTimeLeft <= (totalRestTime * 0.1f)
-                        val indicatorColor =
-                            if (isLowTime) {
-                                MaterialTheme.colorScheme.error
-                            } else {
-                                MaterialTheme.colorScheme.primary
-                            }
-
-                        LinearProgressIndicator(
-                            progress = { animatedProgress },
-                            modifier = Modifier.fillMaxWidth().height(8.dp),
-                            color = indicatorColor,
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text =
-                                stringResource(
-                                    R.string.rest_interval_label,
-                                ) + ": " + stringResource(R.string.timer_seconds, restTimeLeft),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = indicatorColor,
-                        )
-                        Spacer(Modifier.height(16.dp))
-                    }
                     Button(
                         onClick = onFinish,
                         modifier = Modifier.fillMaxWidth().height(56.dp),
@@ -118,65 +83,148 @@ fun WorkoutTrackingScreen(
         },
         modifier = modifier,
     ) { padding ->
-        if (workout == null || activeSession == null) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator()
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (workout == null || activeSession == null) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    itemsIndexed(workout.exercises) { exerciseIndex, exercise ->
+                        val isLastExercise = exerciseIndex == workout.exercises.size - 1
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors =
+                                CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                ),
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        Icons.Default.FitnessCenter,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                    )
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = exercise.exercise.name.uppercase(),
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.ExtraBold,
+                                        letterSpacing = 1.sp,
+                                    )
+                                }
+                                Spacer(Modifier.height(12.dp))
+                                exercise.sets.forEachIndexed { setIndex, set ->
+                                    val log = activeSession.logs.find { it.setId == set.id }
+                                    val isLogged = log != null
+                                    val isLastSet = setIndex == exercise.sets.size - 1
+                                    SetRow(
+                                        setNum = setIndex + 1,
+                                        targetWeight = set.targetWeight,
+                                        targetReps = set.targetReps,
+                                        isLogged = isLogged,
+                                        actualWeight = log?.actualWeight,
+                                        actualReps = log?.actualReps,
+                                        onLog = { weight, reps ->
+                                            val rest = if (isLastExercise && isLastSet) 0 else set.restInterval
+                                            onLogSet(
+                                                activeSession.session.id,
+                                                exercise.exercise.id,
+                                                set.id,
+                                                weight,
+                                                reps,
+                                                rest,
+                                            )
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                itemsIndexed(workout.exercises) { exerciseIndex, exercise ->
-                    val isLastExercise = exerciseIndex == workout.exercises.size - 1
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors =
-                            CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            ),
+
+            if (restTimeLeft > 0) {
+                val nextSetInfo =
+                    remember(workout, activeSession) {
+                        if (workout != null && activeSession != null) {
+                            var foundNext = ""
+                            for (ex in workout.exercises) {
+                                val loggedSetIds = activeSession.logs.map { it.setId }
+                                val nextSet = ex.sets.find { it.id !in loggedSetIds }
+                                if (nextSet != null) {
+                                    val setIndex = ex.sets.indexOf(nextSet) + 1
+                                    foundNext = "${ex.exercise.name} - $setIndex/${ex.sets.size}"
+                                    break
+                                }
+                            }
+                            foundNext
+                        } else {
+                            ""
+                        }
+                    }
+
+                Surface(
+                    modifier = Modifier.fillMaxSize().pointerInput(Unit) {},
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxSize().padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.FitnessCenter,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                )
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = exercise.exercise.name.uppercase(),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    fontWeight = FontWeight.ExtraBold,
-                                    letterSpacing = 1.sp,
-                                )
-                            }
-                            Spacer(Modifier.height(12.dp))
-                            exercise.sets.forEachIndexed { setIndex, set ->
-                                val log = activeSession.logs.find { it.setId == set.id }
-                                val isLogged = log != null
-                                val isLastSet = setIndex == exercise.sets.size - 1
-                                SetRow(
-                                    setNum = setIndex + 1,
-                                    targetWeight = set.targetWeight,
-                                    targetReps = set.targetReps,
-                                    isLogged = isLogged,
-                                    actualWeight = log?.actualWeight,
-                                    actualReps = log?.actualReps,
-                                    onLog = { weight, reps ->
-                                        val rest = if (isLastExercise && isLastSet) 0 else set.restInterval
-                                        onLogSet(
-                                            activeSession.session.id,
-                                            exercise.exercise.id,
-                                            set.id,
-                                            weight,
-                                            reps,
-                                            rest,
-                                        )
-                                    },
-                                )
-                            }
+                        Text(
+                            text = stringResource(R.string.rest_interval_label),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        if (nextSetInfo.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.next_set_label, nextSetInfo),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                        Spacer(Modifier.height(32.dp))
+                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(200.dp)) {
+                            val progressTarget =
+                                if (totalRestTime > 0) {
+                                    (restTimeLeft).toFloat() / totalRestTime.toFloat()
+                                } else {
+                                    0f
+                                }
+                            val animatedProgress by animateFloatAsState(
+                                targetValue = progressTarget,
+                                label = "RestTimerProgress",
+                            )
+                            CircularProgressIndicator(
+                                progress = { animatedProgress },
+                                modifier = Modifier.fillMaxSize(),
+                                strokeWidth = 12.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                            )
+                            Text(
+                                text = stringResource(R.string.timer_seconds, restTimeLeft),
+                                style = MaterialTheme.typography.displayLarge,
+                                fontWeight = FontWeight.Bold,
+                            )
+                        }
+                        Spacer(Modifier.height(48.dp))
+                        Button(
+                            onClick = onSkipRest,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium,
+                        ) {
+                            Text(
+                                stringResource(R.string.action_skip),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
                         }
                     }
                 }

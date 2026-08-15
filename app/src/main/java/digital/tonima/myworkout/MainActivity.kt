@@ -143,6 +143,7 @@ fun MainAppContent() {
                     onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
                         viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
                     },
+                    onSkipRest = { viewModel.skipRest() },
                     onFinish = {
                         viewModel.finishWorkout()
                         navigator.goBack()
