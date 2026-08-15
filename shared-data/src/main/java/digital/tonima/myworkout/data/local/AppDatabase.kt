@@ -2,7 +2,13 @@ package digital.tonima.myworkout.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
-import digital.tonima.myworkout.data.model.*
+import digital.tonima.myworkout.data.model.AchievementEntity
+import digital.tonima.myworkout.data.model.ExerciseEntity
+import digital.tonima.myworkout.data.model.MasterExerciseEntity
+import digital.tonima.myworkout.data.model.SetEntity
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutSessionEntity
 
 @Database(
     entities = [

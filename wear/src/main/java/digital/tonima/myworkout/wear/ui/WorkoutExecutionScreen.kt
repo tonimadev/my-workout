@@ -35,6 +35,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.TransformingLazyColumn
@@ -178,7 +179,7 @@ fun WorkoutExecutionScreen(
                             .padding(horizontal = 8.dp, vertical = 2.dp),
                 ) {
                     Text(
-                        text = "+$xpGained XP",
+                        text = stringResource(R.string.xp_gained_feedback, xpGained ?: 0),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.primary,
                     )
@@ -265,7 +266,50 @@ fun ExerciseDetails(
 
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // Reps Stepper
+            // Weight Control
+            item {
+                if (isAmbientMode) {
+                    Text(
+                        text = stringResource(R.string.weight_unit, weight.toString()),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.label_weight),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            IconButton(onClick = { onWeightChange(weight - 0.5f) }) {
+                                Icon(Icons.Default.Remove, null)
+                            }
+                            Text(
+                                text = weight.toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            IconButton(onClick = { onWeightChange(weight + 0.5f) }) {
+                                Icon(Icons.Default.Add, null)
+                            }
+                        }
+                    }
+                }
+            }
+
+            item { Spacer(modifier = Modifier.height(12.dp)) }
+
+            // Reps Control
             item {
                 if (isAmbientMode) {
                     Text(
@@ -275,58 +319,30 @@ fun ExerciseDetails(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
-                    Stepper(
-                        value = reps,
-                        onValueChange = onRepsChange,
-                        valueProgression = 1..100,
-                        increaseIcon = {
-                            Icon(
-                                Icons.Default.Add,
-                                stringResource(R.string.content_description_increase),
-                            )
-                        },
-                        decreaseIcon = {
-                            Icon(
-                                Icons.Default.Remove,
-                                stringResource(R.string.content_description_decrease),
-                            )
-                        },
-                    ) {
-                        Text(stringResource(R.string.reps_count, reps))
-                    }
-                }
-            }
-
-            // Weight
-            item {
-                if (isAmbientMode) {
-                    Text(
-                        text = stringResource(R.string.weight_unit, weight.toString()),
-                        style = MaterialTheme.typography.bodyLarge,
-                        textAlign = TextAlign.Center,
+                    Column(
                         modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        IconButton(onClick = { onWeightChange(weight - 2.5f) }) {
-                            Icon(Icons.Default.Remove, stringResource(R.string.content_description_decrease_weight))
-                        }
                         Text(
-                            text = stringResource(R.string.weight_unit, weight.toString()),
-                            style = MaterialTheme.typography.bodyMedium,
+                            text = stringResource(R.string.label_reps_uppercase),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
                         )
-                        IconButton(onClick = { onWeightChange(weight + 2.5f) }) {
-                            Icon(Icons.Default.Add, stringResource(R.string.content_description_increase_weight))
+                        Stepper(
+                            value = reps,
+                            onValueChange = onRepsChange,
+                            valueProgression = 1..100,
+                            increaseIcon = { Icon(Icons.Default.Add, null) },
+                            decreaseIcon = { Icon(Icons.Default.Remove, null) },
+                        ) {
+                            Text(reps.toString(), style = MaterialTheme.typography.titleMedium)
                         }
                     }
                 }
             }
 
-            item { Spacer(modifier = Modifier.height(4.dp)) }
+            item { Spacer(modifier = Modifier.height(16.dp)) }
 
             item {
                 if (!isAmbientMode) {

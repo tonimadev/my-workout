@@ -15,7 +15,10 @@ import digital.tonima.myworkout.data.local.AchievementDao
 import digital.tonima.myworkout.data.local.AppDatabase
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
-import digital.tonima.myworkout.data.repository.*
+import digital.tonima.myworkout.data.repository.GamificationRepository
+import digital.tonima.myworkout.data.repository.GamificationRepositoryImpl
+import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.data.repository.WorkoutRepositoryImpl
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")

@@ -18,4 +18,7 @@
     <string name="content_description_decrease_weight">Decrease Weight</string>
     <string name="content_description_complete">Complete</string>
     <string name="exercises_count">%1$d Exercises</string>
+    <string name="label_weight">WEIGHT (KG)</string>
+    <string name="label_reps_uppercase">REPETITIONS</string>
+    <string name="xp_gained_feedback">+%1$d XP</string>
 </resources>

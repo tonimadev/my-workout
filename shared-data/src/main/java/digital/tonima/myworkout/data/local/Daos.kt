@@ -1,7 +1,22 @@
 package digital.tonima.myworkout.data.local
 
-import androidx.room.*
-import digital.tonima.myworkout.data.model.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Transaction
+import androidx.room.Update
+import digital.tonima.myworkout.data.model.AchievementEntity
+import digital.tonima.myworkout.data.model.ExerciseEntity
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.MasterExerciseEntity
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutSessionEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import kotlinx.coroutines.flow.Flow
 
 @Dao

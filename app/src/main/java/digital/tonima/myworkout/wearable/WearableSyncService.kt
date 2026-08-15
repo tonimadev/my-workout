@@ -1,5 +1,6 @@
 package digital.tonima.myworkout.wearable
 
+import android.util.Log
 import com.google.android.gms.wearable.MessageEvent
 import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,7 +30,7 @@ class WearableSyncService : WearableListenerService() {
                         val log = Json.decodeFromString<WorkoutLogEntity>(logJson)
                         repository.addLog(log)
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e("WearableSyncService", "Error adding log", e)
                     }
                 }
             }
@@ -41,7 +42,7 @@ class WearableSyncService : WearableListenerService() {
                             repository.finishSession(it.session)
                         }
                     } catch (e: Exception) {
-                        e.printStackTrace()
+                        Log.e("WearableSyncService", "Error finishing session", e)
                     }
                 }
             }

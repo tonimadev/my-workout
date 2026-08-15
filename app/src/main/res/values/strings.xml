@@ -52,4 +52,24 @@
     <string name="onboarding_stats_desc">Visualize your weight evolution for each exercise over time.</string>
     <string name="onboarding_wear_title">Train with Your Watch</string>
     <string name="onboarding_wear_desc">Sync your workouts to your Wear OS watch and log your sets directly from your wrist.</string>
+    <string name="dashboard_pro_title">PRO DASHBOARD</string>
+    <string name="technical_evolution_label">TECHNICAL EVOLUTION</string>
+    <string name="view_load_history">View load history</string>
+    <string name="level_label">LEVEL %1$d</string>
+    <string name="accumulated_xp_label">%1$d ACCUMULATED XP</string>
+    <string name="next_level_xp_label">NEXT LEVEL: %1$dXP</string>
+    <string name="recent_achievements_label">RECENT ACHIEVEMENTS</string>
+    <string name="weekly_volume_label">WEEKLY VOLUME</string>
+    <string name="insufficient_data_chart">Insufficient data to generate the chart.</string>
+    <string name="default_exercise_name">EXERCISE</string>
+    <string name="no_data_exercise">No data recorded for this exercise.</string>
+    <string name="load_history_label">LOAD HISTORY</string>
+    <string name="kg_x_reps">%1$.1f KG X %2$d</string>
+    <string name="workout_list_subtitle">Exceed your limits today</string>
+    <string name="no_workouts_subtitle">Tap + to start your journey</string>
+    <string name="times_trained">Times trained: %1$d</string>
+    <string name="action_create">CREATE</string>
+    <string name="label_workout_name_placeholder">Workout Name (ex: Push Day)</string>
+    <string name="label_exercise_name_placeholder">Exercise Name</string>
+    <string name="seconds_label">SECONDS</string>
 </resources>

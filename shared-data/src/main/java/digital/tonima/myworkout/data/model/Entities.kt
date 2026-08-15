@@ -163,6 +163,11 @@ data class ExerciseWithSets(
 data class SessionWithLogs(
     @Embedded val session: WorkoutSessionEntity,
     @Relation(
+        parentColumn = "workoutId",
+        entityColumn = "id",
+    )
+    val workout: WorkoutEntity? = null,
+    @Relation(
         parentColumn = "id",
         entityColumn = "sessionId",
     )

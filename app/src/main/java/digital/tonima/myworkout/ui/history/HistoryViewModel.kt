@@ -12,9 +12,13 @@ import javax.inject.Inject
 class HistoryViewModel
     @Inject
     constructor(
-        private val repository: WorkoutRepository,
+        repository: WorkoutRepository,
     ) : ViewModel() {
         val sessions =
             repository.getAllSessions()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        val masterExercises =
+            repository.getAllMasterExercises()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
     }

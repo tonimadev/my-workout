@@ -1,22 +1,63 @@
 package digital.tonima.myworkout.ui.workout
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults.colors
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,12 +83,13 @@ fun WorkoutTrackingScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        stringResource(R.string.tracking_title, workout?.workout?.name ?: ""),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
+                        workout?.workout?.name?.uppercase() ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp,
                     )
                 },
-                actions = {
+                navigationIcon = {
                     IconButton(onClick = onCancel) {
                         Icon(
                             Icons.Default.Close,
@@ -56,28 +98,31 @@ fun WorkoutTrackingScreen(
                     }
                 },
                 colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
+                    topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrolledContainerColor = Color.Unspecified,
+                        navigationIconContentColor = Color.Unspecified,
+                        titleContentColor = Color.Unspecified,
+                        actionIconContentColor = Color.Unspecified,
                     ),
             )
         },
         bottomBar = {
             Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
-                shadowElevation = 8.dp,
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Button(
-                        onClick = onFinish,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = MaterialTheme.shapes.medium,
-                    ) {
-                        Text(
-                            stringResource(R.string.finish_workout),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                Button(
+                    onClick = onFinish,
+                    modifier = Modifier.fillMaxWidth().padding(16.dp).height(64.dp),
+                    shape = RoundedCornerShape(20.dp),
+                ) {
+                    Text(
+                        stringResource(R.string.finish_workout).uppercase(),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                    )
                 }
             }
         },
@@ -92,38 +137,65 @@ fun WorkoutTrackingScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(20.dp),
                 ) {
                     itemsIndexed(workout.exercises) { exerciseIndex, exercise ->
                         val isLastExercise = exerciseIndex == workout.exercises.size - 1
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors =
-                                CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                ),
+
+                        Column(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(28.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
+                                        RoundedCornerShape(28.dp),
+                                    ),
                         ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
+                            // Exercise Header
+                            Box(
+                                modifier =
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .background(
+                                            brush =
+                                                Brush.horizontalGradient(
+                                                    colors =
+                                                        listOf(
+                                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.8f),
+                                                            MaterialTheme.colorScheme.secondary.copy(alpha = 0.8f),
+                                                        ),
+                                                ),
+                                        )
+                                        .padding(16.dp),
+                            ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Icon(
                                         Icons.Default.FitnessCenter,
                                         contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(20.dp),
                                     )
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = exercise.exercise.name.uppercase(),
-                                        style = MaterialTheme.typography.labelLarge,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        letterSpacing = 1.sp,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Black,
+                                        color = Color.Black,
+                                        letterSpacing = 0.5.sp,
                                     )
                                 }
-                                Spacer(Modifier.height(12.dp))
+                            }
+
+                            Column(modifier = Modifier.padding(16.dp)) {
                                 exercise.sets.forEachIndexed { setIndex, set ->
                                     val log = activeSession.logs.find { it.setId == set.id }
                                     val isLogged = log != null
                                     val isLastSet = setIndex == exercise.sets.size - 1
-                                    SetRow(
+
+                                    SetTrackingRow(
                                         setNum = setIndex + 1,
                                         targetWeight = set.targetWeight,
                                         targetReps = set.targetReps,
@@ -142,6 +214,10 @@ fun WorkoutTrackingScreen(
                                             )
                                         },
                                     )
+
+                                    if (setIndex < exercise.sets.size - 1) {
+                                        Spacer(Modifier.height(12.dp))
+                                    }
                                 }
                             }
                         }
@@ -149,92 +225,25 @@ fun WorkoutTrackingScreen(
                 }
             }
 
-            if (restTimeLeft > 0) {
-                val nextSetInfo =
-                    remember(workout, activeSession) {
-                        if (workout != null && activeSession != null) {
-                            var foundNext = ""
-                            for (ex in workout.exercises) {
-                                val loggedSetIds = activeSession.logs.map { it.setId }
-                                val nextSet = ex.sets.find { it.id !in loggedSetIds }
-                                if (nextSet != null) {
-                                    val setIndex = ex.sets.indexOf(nextSet) + 1
-                                    foundNext = "${ex.exercise.name} - $setIndex/${ex.sets.size}"
-                                    break
-                                }
-                            }
-                            foundNext
-                        } else {
-                            ""
-                        }
-                    }
-
-                Surface(
-                    modifier = Modifier.fillMaxSize().pointerInput(Unit) {},
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f),
-                ) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(32.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            text = stringResource(R.string.rest_interval_label),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                        if (nextSetInfo.isNotEmpty()) {
-                            Text(
-                                text = stringResource(R.string.next_set_label, nextSetInfo),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                        Spacer(Modifier.height(32.dp))
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(200.dp)) {
-                            val progressTarget =
-                                if (totalRestTime > 0) {
-                                    (restTimeLeft).toFloat() / totalRestTime.toFloat()
-                                } else {
-                                    0f
-                                }
-                            val animatedProgress by animateFloatAsState(
-                                targetValue = progressTarget,
-                                label = "RestTimerProgress",
-                            )
-                            CircularProgressIndicator(
-                                progress = { animatedProgress },
-                                modifier = Modifier.fillMaxSize(),
-                                strokeWidth = 12.dp,
-                                color = MaterialTheme.colorScheme.primary,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
-                            Text(
-                                text = stringResource(R.string.timer_seconds, restTimeLeft),
-                                style = MaterialTheme.typography.displayLarge,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        Spacer(Modifier.height(48.dp))
-                        Button(
-                            onClick = onSkipRest,
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            Text(
-                                stringResource(R.string.action_skip),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                        }
-                    }
-                }
+            AnimatedVisibility(
+                visible = restTimeLeft > 0,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                RestTimerOverlay(
+                    remaining = restTimeLeft,
+                    total = totalRestTime,
+                    workout = workout,
+                    activeSession = activeSession,
+                    onSkip = onSkipRest,
+                )
             }
         }
     }
 }
 
 @Composable
-fun SetRow(
+fun SetTrackingRow(
     setNum: Int,
     targetWeight: Double,
     targetReps: Int,
@@ -243,62 +252,218 @@ fun SetRow(
     actualReps: Int?,
     onLog: (Double, Int) -> Unit,
 ) {
-    var weight by remember { mutableStateOf(targetWeight.toString()) }
-    var reps by remember { mutableStateOf(targetReps.toString()) }
+    var weightInput by remember { mutableStateOf(targetWeight.toString()) }
+    var repsInput by remember { mutableStateOf(targetReps.toString()) }
 
     Row(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .padding(vertical = 6.dp),
+                .clip(RoundedCornerShape(16.dp))
+                .background(
+                    if (isLogged) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                    } else {
+                        MaterialTheme.colorScheme.background.copy(alpha = 0.5f)
+                    },
+                )
+                .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Surface(
-            modifier = Modifier.size(32.dp),
-            shape = MaterialTheme.shapes.small,
-            color = if (isLogged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+        Box(
+            modifier =
+                Modifier
+                    .size(36.dp)
+                    .background(
+                        if (isLogged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        CircleShape,
+                    ),
+            contentAlignment = Alignment.Center,
         ) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(
-                    text = setNum.toString(),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (isLogged) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            Text(
+                text = setNum.toString(),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = if (isLogged) Color.Black else MaterialTheme.colorScheme.onSurface,
+            )
         }
 
         Spacer(Modifier.width(12.dp))
 
         OutlinedTextField(
-            value = if (isLogged) actualWeight?.toString() ?: "" else weight,
-            onValueChange = { weight = it },
-            modifier = Modifier.weight(1f),
-            label = { Text(stringResource(R.string.unit_kg)) },
+            value =
+                if (isLogged) {
+                    actualWeight?.toString() ?: ""
+                } else {
+                    weightInput
+                },
+            onValueChange = { weightInput = it },
+            modifier = Modifier.weight(1f).height(52.dp),
+            placeholder = {
+                Text(
+                    stringResource(R.string.unit_kg).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            },
             enabled = !isLogged,
-            textStyle = TextStyle(textAlign = TextAlign.Center),
-            shape = MaterialTheme.shapes.medium,
+            textStyle = TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold),
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors =
+                colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor = Color.Transparent,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                ),
         )
         Spacer(Modifier.width(8.dp))
         OutlinedTextField(
-            value = if (isLogged) actualReps?.toString() ?: "" else reps,
-            onValueChange = { reps = it },
-            modifier = Modifier.weight(1f),
-            label = { Text(stringResource(R.string.unit_reps)) },
+            value =
+                if (isLogged) {
+                    actualReps?.toString() ?: ""
+                } else {
+                    repsInput
+                },
+            onValueChange = { repsInput = it },
+            modifier = Modifier.weight(1f).height(52.dp),
+            placeholder = {
+                Text(
+                    stringResource(R.string.unit_reps).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                )
+            },
             enabled = !isLogged,
-            textStyle = TextStyle(textAlign = TextAlign.Center),
-            shape = MaterialTheme.shapes.medium,
+            textStyle = TextStyle(textAlign = TextAlign.Center, fontWeight = FontWeight.Bold),
+            shape = RoundedCornerShape(12.dp),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            colors =
+                colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    disabledBorderColor = Color.Transparent,
+                    disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                ),
         )
         Spacer(Modifier.width(8.dp))
         IconButton(
-            onClick = { onLog(weight.toDoubleOrNull() ?: 0.0, reps.toIntOrNull() ?: 0) },
+            onClick = { onLog(weightInput.toDoubleOrNull() ?: 0.0, repsInput.toIntOrNull() ?: 0) },
             enabled = !isLogged,
+            modifier = Modifier.size(44.dp),
         ) {
             Icon(
                 if (isLogged) Icons.Default.CheckCircle else Icons.Default.Check,
-                contentDescription = stringResource(R.string.content_description_log),
+                contentDescription = null,
                 tint = if (isLogged) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                modifier = Modifier.size(28.dp),
+                modifier = Modifier.size(32.dp),
             )
+        }
+    }
+}
+
+@Composable
+fun RestTimerOverlay(
+    remaining: Int,
+    total: Int,
+    workout: WorkoutWithExercises?,
+    activeSession: SessionWithLogs?,
+    onSkip: () -> Unit,
+) {
+    val nextSetInfo =
+        remember(workout, activeSession) {
+            if (workout != null && activeSession != null) {
+                var foundNext = ""
+                for (ex in workout.exercises) {
+                    val loggedSetIds = activeSession.logs.map { it.setId }
+                    val nextSet = ex.sets.find { it.id !in loggedSetIds }
+                    if (nextSet != null) {
+                        val setIndex = ex.sets.indexOf(nextSet) + 1
+                        foundNext = "${ex.exercise.name} ($setIndex/${ex.sets.size})"
+                        break
+                    }
+                }
+                foundNext
+            } else {
+                ""
+            }
+        }
+
+    Surface(
+        modifier = Modifier.fillMaxSize().pointerInput(Unit) {},
+        color = MaterialTheme.colorScheme.background.copy(alpha = 0.98f),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                stringResource(R.string.rest_interval_label).uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp,
+                color = MaterialTheme.colorScheme.outline,
+            )
+
+            Spacer(Modifier.height(48.dp))
+
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(240.dp)) {
+                val progressTarget = if (total > 0) remaining.toFloat() / total.toFloat() else 0f
+                val animatedProgress by animateFloatAsState(targetValue = progressTarget, label = "RestTimerProgress")
+
+                CircularProgressIndicator(
+                    progress = { animatedProgress },
+                    modifier = Modifier.fillMaxSize(),
+                    strokeWidth = 16.dp,
+                    color = MaterialTheme.colorScheme.primary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                    strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                )
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = remaining.toString(),
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Black,
+                        fontSize = 80.sp,
+                    )
+                    Text(
+                        stringResource(R.string.seconds_label),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(48.dp))
+
+            if (nextSetInfo.isNotEmpty()) {
+                Text(
+                    "PRÓXIMO:",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
+                    nextSetInfo,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
+                    textAlign = TextAlign.Center,
+                )
+            }
+
+            Spacer(Modifier.height(64.dp))
+
+            OutlinedButton(
+                onClick = onSkip,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                border = androidx.compose.foundation.BorderStroke(2.dp, MaterialTheme.colorScheme.primary),
+            ) {
+                Icon(Icons.Default.Timer, null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.action_skip).uppercase(), fontWeight = FontWeight.Black)
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package digital.tonima.myworkout.wearable
 
 import android.content.Context
+import android.util.Log
 import com.google.android.gms.wearable.PutDataMapRequest
 import com.google.android.gms.wearable.Wearable
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -32,7 +33,7 @@ class PhoneWearableSyncManager
                 val putDataReq = putDataMapReq.asPutDataRequest().setUrgent()
                 dataClient.putDataItem(putDataReq).await()
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("PhoneSyncManager", "Error syncing workouts", e)
             }
         }
 
@@ -54,7 +55,7 @@ class PhoneWearableSyncManager
                     messageClient.sendMessage(node.id, path, data).await()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("PhoneSyncManager", "Error sending message: $path", e)
             }
         }
     }

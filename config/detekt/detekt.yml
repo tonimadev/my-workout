@@ -167,7 +167,7 @@ style:
   SafeCast:
     active: true
   UnusedImports:
-    active: false
+    active: true
   UnusedPrivateMember:
     active: true
   WildcardImport:

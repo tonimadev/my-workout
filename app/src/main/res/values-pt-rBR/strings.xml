@@ -52,4 +52,24 @@
     <string name="onboarding_stats_desc">Visualize a evolução de carga de cada exercício ao longo do tempo.</string>
     <string name="onboarding_wear_title">Treine com seu Relógio</string>
     <string name="onboarding_wear_desc">Sincronize seus treinos com seu relógio Wear OS e registre suas séries direto do pulso.</string>
+    <string name="dashboard_pro_title">DASHBOARD PRO</string>
+    <string name="technical_evolution_label">EVOLUÇÃO TÉCNICA</string>
+    <string name="view_load_history">Ver histórico de carga</string>
+    <string name="level_label">NÍVEL %1$d</string>
+    <string name="accumulated_xp_label">%1$d XP ACUMULADO</string>
+    <string name="next_level_xp_label">PRÓXIMO NÍVEL: %1$dXP</string>
+    <string name="recent_achievements_label">CONQUISTAS RECENTES</string>
+    <string name="weekly_volume_label">VOLUME SEMANAL</string>
+    <string name="insufficient_data_chart">Dados insuficientes para gerar o gráfico.</string>
+    <string name="default_exercise_name">EXERCÍCIO</string>
+    <string name="no_data_exercise">Nenhum dado registrado para este exercício.</string>
+    <string name="load_history_label">HISTÓRICO DE CARGA</string>
+    <string name="kg_x_reps">%1$.1f KG X %2$d</string>
+    <string name="workout_list_subtitle">Supere seus limites hoje</string>
+    <string name="no_workouts_subtitle">Toque no + para começar sua jornada</string>
+    <string name="times_trained">Vezes treinado: %1$d</string>
+    <string name="action_create">CRIAR</string>
+    <string name="label_workout_name_placeholder">Nome do Treino (ex: Push Day)</string>
+    <string name="label_exercise_name_placeholder">Nome do Exercício</string>
+    <string name="seconds_label">SEGUNDOS</string>
 </resources>

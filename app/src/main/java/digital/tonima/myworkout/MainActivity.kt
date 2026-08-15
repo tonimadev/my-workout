@@ -16,7 +16,11 @@ import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.ExperimentalMaterial3AdaptiveNavigationSuiteApi
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation3.runtime.NavKey
@@ -25,11 +29,14 @@ import androidx.navigation3.ui.NavDisplay
 import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.ui.history.HistoryScreen
 import digital.tonima.myworkout.ui.history.HistoryViewModel
-import digital.tonima.myworkout.ui.navigation.*
+import digital.tonima.myworkout.ui.navigation.Destination
 import digital.tonima.myworkout.ui.navigation.Destination.History
 import digital.tonima.myworkout.ui.navigation.Destination.Stats
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
+import digital.tonima.myworkout.ui.navigation.Navigator
+import digital.tonima.myworkout.ui.navigation.rememberNavigationState
+import digital.tonima.myworkout.ui.navigation.toEntries
 import digital.tonima.myworkout.ui.onboarding.OnboardingScreen
 import digital.tonima.myworkout.ui.onboarding.OnboardingViewModel
 import digital.tonima.myworkout.ui.stats.StatsScreen
@@ -157,7 +164,8 @@ fun MainAppContent() {
             entry<History> {
                 val viewModel: HistoryViewModel = hiltViewModel()
                 val sessions by viewModel.sessions.collectAsState()
-                HistoryScreen(sessions = sessions)
+                val masterExercises by viewModel.masterExercises.collectAsState()
+                HistoryScreen(sessions = sessions, masterExercises = masterExercises)
             }
 
             entry<Stats> {
@@ -175,7 +183,7 @@ fun MainAppContent() {
                     gamificationStats = gamificationStats,
                     achievements = achievements,
                     sessions = sessions,
-                    onSelectExercise = { viewModel.selectExercise(it) },
+                    onSelectExercise = { id -> viewModel.selectExercise(id) },
                 )
             }
         }

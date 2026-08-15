@@ -47,6 +47,7 @@ class GamificationRepositoryTest {
             val sessionWithLogs =
                 SessionWithLogs(
                     session = WorkoutSessionEntity(id = sessionId, workoutId = 1, startTime = 0L),
+                    workout = null,
                     logs = listOf(mockk(relaxed = true), mockk(relaxed = true)), // 2 logs = 20 XP + 50 XP bonus = 70 XP
                 )
 

@@ -1,5 +1,6 @@
 package digital.tonima.myworkout.wear
 
+import android.util.Log
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.DataMapItem
@@ -56,7 +57,7 @@ class WearableSyncService : WearableListenerService() {
                     )
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("WearableSyncService", "Error processing workouts JSON", e)
             }
         }
     }

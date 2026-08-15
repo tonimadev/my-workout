@@ -2,9 +2,14 @@ package digital.tonima.myworkout.data.repository
 
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
-import digital.tonima.myworkout.data.model.*
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutSessionEntity
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coVerify
+import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -14,11 +19,18 @@ class WorkoutRepositoryTest {
     private val workoutDao = mockk<WorkoutDao>(relaxed = true)
     private val workoutSessionDao = mockk<WorkoutSessionDao>(relaxed = true)
     private val wearableSyncManager = mockk<WearableSyncManager>(relaxed = true)
+    private val gamificationRepository = mockk<GamificationRepository>(relaxed = true)
     private lateinit var repository: WorkoutRepository
 
     @Before
     fun setup() {
-        repository = WorkoutRepositoryImpl(workoutDao, workoutSessionDao, wearableSyncManager)
+        repository =
+            WorkoutRepositoryImpl(
+                workoutDao,
+                workoutSessionDao,
+                wearableSyncManager,
+                gamificationRepository,
+            )
     }
 
     @Test
@@ -65,5 +77,17 @@ class WorkoutRepositoryTest {
 
             coVerify { workoutSessionDao.insertLog(log) }
             coVerify { wearableSyncManager.syncLog(log) }
+        }
+
+    @Test
+    fun `finishSession should update session, process gamification and sync to wearable`() =
+        runTest {
+            val session = WorkoutSessionEntity(id = 1, workoutId = 1, startTime = 0L)
+
+            repository.finishSession(session)
+
+            coVerify { workoutSessionDao.updateSession(match { it.endTime != null }) }
+            coVerify { gamificationRepository.processSessionCompletion(session.id) }
+            coVerify { wearableSyncManager.syncFinishSession(session.id) }
         }
 }

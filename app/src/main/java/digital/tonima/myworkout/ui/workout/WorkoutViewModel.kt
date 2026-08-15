@@ -3,14 +3,25 @@ package digital.tonima.myworkout.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import digital.tonima.myworkout.data.model.*
+import digital.tonima.myworkout.data.model.ExerciseEntity
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class WorkoutViewModel
@@ -110,7 +121,7 @@ class WorkoutViewModel
                     _totalRestTime.value = seconds
                     _restTimeRemaining.value = seconds
                     while (_restTimeRemaining.value > 0) {
-                        delay(1000)
+                        delay(1000.milliseconds)
                         _restTimeRemaining.value -= 1
                     }
                     alertManager.triggerCompletionAlert()

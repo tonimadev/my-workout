@@ -15,26 +15,30 @@ private val DarkColorScheme =
     darkColorScheme(
         primary = OrangePrimary,
         secondary = OrangeSecondary,
-        tertiary = SuccessGreen,
+        tertiary = NeonBlue,
         background = DarkGymBackground,
         surface = DarkGymSurface,
+        surfaceVariant = DarkGymCard,
         onPrimary = Color.Black,
         onSecondary = Color.Black,
         onBackground = Color.White,
         onSurface = Color.White,
+        outline = BorderColor,
     )
 
 private val LightColorScheme =
     lightColorScheme(
         primary = OrangePrimary,
         secondary = OrangeSecondary,
-        tertiary = SuccessGreen,
-        background = Color(0xFFFDFDFD),
+        tertiary = NeonBlue,
+        background = Color(0xFFF8F8F8),
         surface = Color.White,
+        surfaceVariant = Color(0xFFEEEEEE),
         onPrimary = Color.White,
         onSecondary = Color.White,
-        onBackground = Color(0xFF1C1B1F),
-        onSurface = Color(0xFF1C1B1F),
+        onBackground = Color(0xFF121212),
+        onSurface = Color(0xFF121212),
+        outline = Color(0xFFDDDDDD),
     )
 
 @Composable

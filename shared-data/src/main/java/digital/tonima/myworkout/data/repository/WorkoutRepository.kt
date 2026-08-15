@@ -1,8 +1,16 @@
 package digital.tonima.myworkout.data.repository
 
+import android.util.Log
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
-import digital.tonima.myworkout.data.model.*
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.MasterExerciseEntity
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SyncData
+import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutSessionEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -74,7 +82,7 @@ class WorkoutRepositoryImpl
                 val masters = workoutDao.getAllMasterExercises().first()
                 wearableSyncManager.syncWorkouts(SyncData(workouts, masters))
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.e("WorkoutRepository", "Error syncing workouts to wearable", e)
             }
         }
 

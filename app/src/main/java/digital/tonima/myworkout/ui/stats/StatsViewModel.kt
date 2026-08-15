@@ -6,7 +6,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.myworkout.data.repository.GamificationRepository
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -19,19 +24,19 @@ class StatsViewModel
     ) : ViewModel() {
         val masterExercises =
             repository.getAllMasterExercises()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
 
         val gamificationStats =
             gamificationRepository.getGamificationStats()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+                .stateIn(viewModelScope, WhileSubscribed(5000), null)
 
         val achievements =
             gamificationRepository.getAchievements()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
 
         val sessions =
             repository.getAllSessions()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
 
         private val _selectedExerciseId = MutableStateFlow<Long?>(null)
         val selectedExerciseId = _selectedExerciseId.asStateFlow()
@@ -43,7 +48,7 @@ class StatsViewModel
                 } else {
                     flowOf(emptyList())
                 }
-            }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+            }.stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
 
         fun selectExercise(id: Long?) {
             _selectedExerciseId.value = id
