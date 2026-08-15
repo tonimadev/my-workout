@@ -51,7 +51,6 @@ import androidx.wear.compose.material3.IconButton
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.ProgressIndicatorDefaults
 import androidx.wear.compose.material3.ScreenScaffold
-import androidx.wear.compose.material3.Stepper
 import androidx.wear.compose.material3.Text
 import digital.tonima.myworkout.R
 import digital.tonima.myworkout.data.model.SessionWithLogs
@@ -329,14 +328,22 @@ fun ExerciseDetails(
                             color = MaterialTheme.colorScheme.primary,
                             fontWeight = FontWeight.Bold,
                         )
-                        Stepper(
-                            value = reps,
-                            onValueChange = onRepsChange,
-                            valueProgression = 1..100,
-                            increaseIcon = { Icon(Icons.Default.Add, null) },
-                            decreaseIcon = { Icon(Icons.Default.Remove, null) },
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
                         ) {
-                            Text(reps.toString(), style = MaterialTheme.typography.titleMedium)
+                            IconButton(onClick = { if (reps > 1) onRepsChange(reps - 1) }) {
+                                Icon(Icons.Default.Remove, null)
+                            }
+                            Text(
+                                text = reps.toString(),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(horizontal = 12.dp),
+                            )
+                            IconButton(onClick = { if (reps < 100) onRepsChange(reps + 1) }) {
+                                Icon(Icons.Default.Add, null)
+                            }
                         }
                     }
                 }
