@@ -1,3 +1,5 @@
+![Banner](screenshots/banner.jpeg)
+
 # My Workout
 
 A comprehensive workout tracking application for Android and Wear OS, designed to help users manage their fitness routines and track progress seamlessly across devices.
