@@ -33,6 +33,14 @@ class WatchWearableSyncManager
             }
         }
 
+        override suspend fun syncFinishSession(sessionId: Long) {
+            try {
+                sendMessage("/workout/finish_session", sessionId.toString().toByteArray())
+            } catch (e: Exception) {
+                Log.e("WatchSync", "Error syncing finish session", e)
+            }
+        }
+
         override suspend fun sendMessage(
             path: String,
             data: ByteArray,

@@ -8,7 +8,6 @@ import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.tasks.await
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,6 +38,10 @@ class PhoneWearableSyncManager
 
         override suspend fun syncLog(log: WorkoutLogEntity) {
             // Phone doesn't sync logs to watch in this flow
+        }
+
+        override suspend fun syncFinishSession(sessionId: Long) {
+            // Phone doesn't sync finish to watch in this flow
         }
 
         override suspend fun sendMessage(

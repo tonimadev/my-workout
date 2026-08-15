@@ -54,6 +54,7 @@ class WorkoutRepositoryImpl
         private val workoutDao: WorkoutDao,
         private val workoutSessionDao: WorkoutSessionDao,
         private val wearableSyncManager: WearableSyncManager,
+        private val gamificationRepository: GamificationRepository,
     ) : WorkoutRepository {
         override fun getAllWorkouts(): Flow<List<WorkoutWithExercises>> = workoutDao.getAllWorkoutsWithExercises()
 
@@ -113,6 +114,8 @@ class WorkoutRepositoryImpl
 
         override suspend fun finishSession(session: WorkoutSessionEntity) {
             workoutSessionDao.updateSession(session.copy(endTime = System.currentTimeMillis()))
+            gamificationRepository.processSessionCompletion(session.id)
+            wearableSyncManager.syncFinishSession(session.id)
         }
 
         override suspend fun addLog(log: WorkoutLogEntity) {

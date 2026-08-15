@@ -8,6 +8,7 @@ import digital.tonima.myworkout.data.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -27,6 +28,18 @@ class WearableSyncService : WearableListenerService() {
                     try {
                         val log = Json.decodeFromString<WorkoutLogEntity>(logJson)
                         repository.addLog(log)
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+            }
+            "/workout/finish_session" -> {
+                val sessionId = String(messageEvent.data).toLongOrNull() ?: return
+                scope.launch {
+                    try {
+                        repository.getSessionById(sessionId).first()?.let {
+                            repository.finishSession(it.session)
+                        }
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }

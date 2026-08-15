@@ -16,7 +16,23 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 - **Data Synchronization**: Automatic two-way synchronization between the mobile app and Wear OS using the Wearable Data Layer API.
 - **Rest Timer**: Integrated rest timer during workout tracking to ensure optimal recovery between sets.
 - **Workout History**: Review past sessions and track your consistency over time.
+- **Gamification System**: Stay motivated with an XP-based progression system, player levels, and training streaks.
+- **Advanced Analytics**: Visualize your progress with weekly volume charts and detailed exercise history.
+- **Achievements & Badges**: Unlock badges for reaching milestones like streak goals, high volume, or intense workouts.
+- **Wear OS XP Feedback**: Real-time visual feedback on your wrist as you gain XP for each completed set.
 - **Localization**: Full support for English and Portuguese (pt-BR).
+
+## Gamification & Progression
+
+"My Workout" turns your fitness journey into a rewarding experience:
+
+- **XP System**: Earn 10 XP for every set completed and a 50 XP bonus for finishing a full workout session.
+- **Leveling**: Progress through levels as you accumulate XP. The formula follows a square root curve, making early levels quick to achieve while higher levels represent true dedication.
+- **Streaks**: Maintain a training streak to show your consistency. Training on consecutive days earns you the "fire" indicator and extra bonus XP.
+- **Achievements**: Earn specialized badges for milestones:
+    - **Elite Warrior**: 7-day training streak.
+    - **Weightlifter**: Move over 10 tons of total volume in a single session.
+    - **Repetition Machine**: Complete more than 20 sets in one workout.
 
 ## Screens
 

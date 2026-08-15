@@ -85,3 +85,15 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_logs WHERE sessionId = :sessionId")
     fun getLogsForSession(sessionId: Long): Flow<List<WorkoutLogEntity>>
 }
+
+@Dao
+interface AchievementDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAchievement(achievement: AchievementEntity): Long
+
+    @Query("SELECT * FROM achievements ORDER BY timestamp DESC")
+    fun getAllAchievements(): Flow<List<AchievementEntity>>
+
+    @Query("SELECT * FROM achievements WHERE type = :type")
+    fun getAchievementsByType(type: String): Flow<List<AchievementEntity>>
+}

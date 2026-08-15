@@ -157,6 +157,9 @@ class WorkoutViewModel
         private val _isResting = MutableStateFlow(false)
         val isResting: StateFlow<Boolean> = _isResting.asStateFlow()
 
+        private val _lastXpGained = MutableStateFlow<Int?>(null)
+        val lastXpGained: StateFlow<Int?> = _lastXpGained.asStateFlow()
+
         private var restJob: Job? = null
 
         fun loadWorkout(workoutId: Long) {
@@ -211,6 +214,16 @@ class WorkoutViewModel
                         timestamp = System.currentTimeMillis(),
                     )
                 repository.addLog(log)
+
+                // Show XP feedback
+                _lastXpGained.value = 10
+                viewModelScope.launch {
+                    delay(2000.milliseconds)
+                    if (_lastXpGained.value == 10) {
+                        _lastXpGained.value = null
+                    }
+                }
+
                 if (restInterval > 0) {
                     val endTime = SystemClock.elapsedRealtime() + (restInterval * 1000L)
                     val intent =

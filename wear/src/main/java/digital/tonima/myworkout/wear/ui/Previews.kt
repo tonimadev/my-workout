@@ -113,6 +113,7 @@ fun WorkoutExecutionScreenPreview() {
             onCompleteSet = { _, _, _, _, _ -> },
             onSkipRest = {},
             onFinishSession = {},
+            xpGained = 10,
         )
     }
 }

@@ -88,6 +88,8 @@ data class WorkoutSessionEntity(
     val workoutId: Long?,
     val startTime: Long,
     val endTime: Long? = null,
+    val totalVolume: Double = 0.0,
+    val xpGained: Int = 0,
 )
 
 @Serializable
@@ -123,6 +125,17 @@ data class WorkoutLogEntity(
     val actualReps: Int,
     val actualNotes: String = "",
     val timestamp: Long,
+)
+
+@Serializable
+@Entity(tableName = "achievements")
+data class AchievementEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val type: String,
+    val name: String,
+    val description: String,
+    val timestamp: Long,
+    val level: Int = 1,
 )
 
 @Serializable

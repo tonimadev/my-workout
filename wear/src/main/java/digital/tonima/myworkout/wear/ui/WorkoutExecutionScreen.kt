@@ -1,8 +1,11 @@
 package digital.tonima.myworkout.wear.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
@@ -60,6 +64,7 @@ fun WorkoutExecutionScreen(
     totalRestTime: Long,
     isResting: Boolean,
     isAmbientMode: Boolean,
+    xpGained: Int?,
     onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
     onSkipRest: () -> Unit,
     onFinishSession: () -> Unit,
@@ -156,6 +161,27 @@ fun WorkoutExecutionScreen(
                             Text(stringResource(R.string.swipe_next_hint), style = MaterialTheme.typography.bodySmall)
                         }
                     }
+                }
+            }
+
+            AnimatedVisibility(
+                visible = xpGained != null,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = 24.dp),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .clip(androidx.compose.foundation.shape.CircleShape)
+                            .background(MaterialTheme.colorScheme.primaryContainer)
+                            .padding(horizontal = 8.dp, vertical = 2.dp),
+                ) {
+                    Text(
+                        text = "+$xpGained XP",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
 

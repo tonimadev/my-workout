@@ -3,6 +3,7 @@ package digital.tonima.myworkout.ui.stats
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.myworkout.data.repository.GamificationRepository
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
@@ -14,9 +15,22 @@ class StatsViewModel
     @Inject
     constructor(
         private val repository: WorkoutRepository,
+        gamificationRepository: GamificationRepository,
     ) : ViewModel() {
         val masterExercises =
             repository.getAllMasterExercises()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        val gamificationStats =
+            gamificationRepository.getGamificationStats()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+        val achievements =
+            gamificationRepository.getAchievements()
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+        val sessions =
+            repository.getAllSessions()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
         private val _selectedExerciseId = MutableStateFlow<Long?>(null)

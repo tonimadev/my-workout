@@ -165,10 +165,16 @@ fun MainAppContent() {
                 val masterExercises by viewModel.masterExercises.collectAsState()
                 val selectedExerciseId by viewModel.selectedExerciseId.collectAsState()
                 val logs by viewModel.exerciseLogs.collectAsState()
+                val gamificationStats by viewModel.gamificationStats.collectAsState()
+                val achievements by viewModel.achievements.collectAsState()
+                val sessions by viewModel.sessions.collectAsState()
                 StatsScreen(
                     masterExercises = masterExercises,
                     selectedExerciseId = selectedExerciseId,
                     logs = logs,
+                    gamificationStats = gamificationStats,
+                    achievements = achievements,
+                    sessions = sessions,
                     onSelectExercise = { viewModel.selectExercise(it) },
                 )
             }

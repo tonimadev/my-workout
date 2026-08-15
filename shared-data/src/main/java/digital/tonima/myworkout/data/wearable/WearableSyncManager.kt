@@ -8,6 +8,8 @@ interface WearableSyncManager {
 
     suspend fun syncLog(log: WorkoutLogEntity)
 
+    suspend fun syncFinishSession(sessionId: Long)
+
     suspend fun sendMessage(
         path: String,
         data: ByteArray,
