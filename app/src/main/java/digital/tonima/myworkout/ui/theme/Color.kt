@@ -2,12 +2,12 @@ package digital.tonima.myworkout.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Fitness Palette - Bold Red & Performance Dark
-val GymRedPrimary = Color(0xFFE53935)
-val GymRedSecondary = Color(0xFFFF5252)
-val GymRedTertiary = Color(0xFFB71C1C)
+// Fitness Palette - Sporty Deep Orange (Aligns with Red Icon without looking like an error)
+val GymPrimary = Color(0xFFFF5722) // Deep Orange
+val GymSecondary = Color(0xFFFF9800) // Orange
+val GymTertiary = Color(0xFFFFC107) // Amber
 
-val DarkGymBackground = Color(0xFF0A0A0A) // Deeper black for high contrast
+val DarkGymBackground = Color(0xFF0A0A0A)
 val DarkGymSurface = Color(0xFF121212)
 val DarkGymCard = Color(0xFF1E1E1E)
 

@@ -543,26 +543,28 @@ fun ExerciseStats(
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
-                ),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                    ),
             ) {
                 Row(
                     modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary),
-                        contentAlignment = Alignment.Center
+                        modifier =
+                            Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             Icons.Default.Star,
                             null,
                             tint = Color.Black,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(24.dp),
                         )
                     }
                     Spacer(Modifier.width(16.dp))
@@ -571,15 +573,18 @@ fun ExerciseStats(
                             text = (exercise?.name ?: "EXERCÍCIO").uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Text(
-                            text = if (logs.isNotEmpty()) {
-                                val max = logs.maxBy { it.actualWeight }
-                                "${max.actualWeight} KG PARA ${max.actualReps} REPS"
-                            } else "SEM DADOS",
+                            text =
+                                if (logs.isNotEmpty()) {
+                                    val max = logs.maxBy { it.actualWeight }
+                                    "${max.actualWeight} KG PARA ${max.actualReps} REPS"
+                                } else {
+                                    "SEM DADOS"
+                                },
                             style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Black
+                            fontWeight = FontWeight.Black,
                         )
                     }
                 }

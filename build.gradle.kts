@@ -112,3 +112,34 @@ val sortDependencies by tasks.registering {
         }
     }
 }
+// 1. Cria a task apenas uma vez na raiz do projeto
+val killEmulators by tasks.registering {
+    group = "automation"
+    description = "Fecha todos os emuladores ativos via ADB"
+
+    doLast {
+        try {
+            val process = ProcessBuilder("adb", "devices").start()
+
+            process.inputStream.bufferedReader().useLines { lines ->
+                lines.filter { it.startsWith("emulator-") }.forEach { line ->
+                    val emulatorId = line.split("\\s+".toRegex())[0]
+                    println("Encerrando emulador ativo: $emulatorId")
+                    ProcessBuilder("adb", "-s", emulatorId, "emu", "kill").start().waitFor()
+                }
+            }
+        } catch (e: Exception) {
+            println("Aviso: Falha ao tentar fechar emuladores (${e.message})")
+        }
+    }
+}
+
+// 2. Intercepta as tasks dos submódulos (app e wear) e injeta a dependência
+subprojects {
+    tasks.configureEach {
+        if (name == "bundleRelease") {
+            // Referencia a task que foi criada no projeto raiz
+            dependsOn(rootProject.tasks.named("killEmulators"))
+        }
+    }
+}

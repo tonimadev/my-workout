@@ -24,8 +24,10 @@ class WearableSyncService : WearableListenerService() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
+        Log.i("WearableSyncService", "Data changed event received from phone")
         dataEvents.forEach { event ->
             if (event.type == DataEvent.TYPE_CHANGED && event.dataItem.uri.path == "/workout/definitions") {
+                Log.d("WearableSyncService", "Processing /workout/definitions update")
                 val dataMap = DataMapItem.fromDataItem(event.dataItem).dataMap
                 val workoutsJson = dataMap.getString("workouts_json")
                 if (workoutsJson != null) {
@@ -36,6 +38,7 @@ class WearableSyncService : WearableListenerService() {
     }
 
     override fun onMessageReceived(messageEvent: MessageEvent) {
+        Log.i("WearableSyncService", "Message received from phone: ${messageEvent.path}")
         if (messageEvent.path == "/workout/definitions") {
             val workoutsJson = String(messageEvent.data)
             processWorkoutsJson(workoutsJson)
@@ -43,19 +46,28 @@ class WearableSyncService : WearableListenerService() {
     }
 
     private fun processWorkoutsJson(json: String) {
+        Log.i("WearableSyncService", "Starting processing of workouts JSON")
         scope.launch {
             try {
                 val syncData = Json.decodeFromString<SyncData>(json)
+                Log.d(
+                    "WearableSyncService",
+                    "Decoded ${syncData.workouts.size} workouts and ${syncData.masterExercises.size} master exercises",
+                )
+
                 // Save master exercises first to satisfy foreign keys
                 syncData.masterExercises.forEach { master ->
                     repository.upsertMasterExercise(master)
                 }
+                Log.d("WearableSyncService", "Master exercises upserted")
+
                 syncData.workouts.forEach { workoutWithExercises ->
                     repository.addWorkout(
                         workoutWithExercises.workout,
                         workoutWithExercises.exercises,
                     )
                 }
+                Log.i("WearableSyncService", "All workouts successfully saved to wear database")
             } catch (e: Exception) {
                 Log.e("WearableSyncService", "Error processing workouts JSON", e)
             }

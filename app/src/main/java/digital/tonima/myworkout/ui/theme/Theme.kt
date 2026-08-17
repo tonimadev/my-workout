@@ -13,14 +13,14 @@ import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme =
     darkColorScheme(
-        primary = GymRedPrimary,
-        secondary = GymRedSecondary,
-        tertiary = GymRedTertiary,
+        primary = GymPrimary,
+        secondary = GymSecondary,
+        tertiary = GymTertiary,
         background = DarkGymBackground,
         surface = DarkGymSurface,
         surfaceVariant = DarkGymCard,
-        onPrimary = Color.White,
-        onSecondary = Color.White,
+        onPrimary = Color.Black,
+        onSecondary = Color.Black,
         onBackground = Color.White,
         onSurface = Color.White,
         outline = BorderColor,
@@ -28,9 +28,9 @@ private val DarkColorScheme =
 
 private val LightColorScheme =
     lightColorScheme(
-        primary = GymRedPrimary,
-        secondary = GymRedSecondary,
-        tertiary = GymRedTertiary,
+        primary = GymPrimary,
+        secondary = GymSecondary,
+        tertiary = GymTertiary,
         background = Color(0xFFFDFDFD),
         surface = Color.White,
         surfaceVariant = Color(0xFFF5F5F5),

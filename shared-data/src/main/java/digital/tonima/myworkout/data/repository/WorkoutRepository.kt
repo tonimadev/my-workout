@@ -53,6 +53,8 @@ interface WorkoutRepository {
     suspend fun requestSync()
 
     suspend fun forceSync()
+
+    suspend fun saveRemoteSession(sessionWithLogs: SessionWithLogs)
 }
 
 @Singleton
@@ -77,9 +79,11 @@ class WorkoutRepositoryImpl
         }
 
         private suspend fun syncWorkoutsToWearable() {
+            Log.d("WorkoutRepository", "syncWorkoutsToWearable called")
             try {
                 val workouts = workoutDao.getAllWorkoutsWithExercisesSync()
                 val masters = workoutDao.getAllMasterExercises().first()
+                Log.d("WorkoutRepository", "Syncing ${workouts.size} workouts and ${masters.size} master exercises")
                 wearableSyncManager.syncWorkouts(SyncData(workouts, masters))
             } catch (e: Exception) {
                 Log.e("WorkoutRepository", "Error syncing workouts to wearable", e)
@@ -121,12 +125,20 @@ class WorkoutRepositoryImpl
         }
 
         override suspend fun finishSession(session: WorkoutSessionEntity) {
-            workoutSessionDao.updateSession(session.copy(endTime = System.currentTimeMillis()))
+            Log.i("WorkoutRepository", "Finishing session locally: ${session.id}")
+            val updatedSession = session.copy(endTime = System.currentTimeMillis())
+            workoutSessionDao.updateSession(updatedSession)
             gamificationRepository.processSessionCompletion(session.id)
-            wearableSyncManager.syncFinishSession(session.id)
+
+            val fullSession = workoutSessionDao.getSessionWithLogs(session.id).first()
+            if (fullSession != null) {
+                Log.d("WorkoutRepository", "Syncing full session summary to wearable")
+                wearableSyncManager.syncSession(fullSession)
+            }
         }
 
         override suspend fun addLog(log: WorkoutLogEntity) {
+            Log.d("WorkoutRepository", "Adding log for setId: ${log.setId}")
             workoutSessionDao.insertLog(log)
             wearableSyncManager.syncLog(log)
         }
@@ -137,5 +149,16 @@ class WorkoutRepositoryImpl
 
         override suspend fun requestSync() {
             wearableSyncManager.sendMessage("/workout/request_sync", byteArrayOf())
+        }
+
+        override suspend fun saveRemoteSession(sessionWithLogs: SessionWithLogs) {
+            Log.i("WorkoutRepository", "Saving remote session received from wearable")
+            val newSessionId = workoutSessionDao.insertSession(sessionWithLogs.session.copy(id = 0))
+            Log.d("WorkoutRepository", "New local session ID: $newSessionId with ${sessionWithLogs.logs.size} logs")
+            sessionWithLogs.logs.forEach { log ->
+                workoutSessionDao.insertLog(log.copy(id = 0, sessionId = newSessionId))
+            }
+            gamificationRepository.processSessionCompletion(newSessionId)
+            Log.i("WorkoutRepository", "Remote session and gamification processed successfully")
         }
     }
