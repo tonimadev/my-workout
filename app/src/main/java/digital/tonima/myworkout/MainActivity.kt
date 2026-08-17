@@ -13,6 +13,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.Companion.detailPane
 import androidx.compose.material3.adaptive.navigation3.rememberListDetailSceneStrategy
 import androidx.compose.material3.adaptive.navigationsuite.ExperimentalMaterial3AdaptiveNavigationSuiteApi
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
@@ -29,11 +30,11 @@ import androidx.navigation3.ui.NavDisplay
 import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.ui.history.HistoryScreen
 import digital.tonima.myworkout.ui.history.HistoryViewModel
-import digital.tonima.myworkout.ui.navigation.Destination
 import digital.tonima.myworkout.ui.navigation.Destination.History
 import digital.tonima.myworkout.ui.navigation.Destination.Stats
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
 import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
+import digital.tonima.myworkout.ui.navigation.Destination.WorkoutTracking
 import digital.tonima.myworkout.ui.navigation.Navigator
 import digital.tonima.myworkout.ui.navigation.rememberNavigationState
 import digital.tonima.myworkout.ui.navigation.toEntries
@@ -111,14 +112,14 @@ fun MainAppContent() {
             }
 
             entry<WorkoutEdit>(
-                metadata = ListDetailSceneStrategy.detailPane(),
+                metadata = detailPane(),
             ) { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
                 val workout by viewModel.getWorkout(key.workoutId ?: -1).collectAsState(null)
                 WorkoutEditScreen(
                     workout = workout,
                     onBack = { navigator.goBack() },
-                    onStartWorkout = { id -> navigator.navigate(Destination.WorkoutTracking(id)) },
+                    onStartWorkout = { id -> navigator.navigate(WorkoutTracking(id)) },
                     onAddExercise = { id, name -> viewModel.addExercise(id, name) },
                     onAddSet = { workoutId, exerciseId -> viewModel.addSet(workoutId, exerciseId) },
                     onUpdateSet = { wId, eId, sId, weight, reps, rest ->
@@ -130,7 +131,7 @@ fun MainAppContent() {
                 )
             }
 
-            entry<Destination.WorkoutTracking> { key ->
+            entry<WorkoutTracking> { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
                 val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
                 val activeSession by viewModel.activeSession.collectAsState()

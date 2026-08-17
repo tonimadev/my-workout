@@ -2,7 +2,6 @@ package digital.tonima.myworkout.ui.stats
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -25,20 +24,23 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults.colors
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults.topAppBarColors
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -51,7 +53,9 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -78,16 +82,36 @@ fun StatsScreen(
     sessions: List<SessionWithLogs>,
     onSelectExercise: (Long?) -> Unit,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            CenterAlignedTopAppBar(
+            LargeTopAppBar(
                 title = {
-                    Text(
-                        stringResource(R.string.dashboard_pro_title),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text =
+                                if (selectedExerciseId == null) {
+                                    stringResource(R.string.dashboard_pro_title).uppercase()
+                                } else {
+                                    masterExercises.find { it.id == selectedExerciseId }?.name?.uppercase() ?: ""
+                                },
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1.5).sp,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        )
+                        if (selectedExerciseId == null) {
+                            Text(
+                                text = "ACOMPANHE SUA EVOLUÇÃO",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 },
                 navigationIcon = {
                     if (selectedExerciseId != null) {
@@ -99,32 +123,31 @@ fun StatsScreen(
                         }
                     }
                 },
+                scrollBehavior = scrollBehavior,
                 colors =
-                    topAppBarColors(
+                    TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = Color.Unspecified,
-                        navigationIconContentColor = Color.Unspecified,
-                        titleContentColor = Color.Unspecified,
-                        actionIconContentColor = Color.Unspecified,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
             )
         },
     ) { padding ->
-        if (selectedExerciseId == null) {
-            AthleteDashboard(
-                stats = gamificationStats,
-                achievements = achievements,
-                sessions = sessions,
-                exercises = masterExercises,
-                modifier = Modifier.padding(padding),
-                onSelectExercise = onSelectExercise,
-            )
-        } else {
-            ExerciseStats(
-                exercise = masterExercises.find { it.id == selectedExerciseId },
-                logs = logs,
-                modifier = Modifier.padding(padding),
-            )
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            if (selectedExerciseId == null) {
+                AthleteDashboard(
+                    stats = gamificationStats,
+                    achievements = achievements,
+                    sessions = sessions,
+                    exercises = masterExercises,
+                    onSelectExercise = onSelectExercise,
+                )
+            } else {
+                ExerciseStats(
+                    exercise = masterExercises.find { it.id == selectedExerciseId },
+                    logs = logs,
+                )
+            }
         }
     }
 }
@@ -135,13 +158,12 @@ fun AthleteDashboard(
     achievements: List<AchievementEntity>,
     sessions: List<SessionWithLogs>,
     exercises: List<MasterExerciseEntity>,
-    modifier: Modifier = Modifier,
     onSelectExercise: (Long) -> Unit,
 ) {
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(28.dp),
-        contentPadding = PaddingValues(bottom = 32.dp),
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(32.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
     ) {
         item {
             GamificationHeader(stats)
@@ -158,35 +180,53 @@ fun AthleteDashboard(
         }
 
         item {
-            Text(
-                stringResource(R.string.technical_evolution_label),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.outline,
-            )
-        }
-
-        items(exercises) { exercise ->
-            Surface(
-                onClick = { onSelectExercise(exercise.id) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
-            ) {
-                ListItem(
-                    headlineContent = {
-                        Text(exercise.name.uppercase(), fontWeight = FontWeight.Black, letterSpacing = 0.5.sp)
-                    },
-                    supportingContent = { Text(stringResource(R.string.view_load_history)) },
-                    trailingContent = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            null,
-                            modifier = Modifier.size(16.dp).rotate(180f),
-                        )
-                    },
-                    colors = colors(containerColor = Color.Transparent),
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    text = stringResource(R.string.technical_evolution_label).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.outline,
+                    letterSpacing = 1.sp,
                 )
+
+                exercises.forEach { exercise ->
+                    ElevatedCard(
+                        onClick = { onSelectExercise(exercise.id) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        colors =
+                            CardDefaults.elevatedCardColors(
+                                containerColor = MaterialTheme.colorScheme.surface,
+                            ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                    ) {
+                        ListItem(
+                            headlineContent = {
+                                Text(
+                                    text = exercise.name.uppercase(),
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp,
+                                )
+                            },
+                            supportingContent = {
+                                Text(
+                                    text = stringResource(R.string.view_load_history).uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            },
+                            trailingContent = {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.ArrowBack,
+                                    null,
+                                    modifier = Modifier.size(16.dp).rotate(180f),
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        )
+                    }
+                }
             }
         }
     }
@@ -207,124 +247,140 @@ fun GamificationHeader(stats: GamificationStats?) {
         label = "XpProgress",
     )
 
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(32.dp))
-                .background(
-                    brush =
-                        Brush.verticalGradient(
-                            colors =
-                                listOf(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                                    MaterialTheme.colorScheme.background,
-                                ),
-                        ),
-                )
-                .padding(24.dp),
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column {
-                Text(
-                    stringResource(R.string.level_label, currentLevel),
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                Text(
-                    stringResource(R.string.accumulated_xp_label, stats?.totalXp ?: 0),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            // Streak Badge
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.secondary,
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(
-                        Icons.Default.LocalFireDepartment,
-                        contentDescription = null,
-                        tint = Color.Black,
-                        modifier = Modifier.size(18.dp),
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        "${stats?.currentStreak ?: 0}D",
-                        color = Color.Black,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Black,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        Box(
+        Column(
             modifier =
                 Modifier
                     .fillMaxWidth()
-                    .height(12.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                    .background(
+                        brush =
+                            Brush.verticalGradient(
+                                colors =
+                                    listOf(
+                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.05f),
+                                        MaterialTheme.colorScheme.surface,
+                                    ),
+                            ),
+                    )
+                    .padding(24.dp),
         ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(
+                        text = stringResource(R.string.level_label, currentLevel).uppercase(),
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary,
+                        letterSpacing = (-1).sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.accumulated_xp_label, stats?.totalXp ?: 0).uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.outline,
+                    )
+                }
+
+                // Streak Badge
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondary,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.Default.LocalFireDepartment,
+                            contentDescription = null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${stats?.currentStreak ?: 0} DIAS",
+                            color = Color.Black,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black,
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
             Box(
                 modifier =
                     Modifier
-                        .fillMaxWidth(animatedProgress)
-                        .fillMaxHeight()
-                        .background(
-                            brush =
-                                Brush.horizontalGradient(
-                                    colors =
-                                        listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.tertiary,
-                                        ),
-                                ),
-                        ),
-            )
-        }
+                        .fillMaxWidth()
+                        .height(16.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                Box(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(animatedProgress)
+                            .fillMaxHeight()
+                            .background(
+                                brush =
+                                    Brush.horizontalGradient(
+                                        colors =
+                                            listOf(
+                                                MaterialTheme.colorScheme.primary,
+                                                MaterialTheme.colorScheme.tertiary,
+                                            ),
+                                    ),
+                            ),
+                )
+            }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                stringResource(R.string.next_level_xp_label, nextLevelXp),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            Text(
-                "${(progressTarget * 100).toInt()}%",
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.tertiary,
-            )
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    text = stringResource(R.string.next_level_xp_label, nextLevelXp).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.outline,
+                )
+                Text(
+                    text = "${(progressTarget * 100).toInt()}%",
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+            }
         }
     }
 }
 
 @Composable
 fun AchievementSection(achievements: List<AchievementEntity>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            stringResource(R.string.recent_achievements_label),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
+            text = stringResource(R.string.recent_achievements_label).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.outline,
+            letterSpacing = 1.sp,
         )
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(end = 16.dp),
+        ) {
             items(achievements) { achievement ->
                 AchievementBadge(achievement)
             }
@@ -334,43 +390,56 @@ fun AchievementSection(achievements: List<AchievementEntity>) {
 
 @Composable
 fun AchievementBadge(achievement: AchievementEntity) {
-    Surface(
+    ElevatedCard(
         shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.width(160.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
+        modifier = Modifier.width(180.dp),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Icon(
-                if (achievement.level >= 2) Icons.Default.Star else Icons.Default.EmojiEvents,
-                contentDescription = null,
-                modifier = Modifier.size(40.dp),
-                tint =
-                    if (achievement.level >= 2) {
-                        MaterialTheme.colorScheme.secondary
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier =
+                    Modifier
+                        .size(64.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = if (achievement.level >= 2) Icons.Default.Star else Icons.Default.EmojiEvents,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint =
+                        if (achievement.level >= 2) {
+                            MaterialTheme.colorScheme.secondary
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                achievement.name.uppercase(),
-                style = MaterialTheme.typography.labelLarge,
+                text = achievement.name.uppercase(),
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Black,
                 maxLines = 1,
                 textAlign = TextAlign.Center,
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                achievement.description,
+                text = achievement.description,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.outline,
                 maxLines = 2,
                 minLines = 2,
                 textAlign = TextAlign.Center,
+                lineHeight = 16.sp,
             )
         }
     }
@@ -378,27 +447,59 @@ fun AchievementBadge(achievement: AchievementEntity) {
 
 @Composable
 fun VolumeSection(sessions: List<SessionWithLogs>) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
-            stringResource(R.string.weekly_volume_label),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
+            text = stringResource(R.string.weekly_volume_label).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.Black,
             color = MaterialTheme.colorScheme.outline,
+            letterSpacing = 1.sp,
         )
-        Surface(
+        ElevatedCard(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(24.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
+            colors =
+                CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {
-            Column(modifier = Modifier.padding(20.dp)) {
+            Column(modifier = Modifier.padding(24.dp)) {
                 val weekVolume = sessions.take(7).map { it.session.totalVolume }
                 if (weekVolume.isNotEmpty()) {
                     SimpleBarChart(
                         data = weekVolume.reversed(),
-                        modifier = Modifier.fillMaxWidth().height(140.dp),
+                        modifier = Modifier.fillMaxWidth().height(160.dp),
                     )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.TrendingUp,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = "ESTIMATIVA DE PROGRESSO SEMANAL",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 } else {
-                    Text(stringResource(R.string.insufficient_data_chart), style = MaterialTheme.typography.bodyMedium)
+                    Box(modifier = Modifier.fillMaxWidth().height(160.dp), contentAlignment = Alignment.Center) {
+                        Text(
+                            text = stringResource(R.string.insufficient_data_chart).uppercase(),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
                 }
             }
         }
@@ -412,15 +513,17 @@ fun SimpleBarChart(
 ) {
     val max = (data.maxOrNull() ?: 1.0).coerceAtLeast(1.0)
     val primaryColor = MaterialTheme.colorScheme.primary
+    val secondaryColor = MaterialTheme.colorScheme.tertiary
 
     Canvas(modifier = modifier) {
         val spacing = size.width / (data.size * 2 - 1)
         data.forEachIndexed { index, value ->
             val barHeight = (value / max * size.height).toFloat()
-            drawRect(
-                color = primaryColor,
+            drawRoundRect(
+                brush = Brush.verticalGradient(listOf(primaryColor, secondaryColor)),
                 topLeft = Offset(index * spacing * 2, size.height - barHeight),
                 size = Size(spacing, barHeight),
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()),
             )
         }
     }
@@ -430,57 +533,132 @@ fun SimpleBarChart(
 fun ExerciseStats(
     exercise: MasterExerciseEntity?,
     logs: List<WorkoutLogEntity>,
-    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            text = exercise?.name?.uppercase() ?: stringResource(R.string.default_exercise_name),
-            style = MaterialTheme.typography.displaySmall,
-            fontWeight = FontWeight.Black,
-            letterSpacing = (-1).sp,
-        )
-        Spacer(modifier = Modifier.height(24.dp))
-
-        if (logs.isEmpty()) {
-            Text(stringResource(R.string.no_data_exercise))
-        } else {
-            Surface(
-                modifier = Modifier.fillMaxWidth().height(220.dp),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(32.dp),
+        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
+    ) {
+        item {
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f),
+                ),
             ) {
-                WeightChart(logs = logs, modifier = Modifier.fillMaxSize().padding(16.dp))
-            }
-            Spacer(modifier = Modifier.height(32.dp))
-            Text(
-                stringResource(R.string.load_history_label),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.outline,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(logs.reversed()) { log ->
-                    val date =
-                        remember(log.timestamp) {
-                            SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date(log.timestamp))
-                        }
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
+                Row(
+                    modifier = Modifier.padding(20.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.primary),
+                        contentAlignment = Alignment.Center
                     ) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    stringResource(R.string.kg_x_reps, log.actualWeight, log.actualReps),
-                                    fontWeight = FontWeight.Bold,
-                                )
-                            },
-                            supportingContent = { Text(date.uppercase(), style = MaterialTheme.typography.labelSmall) },
-                            colors = colors(containerColor = Color.Transparent),
+                        Icon(
+                            Icons.Default.Star,
+                            null,
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column {
+                        Text(
+                            text = "RECORDES PESSOAIS",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = if (logs.isNotEmpty()) {
+                                val max = logs.maxBy { it.actualWeight }
+                                "${max.actualWeight} KG PARA ${max.actualReps} REPS"
+                            } else "SEM DADOS",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Black
                         )
                     }
                 }
+            }
+        }
+
+        item {
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth().height(260.dp),
+                shape = RoundedCornerShape(28.dp),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = "CARGA MÁXIMA (KG)",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.outline,
+                        letterSpacing = 1.sp,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    WeightChart(logs = logs, modifier = Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        item {
+            Text(
+                text = stringResource(R.string.load_history_label).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.outline,
+                letterSpacing = 1.sp,
+            )
+        }
+
+        items(logs.reversed()) { log ->
+            val date =
+                remember(log.timestamp) {
+                    SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date(log.timestamp))
+                }
+            ElevatedCard(
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.fillMaxWidth(),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+            ) {
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text = stringResource(R.string.kg_x_reps, log.actualWeight, log.actualReps).uppercase(),
+                            fontWeight = FontWeight.Black,
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            text = date.uppercase(),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    },
+                    trailingContent = {
+                        Icon(
+                            Icons.AutoMirrored.Filled.TrendingUp,
+                            null,
+                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                        )
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
             }
         }
     }
@@ -491,6 +669,8 @@ fun WeightChart(
     logs: List<WorkoutLogEntity>,
     modifier: Modifier = Modifier,
 ) {
+    if (logs.isEmpty()) return
+
     val maxWeight = logs.maxOfOrNull { it.actualWeight } ?: 1.0
     val minWeight = logs.minOfOrNull { it.actualWeight } ?: 0.0
     val range = (maxWeight - minWeight).coerceAtLeast(1.0)
@@ -501,7 +681,7 @@ fun WeightChart(
     Canvas(modifier = modifier) {
         val width = size.width
         val height = size.height
-        val spacing = width / (logs.size - 1).coerceAtLeast(1)
+        val spacing = if (logs.size > 1) width / (logs.size - 1) else width
 
         val points =
             logs.mapIndexed { index, log ->
@@ -521,13 +701,29 @@ fun WeightChart(
             drawPath(
                 path = path,
                 brush = Brush.horizontalGradient(listOf(primary, tertiary)),
-                style = Stroke(width = 6f),
+                style = Stroke(width = 8f, cap = StrokeCap.Round),
+            )
+
+            // Fill area
+            val fillPath =
+                Path().apply {
+                    addPath(path)
+                    lineTo(points.last().x, height)
+                    lineTo(points.first().x, height)
+                    close()
+                }
+            drawPath(
+                path = fillPath,
+                brush =
+                    Brush.verticalGradient(
+                        colors = listOf(primary.copy(alpha = 0.2f), Color.Transparent),
+                    ),
             )
         }
 
         points.forEach { point ->
-            drawCircle(color = Color.White, radius = 8f, center = point)
-            drawCircle(color = primary, radius = 4f, center = point)
+            drawCircle(color = Color.White, radius = 6.dp.toPx(), center = point)
+            drawCircle(color = primary, radius = 4.dp.toPx(), center = point)
         }
     }
 }

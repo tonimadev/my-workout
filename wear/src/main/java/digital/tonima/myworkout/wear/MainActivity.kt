@@ -24,7 +24,6 @@ import androidx.wear.ambient.AmbientLifecycleObserver
 import androidx.wear.ambient.AmbientLifecycleObserver.AmbientDetails
 import androidx.wear.ambient.AmbientLifecycleObserver.AmbientLifecycleCallback
 import androidx.wear.compose.material3.AppScaffold
-import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.navigation3.SwipeDismissableSceneStrategy
 import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.wear.ui.WorkoutExecutionScreen
@@ -33,6 +32,7 @@ import digital.tonima.myworkout.wear.ui.WorkoutViewModel
 import digital.tonima.myworkout.wear.ui.navigation.Screen
 import digital.tonima.myworkout.wear.ui.navigation.Screen.WorkoutExecution
 import digital.tonima.myworkout.wear.ui.navigation.Screen.WorkoutList
+import digital.tonima.myworkout.wear.ui.theme.WearAppTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -88,7 +88,7 @@ fun WearApp(
         }
     }
 
-    MaterialTheme {
+    WearAppTheme {
         AppScaffold {
             val backStack =
                 remember {

@@ -1,7 +1,8 @@
 package digital.tonima.myworkout.ui.history
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,20 +12,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.EventNote
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Timer
-import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -34,7 +40,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import digital.tonima.myworkout.data.model.MasterExerciseEntity
@@ -51,35 +59,44 @@ fun HistoryScreen(
     masterExercises: List<MasterExerciseEntity>,
     modifier: Modifier = Modifier,
 ) {
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
     Scaffold(
+        modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            CenterAlignedTopAppBar(
+            LargeTopAppBar(
                 title = {
-                    Text(
-                        "HISTÓRICO",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 2.sp,
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "HISTÓRICO",
+                            style = MaterialTheme.typography.headlineLarge,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = (-1.5).sp,
+                        )
+                        Text(
+                            text = "SEU PROGRESSO AO LONGO DO TEMPO",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
                 },
+                scrollBehavior = scrollBehavior,
                 colors =
                     TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = Color.Unspecified,
-                        navigationIconContentColor = Color.Unspecified,
-                        titleContentColor = Color.Unspecified,
-                        actionIconContentColor = Color.Unspecified,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground,
                     ),
             )
         },
-        modifier = modifier,
     ) { padding ->
         if (sessions.isEmpty()) {
             EmptyHistoryState(modifier = Modifier.padding(padding))
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 items(sessions) { session ->
@@ -103,11 +120,14 @@ fun HistoryItem(
             (end - session.session.startTime).milliseconds
         }
 
-    Surface(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)),
+        colors =
+            CardDefaults.elevatedCardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             // Header: Workout Name & Time
@@ -119,82 +139,112 @@ fun HistoryItem(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = session.workout?.name?.uppercase() ?: "TREINO AVULSO",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
                         text = dateFormat.format(Date(session.session.startTime)).replaceFirstChar { it.uppercase() },
-                        style = MaterialTheme.typography.labelSmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline,
+                        fontWeight = FontWeight.SemiBold,
                     )
                 }
 
                 Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(10.dp),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                 ) {
                     Text(
                         text = timeFormat.format(Date(session.session.startTime)),
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelMedium,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Stats Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 StatChip(
                     icon = Icons.Default.Timer,
-                    label = duration?.let { "${it.inWholeMinutes} min" } ?: "--",
+                    label = duration?.let { "${it.inWholeMinutes} MIN" } ?: "--",
                     color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.weight(1f),
                 )
                 StatChip(
                     icon = Icons.Default.MonitorWeight,
-                    label = "${session.session.totalVolume.toInt()} kg",
+                    label = "${session.session.totalVolume.toInt()} KG",
                     color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.weight(1f),
                 )
                 StatChip(
                     icon = Icons.Default.LocalFireDepartment,
                     label = "+${session.session.xpGained} XP",
                     color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.weight(1f),
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Exercises Summary
             Text(
-                "RESUMO DO TREINO",
+                text = "RESUMO DO TREINO",
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.Black,
                 color = MaterialTheme.colorScheme.outline,
+                letterSpacing = 1.sp,
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             val exerciseGroups = session.logs.groupBy { it.masterExerciseId }
-            exerciseGroups.forEach { (masterId, logs) ->
+            val entries = exerciseGroups.entries.toList()
+            entries.forEachIndexed { index: Int, entry ->
+                val masterId = entry.key
+                val logs = entry.value
                 val exerciseName = masterExercises.find { it.id == masterId }?.name ?: "Exercício"
+
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = exerciseName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
                     )
-                    Text(
-                        text = "${logs.size} séries",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.outline,
+                    Surface(
+                        shape = RoundedCornerShape(6.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                    ) {
+                        Text(
+                            text = "${logs.size} SÉRIES",
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Black,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                    }
+                }
+
+                if (index < entries.size - 1) {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 4.dp),
+                        thickness = 0.5.dp,
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
                     )
                 }
             }
@@ -207,41 +257,74 @@ fun StatChip(
     icon: ImageVector,
     label: String,
     color: Color,
+    modifier: Modifier = Modifier,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, null, modifier = Modifier.size(16.dp), tint = color)
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-        )
-    }
+    SuggestionChip(
+        onClick = {},
+        label = {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+            )
+        },
+        icon = {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = color,
+            )
+        },
+        shape = RoundedCornerShape(12.dp),
+        colors =
+            SuggestionChipDefaults.suggestionChipColors(
+                labelColor = MaterialTheme.colorScheme.onSurface,
+                containerColor = Color.Transparent,
+            ),
+        border =
+            SuggestionChipDefaults.suggestionChipBorder(
+                enabled = true,
+                borderColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            ),
+        modifier = modifier,
+    )
 }
 
 @Composable
 fun EmptyHistoryState(modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize().padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            Icons.AutoMirrored.Filled.EventNote,
-            contentDescription = null,
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.outlineVariant,
-        )
-        Spacer(Modifier.height(16.dp))
+        Surface(
+            modifier = Modifier.size(160.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    Icons.AutoMirrored.Filled.EventNote,
+                    contentDescription = null,
+                    modifier = Modifier.size(80.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
+            }
+        }
+        Spacer(Modifier.height(32.dp))
         Text(
-            "Nenhum treino no histórico",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Bold,
+            text = "NENHUM TREINO ENCONTRADO",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
         )
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Seus treinos finalizados aparecerão aqui",
-            style = MaterialTheme.typography.bodyMedium,
+            text = "Seus treinos finalizados aparecerão aqui para você acompanhar sua evolução.",
+            style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.outline,
+            textAlign = TextAlign.Center,
         )
     }
 }

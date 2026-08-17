@@ -1,6 +1,8 @@
 package digital.tonima.myworkout.ui.onboarding
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,13 +11,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -25,11 +31,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import digital.tonima.myworkout.R
 import kotlinx.coroutines.launch
 
@@ -44,24 +52,27 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                 modifier =
                     Modifier
                         .fillMaxWidth()
-                        .padding(24.dp),
+                        .padding(horizontal = 32.dp, vertical = 48.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Page Indicator
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     repeat(3) { index ->
-                        val color =
-                            if (pagerState.currentPage == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                MaterialTheme.colorScheme.outlineVariant
-                            }
-                        Surface(
-                            modifier = Modifier.size(8.dp),
-                            shape = androidx.compose.foundation.shape.CircleShape,
-                            color = color,
-                        ) {}
+                        val isSelected = pagerState.currentPage == index
+                        Box(
+                            modifier =
+                                Modifier
+                                    .size(width = if (isSelected) 24.dp else 8.dp, height = 8.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        if (isSelected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.outlineVariant
+                                        },
+                                    ),
+                        )
                     }
                 }
 
@@ -75,17 +86,28 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                             onComplete()
                         }
                     },
+                    modifier = Modifier.height(56.dp).width(140.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors =
+                        ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                        ),
                 ) {
                     Text(
-                        if (pagerState.currentPage < 2) {
-                            stringResource(R.string.action_next)
-                        } else {
-                            stringResource(R.string.action_start_using)
-                        },
+                        text =
+                            if (pagerState.currentPage < 2) {
+                                stringResource(R.string.action_next).uppercase()
+                            } else {
+                                stringResource(R.string.action_start_using).uppercase()
+                            },
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp,
                     )
                 }
             }
         },
+        containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         HorizontalPager(
             state = pagerState,
@@ -100,18 +122,21 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                         title = stringResource(R.string.onboarding_welcome_title),
                         description = stringResource(R.string.onboarding_welcome_desc),
                         icon = Icons.Default.FitnessCenter,
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 1 ->
                     OnboardingPage(
                         title = stringResource(R.string.onboarding_stats_title),
                         description = stringResource(R.string.onboarding_stats_desc),
                         icon = Icons.AutoMirrored.Filled.ShowChart,
+                        color = MaterialTheme.colorScheme.secondary,
                     )
                 2 ->
                     OnboardingPage(
                         title = stringResource(R.string.onboarding_wear_title),
                         description = stringResource(R.string.onboarding_wear_desc),
                         icon = Icons.Default.Watch,
+                        color = MaterialTheme.colorScheme.tertiary,
                     )
             }
         }
@@ -123,6 +148,7 @@ fun OnboardingPage(
     title: String,
     description: String,
     icon: ImageVector,
+    color: androidx.compose.ui.graphics.Color,
 ) {
     Column(
         modifier =
@@ -132,25 +158,41 @@ fun OnboardingPage(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            modifier = Modifier.size(120.dp),
-            tint = MaterialTheme.colorScheme.primary,
-        )
-        Spacer(modifier = Modifier.height(32.dp))
+        Surface(
+            modifier = Modifier.size(240.dp),
+            shape = CircleShape,
+            color = color.copy(alpha = 0.1f),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    modifier = Modifier.size(120.dp),
+                    tint = color,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(48.dp))
+
         Text(
-            text = title,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
+            text = title.uppercase(),
+            style = MaterialTheme.typography.displaySmall,
+            fontWeight = FontWeight.Black,
             textAlign = TextAlign.Center,
+            letterSpacing = (-1).sp,
+            lineHeight = 36.sp,
         )
-        Spacer(modifier = Modifier.height(16.dp))
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         Text(
             text = description,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = MaterialTheme.colorScheme.outline,
+            modifier = Modifier.padding(horizontal = 16.dp),
+            lineHeight = 24.sp,
         )
     }
 }
