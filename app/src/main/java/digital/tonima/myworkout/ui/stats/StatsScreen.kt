@@ -568,7 +568,7 @@ fun ExerciseStats(
                     Spacer(Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = "RECORDES PESSOAIS",
+                            text = (exercise?.name ?: "EXERCÍCIO").uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary
