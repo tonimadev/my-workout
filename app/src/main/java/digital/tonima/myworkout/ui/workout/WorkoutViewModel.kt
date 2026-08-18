@@ -1,6 +1,6 @@
 package digital.tonima.myworkout.ui.workout
 
-import androidx.lifecycle.ViewModel
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.myworkout.data.model.ExerciseEntity
@@ -9,19 +9,93 @@ import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.ui.util.MviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+
+@Immutable
+data class WorkoutState(
+    val workouts: List<WorkoutWithExercises> = emptyList(),
+    val selectedWorkout: WorkoutWithExercises? = null,
+    val activeSession: SessionWithLogs? = null,
+    val restTimeRemaining: Int = 0,
+    val totalRestTime: Int = 0,
+    val isLoading: Boolean = false,
+    val error: String? = null,
+)
+
+sealed interface WorkoutIntent {
+    data object LoadWorkouts : WorkoutIntent
+
+    data class LoadWorkout(val id: Long) : WorkoutIntent
+
+    data class AddWorkout(val name: String) : WorkoutIntent
+
+    data class DeleteWorkout(val workout: WorkoutEntity) : WorkoutIntent
+
+    data object SyncWorkouts : WorkoutIntent
+
+    data class StartWorkout(val workoutId: Long) : WorkoutIntent
+
+    data class LogSet(
+        val sessionId: Long,
+        val exerciseId: Long,
+        val setId: Long,
+        val weight: Double,
+        val reps: Int,
+        val restInterval: Int,
+    ) : WorkoutIntent
+
+    data object SkipRest : WorkoutIntent
+
+    data object FinishWorkout : WorkoutIntent
+
+    data class AddExercise(
+        val workoutId: Long,
+        val name: String,
+    ) : WorkoutIntent
+
+    data class AddSet(
+        val workoutId: Long,
+        val exerciseId: Long,
+    ) : WorkoutIntent
+
+    data class UpdateSet(
+        val workoutId: Long,
+        val exerciseId: Long,
+        val setId: Long,
+        val weight: Double,
+        val reps: Int,
+        val rest: Int,
+    ) : WorkoutIntent
+
+    data class DeleteSet(
+        val workoutId: Long,
+        val exerciseId: Long,
+        val setId: Long,
+    ) : WorkoutIntent
+
+    data class DuplicateExercise(
+        val workoutId: Long,
+        val exerciseId: Long,
+    ) : WorkoutIntent
+
+    data class DeleteExercise(
+        val workoutId: Long,
+        val exerciseId: Long,
+    ) : WorkoutIntent
+}
+
+sealed interface WorkoutEffect {
+    data object NavigateBack : WorkoutEffect
+}
 
 @HiltViewModel
 class WorkoutViewModel
@@ -29,23 +103,73 @@ class WorkoutViewModel
     constructor(
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
-    ) : ViewModel() {
-        val workouts =
-            repository.getAllWorkouts()
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    ) : MviViewModel<WorkoutState, WorkoutIntent, WorkoutEffect>(WorkoutState()) {
+        private var restJob: Job? = null
 
-        private val _uiState = MutableStateFlow<WorkoutUiState>(WorkoutUiState.Idle)
-        val uiState: StateFlow<WorkoutUiState> = _uiState
+        init {
+            observeWorkouts()
+        }
 
-        fun deleteWorkout(workout: WorkoutEntity) {
+        private fun observeWorkouts() {
+            viewModelScope.launch {
+                repository.getAllWorkouts().collect { workouts ->
+                    updateState { copy(workouts = workouts) }
+                }
+            }
+        }
+
+        private fun observeWorkout(id: Long) {
+            viewModelScope.launch {
+                repository.getWorkoutById(id).collect { workout ->
+                    updateState { copy(selectedWorkout = workout) }
+                }
+            }
+        }
+
+        override fun handleIntent(intent: WorkoutIntent) {
+            when (intent) {
+                is WorkoutIntent.LoadWorkouts -> observeWorkouts()
+                is WorkoutIntent.LoadWorkout -> observeWorkout(intent.id)
+                is WorkoutIntent.AddWorkout -> addWorkout(intent.name)
+                is WorkoutIntent.DeleteWorkout -> deleteWorkout(intent.workout)
+                is WorkoutIntent.SyncWorkouts -> syncWorkouts()
+                is WorkoutIntent.StartWorkout -> startWorkout(intent.workoutId)
+                is WorkoutIntent.LogSet ->
+                    logSet(
+                        intent.sessionId,
+                        intent.exerciseId,
+                        intent.setId,
+                        intent.weight,
+                        intent.reps,
+                        intent.restInterval,
+                    )
+                is WorkoutIntent.SkipRest -> skipRest()
+                is WorkoutIntent.FinishWorkout -> finishWorkout()
+                is WorkoutIntent.AddExercise -> addExercise(intent.workoutId, intent.name)
+                is WorkoutIntent.AddSet -> addSet(intent.workoutId, intent.exerciseId)
+                is WorkoutIntent.UpdateSet ->
+                    updateSet(
+                        intent.workoutId,
+                        intent.exerciseId,
+                        intent.setId,
+                        intent.weight,
+                        intent.reps,
+                        intent.rest,
+                    )
+                is WorkoutIntent.DeleteSet -> deleteSet(intent.workoutId, intent.exerciseId, intent.setId)
+                is WorkoutIntent.DuplicateExercise -> duplicateExercise(intent.workoutId, intent.exerciseId)
+                is WorkoutIntent.DeleteExercise -> deleteExercise(intent.workoutId, intent.exerciseId)
+            }
+        }
+
+        private fun deleteWorkout(workout: WorkoutEntity) {
             viewModelScope.launch {
                 repository.deleteWorkout(workout)
             }
         }
 
-        fun syncWorkouts() {
+        private fun syncWorkouts() {
             viewModelScope.launch {
-                // repository.addWorkout calls sync internally, but we can force it by re-saving
                 val all = repository.getAllWorkouts().first()
                 all.forEach {
                     repository.addWorkout(it.workout, it.exercises)
@@ -53,34 +177,22 @@ class WorkoutViewModel
             }
         }
 
-        fun addWorkout(name: String) {
+        private fun addWorkout(name: String) {
             viewModelScope.launch {
                 repository.addWorkout(WorkoutEntity(name = name), emptyList())
             }
         }
 
-        // Tracking state
-        private val _activeSession = MutableStateFlow<SessionWithLogs?>(null)
-        val activeSession: StateFlow<SessionWithLogs?> = _activeSession
-
-        private val _restTimeRemaining = MutableStateFlow(0)
-        val restTimeRemaining: StateFlow<Int> = _restTimeRemaining.asStateFlow()
-
-        private val _totalRestTime = MutableStateFlow(0)
-        val totalRestTime: StateFlow<Int> = _totalRestTime.asStateFlow()
-
-        private var restJob: Job? = null
-
-        fun startWorkout(workoutId: Long) {
+        private fun startWorkout(workoutId: Long) {
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
                 repository.getSessionById(sessionId).collect { session ->
-                    _activeSession.value = session
+                    updateState { copy(activeSession = session) }
                 }
             }
         }
 
-        fun logSet(
+        private fun logSet(
             sessionId: Long,
             exerciseId: Long,
             setId: Long,
@@ -89,7 +201,7 @@ class WorkoutViewModel
             restInterval: Int,
         ) {
             viewModelScope.launch {
-                val workoutId = _activeSession.value?.session?.workoutId
+                val workoutId = currentState.activeSession?.session?.workoutId
                 val masterExerciseId =
                     if (workoutId != null) {
                         repository.getWorkoutById(workoutId).first()?.exercises
@@ -118,35 +230,34 @@ class WorkoutViewModel
             restJob?.cancel()
             restJob =
                 viewModelScope.launch {
-                    _totalRestTime.value = seconds
-                    _restTimeRemaining.value = seconds
-                    while (_restTimeRemaining.value > 0) {
+                    updateState { copy(totalRestTime = seconds, restTimeRemaining = seconds) }
+                    while (currentState.restTimeRemaining > 0) {
                         delay(1000.milliseconds)
-                        _restTimeRemaining.value -= 1
+                        updateState { copy(restTimeRemaining = restTimeRemaining - 1) }
                     }
                     alertManager.triggerCompletionAlert()
                 }
         }
 
-        fun skipRest() {
+        private fun skipRest() {
             restJob?.cancel()
-            _restTimeRemaining.value = 0
-            _totalRestTime.value = 0
+            updateState { copy(restTimeRemaining = 0, totalRestTime = 0) }
         }
 
-        fun finishWorkout() {
+        private fun finishWorkout() {
             viewModelScope.launch {
-                val session = _activeSession.value?.session
+                val session = currentState.activeSession?.session
                 if (session != null) {
                     repository.finishSession(session)
-                    _activeSession.value = null
+                    updateState { copy(activeSession = null) }
+                    sendEffect(WorkoutEffect.NavigateBack)
                 }
             }
         }
 
-        fun getWorkout(id: Long) = repository.getWorkoutById(id)
+        fun getWorkoutFlow(id: Long) = repository.getWorkoutById(id)
 
-        fun addExercise(
+        private fun addExercise(
             workoutId: Long,
             name: String,
         ) {
@@ -173,7 +284,7 @@ class WorkoutViewModel
             }
         }
 
-        fun updateSet(
+        private fun updateSet(
             workoutId: Long,
             exerciseId: Long,
             setId: Long,
@@ -205,7 +316,7 @@ class WorkoutViewModel
             }
         }
 
-        fun addSet(
+        private fun addSet(
             workoutId: Long,
             exerciseId: Long,
         ) {
@@ -234,7 +345,7 @@ class WorkoutViewModel
             }
         }
 
-        fun deleteSet(
+        private fun deleteSet(
             workoutId: Long,
             exerciseId: Long,
             setId: Long,
@@ -258,7 +369,7 @@ class WorkoutViewModel
             }
         }
 
-        fun duplicateExercise(
+        private fun duplicateExercise(
             workoutId: Long,
             exerciseId: Long,
         ) {
@@ -280,7 +391,7 @@ class WorkoutViewModel
             }
         }
 
-        fun deleteExercise(
+        private fun deleteExercise(
             workoutId: Long,
             exerciseId: Long,
         ) {
@@ -297,11 +408,3 @@ class WorkoutViewModel
             }
         }
     }
-
-sealed interface WorkoutUiState {
-    data object Idle : WorkoutUiState
-
-    data object Loading : WorkoutUiState
-
-    data class Error(val message: String) : WorkoutUiState
-}

@@ -64,22 +64,17 @@ import androidx.compose.ui.unit.sp
 import digital.tonima.myworkout.R
 import digital.tonima.myworkout.data.model.ExerciseWithSets
 import digital.tonima.myworkout.data.model.SetEntity
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutEditScreen(
-    workout: WorkoutWithExercises?,
+    state: WorkoutState,
+    onIntent: (WorkoutIntent) -> Unit,
     onBack: () -> Unit,
     onStartWorkout: (Long) -> Unit,
-    onAddExercise: (Long, String) -> Unit,
-    onAddSet: (Long, Long) -> Unit,
-    onUpdateSet: (Long, Long, Long, Double, Int, Int) -> Unit,
-    onDeleteSet: (Long, Long, Long) -> Unit,
-    onDuplicateExercise: (Long, Long) -> Unit,
-    onDeleteExercise: (Long, Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val workout = state.selectedWorkout
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
     var editingSet by remember { mutableStateOf<Pair<Long, SetEntity>?>(null) }
@@ -150,11 +145,11 @@ fun WorkoutEditScreen(
                     ExerciseSection(
                         exercise = exercise,
                         workoutId = workout.workout.id,
-                        onAddSet = onAddSet,
-                        onDeleteSet = onDeleteSet,
+                        onAddSet = { wId, eId -> onIntent(WorkoutIntent.AddSet(wId, eId)) },
+                        onDeleteSet = { wId, eId, sId -> onIntent(WorkoutIntent.DeleteSet(wId, eId, sId)) },
                         onEditSet = { editingSet = it },
-                        onDuplicate = onDuplicateExercise,
-                        onDeleteExercise = onDeleteExercise,
+                        onDuplicate = { wId, eId -> onIntent(WorkoutIntent.DuplicateExercise(wId, eId)) },
+                        onDeleteExercise = { wId, eId -> onIntent(WorkoutIntent.DeleteExercise(wId, eId)) },
                     )
                 }
                 item {
@@ -191,7 +186,7 @@ fun WorkoutEditScreen(
             onDismiss = { showAddExerciseDialog = false },
             onConfirm = {
                 if (newExerciseName.isNotBlank()) {
-                    onAddExercise(workout.workout.id, newExerciseName)
+                    onIntent(WorkoutIntent.AddExercise(workout.workout.id, newExerciseName))
                     newExerciseName = ""
                     showAddExerciseDialog = false
                 }
@@ -205,7 +200,7 @@ fun WorkoutEditScreen(
             onDismiss = { editingSet = null },
             onSave = { w, r, restInt ->
                 workout?.workout?.id?.let { workoutId ->
-                    onUpdateSet(workoutId, exerciseId, set.id, w, r, restInt)
+                    onIntent(WorkoutIntent.UpdateSet(workoutId, exerciseId, set.id, w, r, restInt))
                 }
                 editingSet = null
             },

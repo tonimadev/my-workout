@@ -71,16 +71,16 @@ import digital.tonima.myworkout.data.model.WorkoutWithExercises
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutTrackingScreen(
-    workout: WorkoutWithExercises?,
-    activeSession: SessionWithLogs?,
-    restTimeLeft: Int,
-    totalRestTime: Int,
-    onLogSet: (Long, Long, Long, Double, Int, Int) -> Unit,
-    onSkipRest: () -> Unit,
-    onFinish: () -> Unit,
+    state: WorkoutState,
+    onIntent: (WorkoutIntent) -> Unit,
     onCancel: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val workout = state.selectedWorkout
+    val activeSession = state.activeSession
+    val restTimeLeft = state.restTimeRemaining
+    val totalRestTime = state.totalRestTime
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -113,7 +113,7 @@ fun WorkoutTrackingScreen(
                 tonalElevation = 8.dp,
             ) {
                 Button(
-                    onClick = onFinish,
+                    onClick = { onIntent(WorkoutIntent.FinishWorkout) },
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -149,7 +149,10 @@ fun WorkoutTrackingScreen(
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                 ) {
-                    itemsIndexed(workout.exercises) { exerciseIndex, exercise ->
+                    itemsIndexed(
+                        items = workout.exercises,
+                        key = { _, exercise -> exercise.exercise.id },
+                    ) { exerciseIndex, exercise ->
                         val isLastExercise = exerciseIndex == workout.exercises.size - 1
 
                         ElevatedCard(
@@ -211,13 +214,15 @@ fun WorkoutTrackingScreen(
                                             actualReps = log?.actualReps,
                                             onLog = { weight, reps ->
                                                 val rest = if (isLastExercise && isLastSet) 0 else set.restInterval
-                                                onLogSet(
-                                                    activeSession.session.id,
-                                                    exercise.exercise.id,
-                                                    set.id,
-                                                    weight,
-                                                    reps,
-                                                    rest,
+                                                onIntent(
+                                                    WorkoutIntent.LogSet(
+                                                        activeSession.session.id,
+                                                        exercise.exercise.id,
+                                                        set.id,
+                                                        weight,
+                                                        reps,
+                                                        rest,
+                                                    ),
                                                 )
                                             },
                                         )
@@ -243,7 +248,7 @@ fun WorkoutTrackingScreen(
                     total = totalRestTime,
                     workout = workout,
                     activeSession = activeSession,
-                    onSkip = onSkipRest,
+                    onSkip = { onIntent(WorkoutIntent.SkipRest) },
                 )
             }
         }

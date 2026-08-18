@@ -65,13 +65,12 @@ import digital.tonima.myworkout.data.model.WorkoutWithExercises
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutListScreen(
-    workouts: List<WorkoutWithExercises>,
+    state: WorkoutState,
+    onIntent: (WorkoutIntent) -> Unit,
     onWorkoutClick: (Long) -> Unit,
-    onAddWorkout: (String) -> Unit,
-    onDeleteWorkout: (WorkoutWithExercises) -> Unit,
-    onSyncWearable: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val workouts = state.workouts
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showAddDialog by remember { mutableStateOf(false) }
     var newWorkoutName by remember { mutableStateOf("") }
@@ -98,7 +97,7 @@ fun WorkoutListScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = onSyncWearable,
+                        onClick = { onIntent(WorkoutIntent.SyncWorkouts) },
                         colors =
                             IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
@@ -147,7 +146,7 @@ fun WorkoutListScreen(
                         WorkoutCard(
                             workout = workout,
                             onClick = { onWorkoutClick(workout.workout.id) },
-                            onDelete = { onDeleteWorkout(workout) },
+                            onDelete = { onIntent(WorkoutIntent.DeleteWorkout(workout.workout)) },
                         )
                     }
                 }
@@ -162,7 +161,7 @@ fun WorkoutListScreen(
             onDismiss = { showAddDialog = false },
             onConfirm = {
                 if (newWorkoutName.isNotBlank()) {
-                    onAddWorkout(newWorkoutName)
+                    onIntent(WorkoutIntent.AddWorkout(newWorkoutName))
                     newWorkoutName = ""
                     showAddDialog = false
                 }

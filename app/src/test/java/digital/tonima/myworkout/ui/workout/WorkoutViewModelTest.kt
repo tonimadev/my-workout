@@ -40,7 +40,7 @@ class WorkoutViewModelTest {
     @Test
     fun `addWorkout should call repository`() =
         runTest {
-            viewModel.addWorkout("New Workout")
+            viewModel.onIntent(WorkoutIntent.AddWorkout("New Workout"))
             coVerify { repository.addWorkout(match { it.name == "New Workout" }, any()) }
         }
 
@@ -48,7 +48,7 @@ class WorkoutViewModelTest {
     fun `deleteWorkout should call repository`() =
         runTest {
             val workout = WorkoutEntity(id = 1, name = "Test")
-            viewModel.deleteWorkout(workout)
+            viewModel.onIntent(WorkoutIntent.DeleteWorkout(workout))
             coVerify { repository.deleteWorkout(workout) }
         }
 
@@ -58,7 +58,7 @@ class WorkoutViewModelTest {
             coEvery { repository.startSession(any()) } returns 1L
             every { repository.getSessionById(any()) } returns flowOf(null)
 
-            viewModel.startWorkout(1L)
+            viewModel.onIntent(WorkoutIntent.StartWorkout(1L))
 
             coVerify { repository.startSession(1L) }
         }

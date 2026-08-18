@@ -13,123 +13,93 @@ import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
-@Preview(
-    device = SMALL_ROUND,
-)
-@Preview(
-    device = LARGE_ROUND,
-)
-@Preview(
-    device = RECT,
-)
-@Preview(
-    device = SQUARE,
-)
+@Preview(device = SMALL_ROUND)
+@Preview(device = LARGE_ROUND)
+@Preview(device = RECT)
+@Preview(device = SQUARE)
 @Composable
 fun WorkoutListScreenPreview() {
     MaterialTheme {
         WorkoutListScreen(
-            workouts =
-                listOf(
-                    WorkoutWithExercises(
-                        workout = WorkoutEntity(id = 1, name = "Workout A"),
-                        exercises =
-                            listOf(
-                                ExerciseWithSets(
-                                    exercise =
-                                        ExerciseEntity(
-                                            id = 1,
-                                            workoutId = 1,
-                                            name = "Squat",
-                                            order = 1,
+            state =
+                WorkoutState(
+                    workouts =
+                        listOf(
+                            WorkoutWithExercises(
+                                workout = WorkoutEntity(id = 1, name = "Workout A"),
+                                exercises =
+                                    listOf(
+                                        ExerciseWithSets(
+                                            exercise = ExerciseEntity(id = 1, workoutId = 1, name = "Squat", order = 1),
+                                            sets =
+                                                listOf(
+                                                    SetEntity(
+                                                        id = 1,
+                                                        exerciseId = 1,
+                                                        targetWeight = 100.0,
+                                                        targetReps = 5,
+                                                        order = 1,
+                                                    ),
+                                                ),
                                         ),
-                                    sets =
-                                        listOf(
-                                            SetEntity(
-                                                id = 1,
-                                                exerciseId = 1,
-                                                targetWeight = 100.0,
-                                                targetReps = 5,
-                                                order = 1,
-                                            ),
-                                        ),
-                                ),
+                                    ),
                             ),
-                    ),
+                        ),
                 ),
             onWorkoutClick = {},
         )
     }
 }
 
-@Preview(
-    device = SMALL_ROUND,
-)
-@Preview(
-    device = LARGE_ROUND,
-)
-@Preview(
-    device = RECT,
-)
-@Preview(
-    device = SQUARE,
-)
+@Preview(device = SMALL_ROUND)
+@Preview(device = LARGE_ROUND)
+@Preview(device = RECT)
+@Preview(device = SQUARE)
 @Composable
 fun WorkoutExecutionScreenPreview() {
     MaterialTheme {
         WorkoutExecutionScreen(
-            workout =
-                WorkoutWithExercises(
-                    workout = WorkoutEntity(id = 1, name = "Workout A"),
-                    exercises =
-                        listOf(
-                            ExerciseWithSets(
-                                exercise = ExerciseEntity(id = 1, workoutId = 1, name = "Squat", order = 1),
-                                sets =
-                                    listOf(
-                                        SetEntity(
-                                            id = 1,
-                                            exerciseId = 1,
-                                            targetWeight = 100.0,
-                                            targetReps = 5,
-                                            order = 1,
-                                        ),
-                                        SetEntity(
-                                            id = 2,
-                                            exerciseId = 1,
-                                            targetWeight = 100.0,
-                                            targetReps = 5,
-                                            order = 2,
-                                        ),
+            state =
+                WorkoutState(
+                    currentWorkout =
+                        WorkoutWithExercises(
+                            workout = WorkoutEntity(id = 1, name = "Workout A"),
+                            exercises =
+                                listOf(
+                                    ExerciseWithSets(
+                                        exercise = ExerciseEntity(id = 1, workoutId = 1, name = "Squat", order = 1),
+                                        sets =
+                                            listOf(
+                                                SetEntity(
+                                                    id = 1,
+                                                    exerciseId = 1,
+                                                    targetWeight = 100.0,
+                                                    targetReps = 5,
+                                                    order = 1,
+                                                ),
+                                                SetEntity(
+                                                    id = 2,
+                                                    exerciseId = 1,
+                                                    targetWeight = 100.0,
+                                                    targetReps = 5,
+                                                    order = 2,
+                                                ),
+                                            ),
                                     ),
-                            ),
+                                ),
                         ),
+                    lastXpGained = 10,
                 ),
-            activeSession = null,
-            restTimeRemaining = 0,
-            totalRestTime = 0,
-            isResting = false,
             isAmbientMode = false,
-            onCompleteSet = { _, _, _, _, _ -> },
-            onSkipRest = {},
-            onFinishSession = {},
-            xpGained = 10,
+            onIntent = {},
         )
     }
 }
 
-@Preview(
-    device = SMALL_ROUND,
-)
-@Preview(
-    device = LARGE_ROUND,
-)
-@Preview(
-    device = RECT,
-)
-@Preview(
-    device = SQUARE,
-)
+@Preview(device = SMALL_ROUND)
+@Preview(device = LARGE_ROUND)
+@Preview(device = RECT)
+@Preview(device = SQUARE)
 @Composable
 fun RestTimerOverlayPreview() {
     MaterialTheme {

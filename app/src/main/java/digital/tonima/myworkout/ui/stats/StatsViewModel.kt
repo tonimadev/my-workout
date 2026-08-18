@@ -1,56 +1,90 @@
 package digital.tonima.myworkout.ui.stats
 
-import androidx.lifecycle.ViewModel
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.myworkout.data.model.AchievementEntity
+import digital.tonima.myworkout.data.model.MasterExerciseEntity
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.WorkoutLogEntity
+import digital.tonima.myworkout.data.preferences.GamificationStats
 import digital.tonima.myworkout.data.repository.GamificationRepository
 import digital.tonima.myworkout.data.repository.WorkoutRepository
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import digital.tonima.myworkout.ui.util.MviViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@Immutable
+data class StatsState(
+    val masterExercises: List<MasterExerciseEntity> = emptyList(),
+    val selectedExerciseId: Long? = null,
+    val exerciseLogs: List<WorkoutLogEntity> = emptyList(),
+    val gamificationStats: GamificationStats = GamificationStats(0, 1, 0, 0L),
+    val achievements: List<AchievementEntity> = emptyList(),
+    val sessions: List<SessionWithLogs> = emptyList(),
+)
+
+sealed interface StatsIntent {
+    data class SelectExercise(val id: Long?) : StatsIntent
+}
+
 @HiltViewModel
 class StatsViewModel
     @Inject
     constructor(
         private val repository: WorkoutRepository,
-        gamificationRepository: GamificationRepository,
-    ) : ViewModel() {
-        val masterExercises =
-            repository.getAllMasterExercises()
-                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
+        private val gamificationRepository: GamificationRepository,
+    ) : MviViewModel<StatsState, StatsIntent, Unit>(StatsState()) {
+        private var logsJob: Job? = null
 
-        val gamificationStats =
-            gamificationRepository.getGamificationStats()
-                .stateIn(viewModelScope, WhileSubscribed(5000), null)
+        init {
+            observeBaseData()
+        }
 
-        val achievements =
-            gamificationRepository.getAchievements()
-                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
+        private fun observeBaseData() {
+            viewModelScope.launch {
+                combine(
+                    repository.getAllMasterExercises(),
+                    gamificationRepository.getGamificationStats(),
+                    gamificationRepository.getAchievements(),
+                    repository.getAllSessions(),
+                ) { masterExercises, stats, achievements, sessions ->
+                    updateState {
+                        copy(
+                            masterExercises = masterExercises,
+                            gamificationStats = stats,
+                            achievements = achievements,
+                            sessions = sessions,
+                        )
+                    }
+                }.collect {}
+            }
+        }
 
-        val sessions =
-            repository.getAllSessions()
-                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
+        override fun handleIntent(intent: StatsIntent) {
+            when (intent) {
+                is StatsIntent.SelectExercise -> selectExercise(intent.id)
+            }
+        }
 
-        private val _selectedExerciseId = MutableStateFlow<Long?>(null)
-        val selectedExerciseId = _selectedExerciseId.asStateFlow()
+        private fun selectExercise(id: Long?) {
+            updateState { copy(selectedExerciseId = id) }
+            observeExerciseLogs(id)
+        }
 
-        val exerciseLogs =
-            _selectedExerciseId.flatMapLatest { id ->
-                if (id != null) {
-                    repository.getLogsForMasterExercise(id)
-                } else {
-                    flowOf(emptyList())
+        private fun observeExerciseLogs(id: Long?) {
+            logsJob?.cancel()
+            if (id == null) {
+                updateState { copy(exerciseLogs = emptyList()) }
+                return
+            }
+            logsJob =
+                viewModelScope.launch {
+                    repository.getLogsForMasterExercise(id).collect { logs ->
+                        updateState { copy(exerciseLogs = logs) }
+                    }
                 }
-            }.stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
-
-        fun selectExercise(id: Long?) {
-            _selectedExerciseId.value = id
         }
     }

@@ -60,8 +60,8 @@ class GamificationRepositoryTest {
 
             coVerify {
                 preferencesRepository.updateGamificationStats(
-                    xpToAdd = 70,
-                    newLevel = 1, // sqrt(70/100) + 1 = 0 + 1 = 1
+                    xpToAdd = 90,
+                    newLevel = 1, // sqrt(90/100) + 1 = 0 + 1 = 1
                     newStreak = 1,
                     timestamp = any(),
                 )

@@ -30,6 +30,9 @@ class StatsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { repository.getAllMasterExercises() } returns flowOf(emptyList())
+        every { gamificationRepository.getGamificationStats() } returns flowOf(mockk(relaxed = true))
+        every { gamificationRepository.getAchievements() } returns flowOf(emptyList())
+        every { repository.getAllSessions() } returns flowOf(emptyList())
         viewModel = StatsViewModel(repository, gamificationRepository)
     }
 
@@ -47,18 +50,21 @@ class StatsViewModelTest {
             // Re-create to pick up mocked data
             viewModel = StatsViewModel(repository, gamificationRepository)
 
-            viewModel.masterExercises.test {
-                assertEquals(exercises, awaitItem())
+            viewModel.state.test {
+                // With UnconfinedTestDispatcher, we might get the updated state immediately
+                val item = awaitItem()
+                assertEquals(exercises, item.masterExercises)
             }
         }
 
     @Test
     fun `selectExercise should update selectedExerciseId`() =
         runTest {
-            viewModel.selectedExerciseId.test {
-                assertEquals(null, awaitItem())
-                viewModel.selectExercise(1L)
-                assertEquals(1L, awaitItem())
+            viewModel.state.test {
+                // Initial state
+                awaitItem()
+                viewModel.onIntent(StatsIntent.SelectExercise(1L))
+                assertEquals(1L, awaitItem().selectedExerciseId)
             }
         }
 }

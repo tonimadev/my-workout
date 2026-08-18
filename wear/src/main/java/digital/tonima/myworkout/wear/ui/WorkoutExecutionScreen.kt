@@ -53,22 +53,20 @@ import androidx.wear.compose.material3.ProgressIndicatorDefaults
 import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.Text
 import digital.tonima.myworkout.R
-import digital.tonima.myworkout.data.model.SessionWithLogs
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
 @Composable
 fun WorkoutExecutionScreen(
-    workout: WorkoutWithExercises,
-    activeSession: SessionWithLogs?,
-    restTimeRemaining: Long,
-    totalRestTime: Long,
-    isResting: Boolean,
+    state: WorkoutState,
     isAmbientMode: Boolean,
-    xpGained: Int?,
-    onCompleteSet: (Long, Long, Float, Int, Int) -> Unit,
-    onSkipRest: () -> Unit,
-    onFinishSession: () -> Unit,
+    onIntent: (WorkoutIntent) -> Unit,
 ) {
+    val workout = state.currentWorkout ?: return
+    val activeSession = state.activeSession
+    val restTimeRemaining = state.restTimeRemaining
+    val totalRestTime = state.totalRestTime
+    val isResting = state.isResting
+    val xpGained = state.lastXpGained
+
     val pagerState = rememberPagerState(pageCount = { workout.exercises.size })
 
     val currentExerciseIndex = pagerState.currentPage
@@ -129,16 +127,18 @@ fun WorkoutExecutionScreen(
                         onCompleteSet = {
                             if (activeSession != null) {
                                 val rest = if (isLastExercise && isLastSet) 0 else currentSet.restInterval
-                                onCompleteSet(
-                                    exercise.id,
-                                    currentSet.id,
-                                    weight,
-                                    reps,
-                                    rest,
+                                onIntent(
+                                    WorkoutIntent.CompleteSet(
+                                        exercise.id,
+                                        currentSet.id,
+                                        weight,
+                                        reps,
+                                        rest,
+                                    ),
                                 )
                             }
                         },
-                        onFinishSession = onFinishSession,
+                        onFinishSession = { onIntent(WorkoutIntent.FinishSession) },
                     )
                 } else {
                     // Exercise finished
@@ -154,7 +154,7 @@ fun WorkoutExecutionScreen(
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         if (pageIndex == workout.exercises.size - 1) {
-                            Button(onClick = onFinishSession) {
+                            Button(onClick = { onIntent(WorkoutIntent.FinishSession) }) {
                                 Text(stringResource(R.string.finish_workout))
                             }
                         } else {
@@ -218,7 +218,7 @@ fun WorkoutExecutionScreen(
                         total = totalRestTime,
                         nextSetInfo = nextSetInfo,
                         isAmbientMode = isAmbientMode,
-                        onSkip = onSkipRest,
+                        onSkip = { onIntent(WorkoutIntent.SkipRest) },
                     )
                 }
             }

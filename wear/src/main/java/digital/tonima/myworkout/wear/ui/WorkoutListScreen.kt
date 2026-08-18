@@ -19,13 +19,13 @@ import androidx.wear.compose.material3.lazy.rememberTransformationSpec
 import androidx.wear.compose.material3.lazy.transformedHeight
 import digital.tonima.myworkout.BuildConfig
 import digital.tonima.myworkout.R
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 
 @Composable
 fun WorkoutListScreen(
-    workouts: List<WorkoutWithExercises>,
+    state: WorkoutState,
     onWorkoutClick: (Long) -> Unit,
 ) {
+    val workouts = state.workouts
     val columnState = rememberTransformingLazyColumnState()
     val transformationSpec = rememberTransformationSpec()
 

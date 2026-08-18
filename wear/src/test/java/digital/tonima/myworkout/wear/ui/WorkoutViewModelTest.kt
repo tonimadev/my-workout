@@ -1,5 +1,6 @@
 package digital.tonima.myworkout.wear.ui
 
+import android.content.Context
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import io.mockk.coVerify
@@ -20,6 +21,7 @@ import org.junit.Test
 class WorkoutViewModelTest {
     private val repository = mockk<WorkoutRepository>(relaxed = true)
     private val alertManager = mockk<AlertManager>(relaxed = true)
+    private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: WorkoutViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -27,7 +29,7 @@ class WorkoutViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { repository.getAllWorkouts() } returns flowOf(emptyList())
-        viewModel = WorkoutViewModel(repository, alertManager)
+        viewModel = WorkoutViewModel(repository, alertManager, context)
     }
 
     @After
@@ -44,7 +46,7 @@ class WorkoutViewModelTest {
     @Test
     fun `loadWorkout should call repository`() =
         runTest {
-            viewModel.loadWorkout(1L)
+            viewModel.onIntent(WorkoutIntent.LoadWorkout(1L))
             coVerify { repository.getWorkoutById(1L) }
         }
 }

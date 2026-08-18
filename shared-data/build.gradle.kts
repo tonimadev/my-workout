@@ -23,9 +23,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
+    compileOnly(libs.androidx.compose.runtime)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.room.ktx)
@@ -34,6 +40,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.play.services.wearable)
+    implementation(platform(libs.androidx.compose.bom))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

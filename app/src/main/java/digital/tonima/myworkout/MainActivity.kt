@@ -40,10 +40,13 @@ import digital.tonima.myworkout.ui.navigation.rememberNavigationState
 import digital.tonima.myworkout.ui.navigation.toEntries
 import digital.tonima.myworkout.ui.onboarding.OnboardingScreen
 import digital.tonima.myworkout.ui.onboarding.OnboardingViewModel
+import digital.tonima.myworkout.ui.stats.StatsIntent
 import digital.tonima.myworkout.ui.stats.StatsScreen
 import digital.tonima.myworkout.ui.stats.StatsViewModel
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
 import digital.tonima.myworkout.ui.workout.WorkoutEditScreen
+import digital.tonima.myworkout.ui.workout.WorkoutEffect
+import digital.tonima.myworkout.ui.workout.WorkoutIntent
 import digital.tonima.myworkout.ui.workout.WorkoutListScreen
 import digital.tonima.myworkout.ui.workout.WorkoutTrackingScreen
 import digital.tonima.myworkout.ui.workout.WorkoutViewModel
@@ -101,13 +104,14 @@ fun MainAppContent() {
                 metadata = ListDetailSceneStrategy.listPane(),
             ) {
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val workouts by viewModel.workouts.collectAsState()
+                val state by viewModel.state.collectAsState()
+                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
+                val onWorkoutClick = remember { { id: Long -> navigator.navigate(WorkoutEdit(id)) } }
+
                 WorkoutListScreen(
-                    workouts = workouts,
-                    onWorkoutClick = { id -> navigator.navigate(WorkoutEdit(id)) },
-                    onAddWorkout = { name -> viewModel.addWorkout(name) },
-                    onDeleteWorkout = { workout -> viewModel.deleteWorkout(workout.workout) },
-                    onSyncWearable = { viewModel.syncWorkouts() },
+                    state = state,
+                    onIntent = onIntent,
+                    onWorkoutClick = onWorkoutClick,
                 )
             }
 
@@ -115,76 +119,63 @@ fun MainAppContent() {
                 metadata = detailPane(),
             ) { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val workout by viewModel.getWorkout(key.workoutId ?: -1).collectAsState(null)
+                val state by viewModel.state.collectAsState()
+                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
+                val onBack = remember { { navigator.goBack() } }
+                val onStartWorkout = remember { { id: Long -> navigator.navigate(WorkoutTracking(id)) } }
+
+                LaunchedEffect(key.workoutId) {
+                    key.workoutId?.let { viewModel.onIntent(WorkoutIntent.LoadWorkout(it)) }
+                }
+
                 WorkoutEditScreen(
-                    workout = workout,
-                    onBack = { navigator.goBack() },
-                    onStartWorkout = { id -> navigator.navigate(WorkoutTracking(id)) },
-                    onAddExercise = { id, name -> viewModel.addExercise(id, name) },
-                    onAddSet = { workoutId, exerciseId -> viewModel.addSet(workoutId, exerciseId) },
-                    onUpdateSet = { wId, eId, sId, weight, reps, rest ->
-                        viewModel.updateSet(wId, eId, sId, weight, reps, rest)
-                    },
-                    onDeleteSet = { wId, eId, sId -> viewModel.deleteSet(wId, eId, sId) },
-                    onDuplicateExercise = { wId, eId -> viewModel.duplicateExercise(wId, eId) },
-                    onDeleteExercise = { wId, eId -> viewModel.deleteExercise(wId, eId) },
+                    state = state,
+                    onIntent = onIntent,
+                    onBack = onBack,
+                    onStartWorkout = onStartWorkout,
                 )
             }
 
             entry<WorkoutTracking> { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val workout by viewModel.getWorkout(key.workoutId).collectAsState(null)
-                val activeSession by viewModel.activeSession.collectAsState()
-                val restTimeLeft by viewModel.restTimeRemaining.collectAsState()
-                val totalRestTime by viewModel.totalRestTime.collectAsState()
+                val state by viewModel.state.collectAsState()
+                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
+                val onCancel = remember { { navigator.goBack() } }
 
-                // Start workout if not already started
                 LaunchedEffect(key.workoutId) {
-                    viewModel.startWorkout(key.workoutId)
+                    viewModel.onIntent(WorkoutIntent.LoadWorkout(key.workoutId))
+                    viewModel.onIntent(WorkoutIntent.StartWorkout(key.workoutId))
+                }
+
+                LaunchedEffect(viewModel) {
+                    viewModel.effects.collect { effect ->
+                        when (effect) {
+                            WorkoutEffect.NavigateBack -> navigator.goBack()
+                        }
+                    }
                 }
 
                 WorkoutTrackingScreen(
-                    workout = workout,
-                    activeSession = activeSession,
-                    restTimeLeft = restTimeLeft,
-                    totalRestTime = totalRestTime,
-                    onLogSet = { sessionId, exerciseId, setId, weight, reps, rest ->
-                        viewModel.logSet(sessionId, exerciseId, setId, weight, reps, rest)
-                    },
-                    onSkipRest = { viewModel.skipRest() },
-                    onFinish = {
-                        viewModel.finishWorkout()
-                        navigator.goBack()
-                    },
-                    onCancel = {
-                        navigator.goBack()
-                    },
+                    state = state,
+                    onIntent = onIntent,
+                    onCancel = onCancel,
                 )
             }
 
             entry<History> {
                 val viewModel: HistoryViewModel = hiltViewModel()
-                val sessions by viewModel.sessions.collectAsState()
-                val masterExercises by viewModel.masterExercises.collectAsState()
-                HistoryScreen(sessions = sessions, masterExercises = masterExercises)
+                val state by viewModel.state.collectAsState()
+                HistoryScreen(state = state)
             }
 
             entry<Stats> {
                 val viewModel: StatsViewModel = hiltViewModel()
-                val masterExercises by viewModel.masterExercises.collectAsState()
-                val selectedExerciseId by viewModel.selectedExerciseId.collectAsState()
-                val logs by viewModel.exerciseLogs.collectAsState()
-                val gamificationStats by viewModel.gamificationStats.collectAsState()
-                val achievements by viewModel.achievements.collectAsState()
-                val sessions by viewModel.sessions.collectAsState()
+                val state by viewModel.state.collectAsState()
+                val onIntent = remember(viewModel) { { intent: StatsIntent -> viewModel.onIntent(intent) } }
+
                 StatsScreen(
-                    masterExercises = masterExercises,
-                    selectedExerciseId = selectedExerciseId,
-                    logs = logs,
-                    gamificationStats = gamificationStats,
-                    achievements = achievements,
-                    sessions = sessions,
-                    onSelectExercise = { id -> viewModel.selectExercise(id) },
+                    state = state,
+                    onIntent = onIntent,
                 )
             }
         }

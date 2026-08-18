@@ -26,7 +26,9 @@ import androidx.wear.ambient.AmbientLifecycleObserver.AmbientLifecycleCallback
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.navigation3.SwipeDismissableSceneStrategy
 import dagger.hilt.android.AndroidEntryPoint
+import digital.tonima.myworkout.wear.ui.WorkoutEffect
 import digital.tonima.myworkout.wear.ui.WorkoutExecutionScreen
+import digital.tonima.myworkout.wear.ui.WorkoutIntent
 import digital.tonima.myworkout.wear.ui.WorkoutListScreen
 import digital.tonima.myworkout.wear.ui.WorkoutViewModel
 import digital.tonima.myworkout.wear.ui.navigation.Screen
@@ -116,48 +118,39 @@ fun WearApp(
             ) { key ->
                 NavEntry(key) {
                     val viewModel: WorkoutViewModel = hiltViewModel()
+                    val state by viewModel.state.collectAsState()
+                    val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
+
+                    LaunchedEffect(viewModel) {
+                        viewModel.effects.collect { effect ->
+                            when (effect) {
+                                WorkoutEffect.NavigateBack -> {
+                                    if (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
+                                }
+                            }
+                        }
+                    }
+
                     when (key) {
                         is WorkoutList -> {
-                            val workouts by viewModel.workouts.collectAsState()
                             WorkoutListScreen(
-                                workouts = workouts,
+                                state = state,
                                 onWorkoutClick = { workoutId ->
                                     backStack.add(WorkoutExecution(workoutId))
                                 },
                             )
                         }
                         is WorkoutExecution -> {
-                            val workout by viewModel.currentWorkout.collectAsState()
-                            val activeSession by viewModel.activeSession.collectAsState()
-                            val restTime by viewModel.restTimeRemaining.collectAsState()
-                            val totalRestTime by viewModel.totalRestTime.collectAsState()
-                            val isResting by viewModel.isResting.collectAsState()
-                            val lastXpGained by viewModel.lastXpGained.collectAsState()
-
                             LaunchedEffect(key.workoutId) {
-                                viewModel.loadWorkout(key.workoutId)
-                                viewModel.startSession(key.workoutId)
+                                viewModel.onIntent(WorkoutIntent.LoadWorkout(key.workoutId))
+                                viewModel.onIntent(WorkoutIntent.StartSession(key.workoutId))
                             }
 
-                            workout?.let {
-                                WorkoutExecutionScreen(
-                                    workout = it,
-                                    activeSession = activeSession,
-                                    restTimeRemaining = restTime,
-                                    totalRestTime = totalRestTime,
-                                    isResting = isResting,
-                                    isAmbientMode = isAmbientMode,
-                                    xpGained = lastXpGained,
-                                    onCompleteSet = { exerciseId, setId, weight, reps, rest ->
-                                        viewModel.completeSet(exerciseId, setId, weight, reps, rest)
-                                    },
-                                    onSkipRest = { viewModel.skipRest() },
-                                    onFinishSession = {
-                                        viewModel.finishSession()
-                                        if (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
-                                    },
-                                )
-                            }
+                            WorkoutExecutionScreen(
+                                state = state,
+                                isAmbientMode = isAmbientMode,
+                                onIntent = onIntent,
+                            )
                         }
                     }
                 }

@@ -1,6 +1,5 @@
 package digital.tonima.myworkout.ui.history
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -55,10 +54,11 @@ import kotlin.time.Duration.Companion.milliseconds
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HistoryScreen(
-    sessions: List<SessionWithLogs>,
-    masterExercises: List<MasterExerciseEntity>,
+    state: HistoryState,
     modifier: Modifier = Modifier,
 ) {
+    val sessions = state.sessions
+    val masterExercises = state.masterExercises
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -99,7 +99,10 @@ fun HistoryScreen(
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
             ) {
-                items(sessions) { session ->
+                items(
+                    items = sessions,
+                    key = { it.session.id },
+                ) { session ->
                     HistoryItem(session, masterExercises)
                 }
             }

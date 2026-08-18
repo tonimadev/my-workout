@@ -1,7 +1,6 @@
 package digital.tonima.myworkout.ui.theme
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -43,7 +42,7 @@ private val LightColorScheme =
 
 @Composable
 fun MyWorkoutTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = true,
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false, // Disabled by default for consistent fitness brand
     content: @Composable () -> Unit,

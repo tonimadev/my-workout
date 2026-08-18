@@ -1,8 +1,10 @@
 package digital.tonima.myworkout.data.repository
 
+import android.util.Log
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
 import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.model.WorkoutSessionEntity
@@ -10,6 +12,7 @@ import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import io.mockk.mockkStatic
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
@@ -24,6 +27,7 @@ class WorkoutRepositoryTest {
 
     @Before
     fun setup() {
+        mockkStatic(Log::class)
         repository =
             WorkoutRepositoryImpl(
                 workoutDao,
@@ -83,11 +87,13 @@ class WorkoutRepositoryTest {
     fun `finishSession should update session, process gamification and sync to wearable`() =
         runTest {
             val session = WorkoutSessionEntity(id = 1, workoutId = 1, startTime = 0L)
+            val sessionWithLogs = SessionWithLogs(session, null, emptyList())
+            coEvery { workoutSessionDao.getSessionWithLogs(session.id) } returns flowOf(sessionWithLogs)
 
             repository.finishSession(session)
 
             coVerify { workoutSessionDao.updateSession(match { it.endTime != null }) }
             coVerify { gamificationRepository.processSessionCompletion(session.id) }
-            coVerify { wearableSyncManager.syncFinishSession(session.id) }
+            coVerify { wearableSyncManager.syncSession(sessionWithLogs) }
         }
 }

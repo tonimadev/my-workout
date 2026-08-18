@@ -3,7 +3,7 @@ package digital.tonima.myworkout.wear.ui
 import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
-import androidx.lifecycle.ViewModel
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -18,17 +18,48 @@ import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.wear.WorkoutService
+import digital.tonima.myworkout.wear.ui.util.MviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted.Companion.WhileSubscribed
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
+
+@Immutable
+data class WorkoutState(
+    val workouts: List<WorkoutWithExercises> = emptyList(),
+    val activeSession: SessionWithLogs? = null,
+    val currentWorkout: WorkoutWithExercises? = null,
+    val restTimeRemaining: Long = 0,
+    val totalRestTime: Long = 0,
+    val isResting: Boolean = false,
+    val lastXpGained: Int? = null,
+)
+
+sealed interface WorkoutIntent {
+    data object RequestSync : WorkoutIntent
+
+    data class LoadWorkout(val workoutId: Long) : WorkoutIntent
+
+    data class StartSession(val workoutId: Long) : WorkoutIntent
+
+    data class CompleteSet(
+        val exerciseId: Long,
+        val setId: Long,
+        val weight: Float,
+        val reps: Int,
+        val restInterval: Int,
+    ) : WorkoutIntent
+
+    data object SkipRest : WorkoutIntent
+
+    data object FinishSession : WorkoutIntent
+}
+
+sealed interface WorkoutEffect {
+    data object NavigateBack : WorkoutEffect
+}
 
 @HiltViewModel
 class WorkoutViewModel
@@ -37,13 +68,40 @@ class WorkoutViewModel
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
         @ApplicationContext private val context: Context,
-    ) : ViewModel() {
+    ) : MviViewModel<WorkoutState, WorkoutIntent, WorkoutEffect>(WorkoutState()) {
+        private var restJob: Job? = null
+
         init {
-            viewModelScope.launch {
-                repository.requestSync()
-            }
+            onIntent(WorkoutIntent.RequestSync)
+            observeWorkouts()
             if (BuildConfig.DEBUG) {
                 injectDebugData()
+            }
+        }
+
+        private fun observeWorkouts() {
+            viewModelScope.launch {
+                repository.getAllWorkouts().collect { workouts ->
+                    updateState { copy(workouts = workouts) }
+                }
+            }
+        }
+
+        override fun handleIntent(intent: WorkoutIntent) {
+            when (intent) {
+                is WorkoutIntent.RequestSync -> viewModelScope.launch { repository.requestSync() }
+                is WorkoutIntent.LoadWorkout -> loadWorkout(intent.workoutId)
+                is WorkoutIntent.StartSession -> startSession(intent.workoutId)
+                is WorkoutIntent.CompleteSet ->
+                    completeSet(
+                        intent.exerciseId,
+                        intent.setId,
+                        intent.weight,
+                        intent.reps,
+                        intent.restInterval,
+                    )
+                is WorkoutIntent.SkipRest -> skipRest()
+                is WorkoutIntent.FinishSession -> finishSession()
             }
         }
 
@@ -138,47 +196,23 @@ class WorkoutViewModel
             }
         }
 
-        val workouts =
-            repository.getAllWorkouts()
-                .stateIn(viewModelScope, WhileSubscribed(5000), emptyList())
-
-        private val _activeSession = MutableStateFlow<SessionWithLogs?>(null)
-        val activeSession: StateFlow<SessionWithLogs?> = _activeSession.asStateFlow()
-
-        private val _currentWorkout = MutableStateFlow<WorkoutWithExercises?>(null)
-        val currentWorkout: StateFlow<WorkoutWithExercises?> = _currentWorkout.asStateFlow()
-
-        private val _restTimeRemaining = MutableStateFlow(0L)
-        val restTimeRemaining: StateFlow<Long> = _restTimeRemaining.asStateFlow()
-
-        private val _totalRestTime = MutableStateFlow(0L)
-        val totalRestTime: StateFlow<Long> = _totalRestTime.asStateFlow()
-
-        private val _isResting = MutableStateFlow(false)
-        val isResting: StateFlow<Boolean> = _isResting.asStateFlow()
-
-        private val _lastXpGained = MutableStateFlow<Int?>(null)
-        val lastXpGained: StateFlow<Int?> = _lastXpGained.asStateFlow()
-
-        private var restJob: Job? = null
-
-        fun loadWorkout(workoutId: Long) {
+        private fun loadWorkout(workoutId: Long) {
             viewModelScope.launch {
                 repository.getWorkoutById(workoutId).collect { workout ->
-                    _currentWorkout.value = workout
+                    updateState { copy(currentWorkout = workout) }
                 }
             }
         }
 
-        fun startSession(workoutId: Long) {
-            if (_activeSession.value?.session?.workoutId == workoutId) return
+        private fun startSession(workoutId: Long) {
+            if (currentState.activeSession?.session?.workoutId == workoutId) return
 
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
                 repository.getSessionById(sessionId).collect { session ->
-                    _activeSession.value = session
+                    updateState { copy(activeSession = session) }
 
-                    val workout = _currentWorkout.value
+                    val workout = currentState.currentWorkout
                     if (session != null && workout != null) {
                         val intent =
                             Intent(context, WorkoutService::class.java).apply {
@@ -191,17 +225,17 @@ class WorkoutViewModel
             }
         }
 
-        fun completeSet(
+        private fun completeSet(
             exerciseId: Long,
             setId: Long,
             weight: Float,
             reps: Int,
             restInterval: Int,
         ) {
-            val session = _activeSession.value ?: return
+            val session = currentState.activeSession ?: return
             viewModelScope.launch {
                 val masterExerciseId =
-                    _currentWorkout.value?.exercises
+                    currentState.currentWorkout?.exercises
                         ?.find { it.exercise.id == exerciseId }?.exercise?.masterExerciseId ?: 0L
 
                 val log =
@@ -216,11 +250,11 @@ class WorkoutViewModel
                 repository.addLog(log)
 
                 // Show XP feedback
-                _lastXpGained.value = 10
+                updateState { copy(lastXpGained = 10) }
                 viewModelScope.launch {
                     delay(2000.milliseconds)
-                    if (_lastXpGained.value == 10) {
-                        _lastXpGained.value = null
+                    if (currentState.lastXpGained == 10) {
+                        updateState { copy(lastXpGained = null) }
                     }
                 }
 
@@ -242,16 +276,20 @@ class WorkoutViewModel
             restJob?.cancel()
             restJob =
                 viewModelScope.launch {
-                    _totalRestTime.value = seconds.toLong()
-                    _restTimeRemaining.value = seconds.toLong()
-                    _isResting.value = true
-                    while (_restTimeRemaining.value > 0) {
+                    updateState {
+                        copy(
+                            totalRestTime = seconds.toLong(),
+                            restTimeRemaining = seconds.toLong(),
+                            isResting = true,
+                        )
+                    }
+                    while (currentState.restTimeRemaining > 0) {
                         delay(1000.milliseconds)
-                        _restTimeRemaining.value -= 1
+                        updateState { copy(restTimeRemaining = restTimeRemaining - 1) }
                     }
                     // Wait for the last second of animation to complete on screen
                     delay(1100.milliseconds)
-                    _isResting.value = false
+                    updateState { copy(isResting = false) }
 
                     val resetIntent =
                         Intent(context, WorkoutService::class.java).apply {
@@ -264,10 +302,9 @@ class WorkoutViewModel
                 }
         }
 
-        fun skipRest() {
+        private fun skipRest() {
             restJob?.cancel()
-            _restTimeRemaining.value = 0
-            _isResting.value = false
+            updateState { copy(restTimeRemaining = 0, isResting = false) }
 
             val resetIntent =
                 Intent(context, WorkoutService::class.java).apply {
@@ -277,12 +314,12 @@ class WorkoutViewModel
             context.startService(resetIntent)
         }
 
-        fun finishSession() {
-            val session = _activeSession.value ?: return
+        private fun finishSession() {
+            val session = currentState.activeSession ?: return
             viewModelScope.launch {
                 repository.finishSession(session.session)
-                _activeSession.value = null
-                _currentWorkout.value = null
+                updateState { copy(activeSession = null, currentWorkout = null) }
+                sendEffect(WorkoutEffect.NavigateBack)
 
                 val intent =
                     Intent(context, WorkoutService::class.java).apply {

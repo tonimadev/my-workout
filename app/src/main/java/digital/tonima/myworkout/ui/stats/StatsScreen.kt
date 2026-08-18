@@ -74,14 +74,16 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(
-    masterExercises: List<MasterExerciseEntity>,
-    selectedExerciseId: Long?,
-    logs: List<WorkoutLogEntity>,
-    gamificationStats: GamificationStats?,
-    achievements: List<AchievementEntity>,
-    sessions: List<SessionWithLogs>,
-    onSelectExercise: (Long?) -> Unit,
+    state: StatsState,
+    onIntent: (StatsIntent) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    val masterExercises = state.masterExercises
+    val selectedExerciseId = state.selectedExerciseId
+    val logs = state.exerciseLogs
+    val gamificationStats = state.gamificationStats
+    val achievements = state.achievements
+    val sessions = state.sessions
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
@@ -115,7 +117,7 @@ fun StatsScreen(
                 },
                 navigationIcon = {
                     if (selectedExerciseId != null) {
-                        IconButton(onClick = { onSelectExercise(null) }) {
+                        IconButton(onClick = { onIntent(StatsIntent.SelectExercise(null)) }) {
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.content_description_back),
@@ -140,7 +142,7 @@ fun StatsScreen(
                     achievements = achievements,
                     sessions = sessions,
                     exercises = masterExercises,
-                    onSelectExercise = onSelectExercise,
+                    onSelectExercise = { onIntent(StatsIntent.SelectExercise(it)) },
                 )
             } else {
                 ExerciseStats(
