@@ -26,7 +26,7 @@ class HistoryViewModel
     @Inject
     constructor(
         private val repository: WorkoutRepository,
-    ) : MviViewModel<HistoryState, HistoryIntent, Unit>(HistoryState()) {
+    ) : MviViewModel<HistoryState, HistoryIntent>(HistoryState()) {
         init {
             observeHistory()
         }

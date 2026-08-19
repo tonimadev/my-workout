@@ -29,6 +29,7 @@ data class WorkoutState(
     val totalRestTime: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val shouldNavigateBack: Boolean = false,
 )
 
 sealed interface WorkoutIntent {
@@ -91,10 +92,8 @@ sealed interface WorkoutIntent {
         val workoutId: Long,
         val exerciseId: Long,
     ) : WorkoutIntent
-}
 
-sealed interface WorkoutEffect {
-    data object NavigateBack : WorkoutEffect
+    data object ResetNavigation : WorkoutIntent
 }
 
 @HiltViewModel
@@ -103,7 +102,7 @@ class WorkoutViewModel
     constructor(
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
-    ) : MviViewModel<WorkoutState, WorkoutIntent, WorkoutEffect>(WorkoutState()) {
+    ) : MviViewModel<WorkoutState, WorkoutIntent>(WorkoutState()) {
         private var restJob: Job? = null
 
         init {
@@ -159,6 +158,7 @@ class WorkoutViewModel
                 is WorkoutIntent.DeleteSet -> deleteSet(intent.workoutId, intent.exerciseId, intent.setId)
                 is WorkoutIntent.DuplicateExercise -> duplicateExercise(intent.workoutId, intent.exerciseId)
                 is WorkoutIntent.DeleteExercise -> deleteExercise(intent.workoutId, intent.exerciseId)
+                is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
             }
         }
 
@@ -249,8 +249,7 @@ class WorkoutViewModel
                 val session = currentState.activeSession?.session
                 if (session != null) {
                     repository.finishSession(session)
-                    updateState { copy(activeSession = null) }
-                    sendEffect(WorkoutEffect.NavigateBack)
+                    updateState { copy(activeSession = null, shouldNavigateBack = true) }
                 }
             }
         }

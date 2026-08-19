@@ -36,7 +36,7 @@ class StatsViewModel
     constructor(
         private val repository: WorkoutRepository,
         private val gamificationRepository: GamificationRepository,
-    ) : MviViewModel<StatsState, StatsIntent, Unit>(StatsState()) {
+    ) : MviViewModel<StatsState, StatsIntent>(StatsState()) {
         private var logsJob: Job? = null
 
         init {

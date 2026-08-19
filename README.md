@@ -54,7 +54,8 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 
 The project follows modern Android development best practices and Clean Architecture principles:
 
-- **MVVM (Model-View-ViewModel)**: Decouples UI logic from business logic for better testability and maintainability.
+- **MVI (Model-View-Intent)**: Utilizes a robust MVI pattern with a base `MviViewModel` to ensure predictable state management and unidirectional data flow.
+- **State-Driven Events**: One-off events (like navigation) are handled as part of the UI state, following the latest Android architecture recommendations to avoid the anti-pattern of using Channels for events.
 - **Jetpack Compose**: 100% declarative UI for both mobile and Wear OS modules.
 - **Navigation 3**: Utilizes the latest Jetpack Navigation 3 for state-driven, adaptive navigation.
 - **Room Database**: Local data persistence using Room for reliable offline access.

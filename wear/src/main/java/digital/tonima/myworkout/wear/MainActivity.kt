@@ -26,7 +26,6 @@ import androidx.wear.ambient.AmbientLifecycleObserver.AmbientLifecycleCallback
 import androidx.wear.compose.material3.AppScaffold
 import androidx.wear.compose.navigation3.SwipeDismissableSceneStrategy
 import dagger.hilt.android.AndroidEntryPoint
-import digital.tonima.myworkout.wear.ui.WorkoutEffect
 import digital.tonima.myworkout.wear.ui.WorkoutExecutionScreen
 import digital.tonima.myworkout.wear.ui.WorkoutIntent
 import digital.tonima.myworkout.wear.ui.WorkoutListScreen
@@ -121,13 +120,12 @@ fun WearApp(
                     val state by viewModel.state.collectAsState()
                     val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
 
-                    LaunchedEffect(viewModel) {
-                        viewModel.effects.collect { effect ->
-                            when (effect) {
-                                WorkoutEffect.NavigateBack -> {
-                                    if (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
-                                }
+                    LaunchedEffect(state.shouldNavigateBack) {
+                        if (state.shouldNavigateBack) {
+                            if (backStack.size > 1) {
+                                backStack.removeAt(backStack.lastIndex)
                             }
+                            viewModel.onIntent(WorkoutIntent.ResetNavigation)
                         }
                     }
 

@@ -45,7 +45,6 @@ import digital.tonima.myworkout.ui.stats.StatsScreen
 import digital.tonima.myworkout.ui.stats.StatsViewModel
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
 import digital.tonima.myworkout.ui.workout.WorkoutEditScreen
-import digital.tonima.myworkout.ui.workout.WorkoutEffect
 import digital.tonima.myworkout.ui.workout.WorkoutIntent
 import digital.tonima.myworkout.ui.workout.WorkoutListScreen
 import digital.tonima.myworkout.ui.workout.WorkoutTrackingScreen
@@ -147,11 +146,10 @@ fun MainAppContent() {
                     viewModel.onIntent(WorkoutIntent.StartWorkout(key.workoutId))
                 }
 
-                LaunchedEffect(viewModel) {
-                    viewModel.effects.collect { effect ->
-                        when (effect) {
-                            WorkoutEffect.NavigateBack -> navigator.goBack()
-                        }
+                LaunchedEffect(state.shouldNavigateBack) {
+                    if (state.shouldNavigateBack) {
+                        navigator.goBack()
+                        viewModel.onIntent(WorkoutIntent.ResetNavigation)
                     }
                 }
 

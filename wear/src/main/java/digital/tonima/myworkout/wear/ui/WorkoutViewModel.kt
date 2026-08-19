@@ -35,6 +35,7 @@ data class WorkoutState(
     val totalRestTime: Long = 0,
     val isResting: Boolean = false,
     val lastXpGained: Int? = null,
+    val shouldNavigateBack: Boolean = false,
 )
 
 sealed interface WorkoutIntent {
@@ -55,10 +56,8 @@ sealed interface WorkoutIntent {
     data object SkipRest : WorkoutIntent
 
     data object FinishSession : WorkoutIntent
-}
 
-sealed interface WorkoutEffect {
-    data object NavigateBack : WorkoutEffect
+    data object ResetNavigation : WorkoutIntent
 }
 
 @HiltViewModel
@@ -68,7 +67,7 @@ class WorkoutViewModel
         private val repository: WorkoutRepository,
         private val alertManager: AlertManager,
         @ApplicationContext private val context: Context,
-    ) : MviViewModel<WorkoutState, WorkoutIntent, WorkoutEffect>(WorkoutState()) {
+    ) : MviViewModel<WorkoutState, WorkoutIntent>(WorkoutState()) {
         private var restJob: Job? = null
 
         init {
@@ -102,6 +101,7 @@ class WorkoutViewModel
                     )
                 is WorkoutIntent.SkipRest -> skipRest()
                 is WorkoutIntent.FinishSession -> finishSession()
+                is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
             }
         }
 
@@ -318,8 +318,7 @@ class WorkoutViewModel
             val session = currentState.activeSession ?: return
             viewModelScope.launch {
                 repository.finishSession(session.session)
-                updateState { copy(activeSession = null, currentWorkout = null) }
-                sendEffect(WorkoutEffect.NavigateBack)
+                updateState { copy(activeSession = null, currentWorkout = null, shouldNavigateBack = true) }
 
                 val intent =
                     Intent(context, WorkoutService::class.java).apply {
