@@ -1,0 +1,10 @@
+<resources>
+    <string name="action_next">Next</string>
+    <string name="action_start_using">Start Using</string>
+    <string name="onboarding_welcome_title">Welcome to My Workout</string>
+    <string name="onboarding_welcome_desc">Your companion for simple and effective weight training management.</string>
+    <string name="onboarding_stats_title">Track Your Progress</string>
+    <string name="onboarding_stats_desc">Visualize your weight evolution for each exercise over time.</string>
+    <string name="onboarding_wear_title">Train with Your Watch</string>
+    <string name="onboarding_wear_desc">Sync your workouts to your Wear OS watch and log your sets directly from your wrist.</string>
+</resources>

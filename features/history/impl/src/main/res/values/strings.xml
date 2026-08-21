@@ -1,0 +1,9 @@
+<resources>
+    <string name="nav_history">History</string>
+    <string name="history_title">Workout History</string>
+    <string name="no_history_message">No history yet. Start a workout!</string>
+    <string name="session_at">Session on %1$s</string>
+    <string name="sets_logged_count">%1$d sets logged</string>
+    <string name="set_summary">Set %1$d: %2$.1fkg x %3$d (%4$ds rest)</string>
+    <string name="exercises_count">%1$d exercises</string>
+</resources>

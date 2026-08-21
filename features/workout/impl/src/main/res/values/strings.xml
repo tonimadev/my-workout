@@ -1,0 +1,35 @@
+<resources>
+    <string name="workout_details">Workout Details</string>
+    <string name="action_add_set">Add Set</string>
+    <string name="action_add_exercise">Add Exercise</string>
+    <string name="dialog_add_exercise_title">Add Exercise</string>
+    <string name="action_add">Add</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="dialog_edit_set_title">Edit Set</string>
+    <string name="label_weight_kg">Weight (kg)</string>
+    <string name="label_reps">Reps</string>
+    <string name="label_rest_interval">Rest Interval (seconds)</string>
+    <string name="action_save">Save</string>
+    <string name="action_duplicate">Duplicate</string>
+    <string name="action_delete">Delete</string>
+    <string name="workout_list_title">My Workouts</string>
+    <string name="no_workouts_message">No workouts yet. Add one!</string>
+    <string name="dialog_add_workout_title">Add Workout</string>
+    <string name="finish_workout">Finish Workout</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_reps">reps</string>
+    <string name="content_description_back">Back</string>
+    <string name="content_description_add_workout">Add Workout</string>
+    <string name="content_description_delete">Delete</string>
+    <string name="content_description_cancel">Cancel</string>
+    <string name="exercises_count">%1$d exercises</string>
+    <string name="rest_interval_label">Rest Interval</string>
+    <string name="action_skip">Skip</string>
+    <string name="workout_list_subtitle">Exceed your limits today</string>
+    <string name="no_workouts_subtitle">Tap + to start your journey</string>
+    <string name="times_trained">Times trained: %1$d</string>
+    <string name="action_create">CREATE</string>
+    <string name="label_workout_name_placeholder">Workout Name (ex: Push Day)</string>
+    <string name="label_exercise_name_placeholder">Exercise Name</string>
+    <string name="seconds_label">SECONDS</string>
+</resources>

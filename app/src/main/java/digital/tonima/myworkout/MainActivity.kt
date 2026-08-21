@@ -28,27 +28,27 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
 import dagger.hilt.android.AndroidEntryPoint
-import digital.tonima.myworkout.ui.history.HistoryScreen
-import digital.tonima.myworkout.ui.history.HistoryViewModel
-import digital.tonima.myworkout.ui.navigation.Destination.History
-import digital.tonima.myworkout.ui.navigation.Destination.Stats
-import digital.tonima.myworkout.ui.navigation.Destination.WorkoutEdit
-import digital.tonima.myworkout.ui.navigation.Destination.WorkoutList
-import digital.tonima.myworkout.ui.navigation.Destination.WorkoutTracking
+import digital.tonima.myworkout.features.history.bridge.HistoryDestination.History
+import digital.tonima.myworkout.features.history.impl.HistoryScreen
+import digital.tonima.myworkout.features.history.impl.HistoryViewModel
+import digital.tonima.myworkout.features.onboarding.impl.OnboardingScreen
+import digital.tonima.myworkout.features.onboarding.impl.OnboardingViewModel
+import digital.tonima.myworkout.features.stats.bridge.StatsDestination.Stats
+import digital.tonima.myworkout.features.stats.impl.StatsIntent
+import digital.tonima.myworkout.features.stats.impl.StatsScreen
+import digital.tonima.myworkout.features.stats.impl.StatsViewModel
+import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutEdit
+import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutList
+import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutTracking
+import digital.tonima.myworkout.features.workout.impl.WorkoutEditScreen
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent
+import digital.tonima.myworkout.features.workout.impl.WorkoutListScreen
+import digital.tonima.myworkout.features.workout.impl.WorkoutTrackingScreen
+import digital.tonima.myworkout.features.workout.impl.WorkoutViewModel
 import digital.tonima.myworkout.ui.navigation.Navigator
 import digital.tonima.myworkout.ui.navigation.rememberNavigationState
 import digital.tonima.myworkout.ui.navigation.toEntries
-import digital.tonima.myworkout.ui.onboarding.OnboardingScreen
-import digital.tonima.myworkout.ui.onboarding.OnboardingViewModel
-import digital.tonima.myworkout.ui.stats.StatsIntent
-import digital.tonima.myworkout.ui.stats.StatsScreen
-import digital.tonima.myworkout.ui.stats.StatsViewModel
 import digital.tonima.myworkout.ui.theme.MyWorkoutTheme
-import digital.tonima.myworkout.ui.workout.WorkoutEditScreen
-import digital.tonima.myworkout.ui.workout.WorkoutIntent
-import digital.tonima.myworkout.ui.workout.WorkoutListScreen
-import digital.tonima.myworkout.ui.workout.WorkoutTrackingScreen
-import digital.tonima.myworkout.ui.workout.WorkoutViewModel
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -90,7 +90,7 @@ fun MainAppContent() {
     val topLevelRoutes = remember { setOf(WorkoutList as NavKey, History as NavKey, Stats as NavKey) }
     val navigationState =
         rememberNavigationState(
-            startRoute = WorkoutList,
+            startRoute = WorkoutList as NavKey,
             topLevelRoutes = topLevelRoutes,
         )
     val navigator = remember { Navigator(navigationState) }

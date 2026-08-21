@@ -1,0 +1,18 @@
+<resources>
+    <string name="nav_stats">Evolução</string>
+    <string name="stats_title">Evolução de Carga</string>
+    <string name="dashboard_pro_title">DASHBOARD PRO</string>
+    <string name="technical_evolution_label">EVOLUÇÃO TÉCNICA</string>
+    <string name="view_load_history">Ver histórico de carga</string>
+    <string name="level_label">NÍVEL %1$d</string>
+    <string name="accumulated_xp_label">%1$d XP ACUMULADO</string>
+    <string name="next_level_xp_label">PRÓXIMO NÍVEL: %1$dXP</string>
+    <string name="recent_achievements_label">CONQUISTAS RECENTES</string>
+    <string name="weekly_volume_label">VOLUME SEMANAL</string>
+    <string name="insufficient_data_chart">Dados insuficientes para gerar o gráfico.</string>
+    <string name="default_exercise_name">EXERCÍCIO</string>
+    <string name="no_data_exercise">Nenhum dado registrado para este exercício.</string>
+    <string name="load_history_label">HISTÓRICO DE CARGA</string>
+    <string name="kg_x_reps">%1$.1f KG X %2$d</string>
+    <string name="content_description_back">Voltar</string>
+</resources>

@@ -1,0 +1,10 @@
+<resources>
+    <string name="action_next">Próximo</string>
+    <string name="action_start_using">Começar</string>
+    <string name="onboarding_welcome_title">Bem-vindo ao Meu Treino</string>
+    <string name="onboarding_welcome_desc">Seu companheiro para gerenciar treinos de musculação de forma simples e eficaz.</string>
+    <string name="onboarding_stats_title">Acompanhe sua Evolução</string>
+    <string name="onboarding_stats_desc">Visualize a evolução de carga de cada exercício ao longo do tempo.</string>
+    <string name="onboarding_wear_title">Treine com seu Relógio</string>
+    <string name="onboarding_wear_desc">Sincronize seus treinos com seu relógio Wear OS e registre suas séries direto do pulso.</string>
+</resources>

@@ -5,7 +5,7 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import digital.tonima.myworkout.data.util.AlertManager
-import digital.tonima.myworkout.util.PhoneAlertManager
+import digital.tonima.myworkout.data.util.PhoneAlertManager
 import javax.inject.Singleton
 
 @Module

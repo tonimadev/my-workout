@@ -70,7 +70,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
-    implementation(project(":shared-data"))
+    implementation(project(":core:data"))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

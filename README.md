@@ -52,22 +52,30 @@ My Workout provides a robust platform for creating, editing, and tracking workou
 
 ## Architecture
 
-The project follows modern Android development best practices and Clean Architecture principles:
+The project follows modern Android development best practices and a **Feature-based Modular Architecture** using the **Bridge/Impl** (API/Implementation) pattern:
 
+- **Modularization**: Code is organized into independent feature modules and core libraries to improve build times, encapsulation, and scalability.
+- **Bridge/Impl Pattern**: Features are split into a `:bridge` module (public API, navigation keys) and an `:impl` module (internal UI, logic, and DI), preventing tight coupling between features.
 - **MVI (Model-View-Intent)**: Utilizes a robust MVI pattern with a base `MviViewModel` to ensure predictable state management and unidirectional data flow.
-- **State-Driven Events**: One-off events (like navigation) are handled as part of the UI state, following the latest Android architecture recommendations to avoid the anti-pattern of using Channels for events.
+- **State-Driven Events**: One-off events (like navigation) are handled as part of the UI state, following the latest Android architecture recommendations.
 - **Jetpack Compose**: 100% declarative UI for both mobile and Wear OS modules.
 - **Navigation 3**: Utilizes the latest Jetpack Navigation 3 for state-driven, adaptive navigation.
-- **Room Database**: Local data persistence using Room for reliable offline access.
+- **Room Database**: Local data persistence using Room.
 - **Hilt**: Dependency injection for modular and scalable code.
 - **Wearable Data Layer**: Robust communication and data sync between handheld and wearable devices.
-- **Coroutines & Flow**: Asynchronous programming for responsive UI and data streams.
 
 ## Project Structure
 
-- `:app`: The mobile application module.
-- `:wear`: The Wear OS companion application module.
-- `:shared-data`: A shared library module containing data models, database, and repository logic used by both app and wear modules.
+- **`:app`**: The mobile application entry point and navigation orchestrator.
+- **`:wear`**: The Wear OS companion application module.
+- **`:core:*`**: Shared infrastructure modules:
+    - `:core:ui`: Common UI components, themes, and base MVI classes.
+    - `:core:data`: Centralized data logic, repositories, and persistence (Room).
+    - `:core:navigation`: Navigation infrastructure and base types.
+    - `:core:common`: Base utilities and extensions.
+- **`:features:*`**: Business features organized by the Bridge/Impl pattern:
+    - `:features:[name]:bridge`: Public API and navigation destinations.
+    - `:features:[name]:impl`: Feature-specific UI, ViewModels, and logic.
 
 ## Setup Instructions
 
