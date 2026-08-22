@@ -15,6 +15,7 @@ import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toJson
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toShareableText
+import digital.tonima.myworkout.data.util.WorkoutSharingUtils.validate
 import digital.tonima.myworkout.ui.util.MviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -106,6 +107,8 @@ sealed interface WorkoutIntent {
 
     data object ClearShareData : WorkoutIntent
 
+    data object ClearError : WorkoutIntent
+
     data object ResetNavigation : WorkoutIntent
 }
 
@@ -175,6 +178,7 @@ class WorkoutViewModel
                 is WorkoutIntent.ExportWorkout -> exportWorkout(intent.workout)
                 is WorkoutIntent.ImportWorkout -> importWorkout(intent.json)
                 is WorkoutIntent.ClearShareData -> updateState { copy(shareText = null, exportJson = null) }
+                is WorkoutIntent.ClearError -> updateState { copy(error = null) }
                 is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
             }
         }
@@ -436,9 +440,13 @@ class WorkoutViewModel
             viewModelScope.launch {
                 val workout = WorkoutSharingUtils.decodeJsonToWorkout(json)
                 if (workout != null) {
-                    repository.importWorkout(workout)
+                    if (WorkoutSharingUtils.run { workout.validate() }) {
+                        repository.importWorkout(workout)
+                    } else {
+                        updateState { copy(error = "import_error_validation") }
+                    }
                 } else {
-                    updateState { copy(error = "Invalid workout data") }
+                    updateState { copy(error = "import_error_format") }
                 }
             }
         }

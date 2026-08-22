@@ -38,5 +38,6 @@
     <string name="dialog_import_workout_title">Importar Treino</string>
     <string name="label_import_json_hint">Cole o código JSON aqui</string>
     <string name="import_success">Treino importado com sucesso!</string>
-    <string name="import_error">Erro ao importar treino. JSON inválido.</string>
+    <string name="import_error_format">Formato JSON inválido.</string>
+    <string name="import_error_validation">Dados do treino inválidos (muitos exercícios ou valores fora do limite).</string>
 </resources>

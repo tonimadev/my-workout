@@ -37,6 +37,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Surface
@@ -45,6 +47,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,9 +79,27 @@ fun WorkoutListScreen(
     var showImportDialog by remember { mutableStateOf(false) }
     var newWorkoutName by remember { mutableStateOf("") }
     var importJson by remember { mutableStateOf("") }
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    val errorFormat = stringResource(R.string.import_error_format)
+    val errorValidation = stringResource(R.string.import_error_validation)
+
+    LaunchedEffect(state.error) {
+        state.error?.let { error ->
+            val message =
+                when (error) {
+                    "import_error_format" -> errorFormat
+                    "import_error_validation" -> errorValidation
+                    else -> error
+                }
+            snackbarHostState.showSnackbar(message)
+            onIntent(WorkoutIntent.ClearError)
+        }
+    }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             LargeTopAppBar(
                 title = {

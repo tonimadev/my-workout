@@ -38,5 +38,6 @@
     <string name="dialog_import_workout_title">Import Workout</string>
     <string name="label_import_json_hint">Paste JSON code here</string>
     <string name="import_success">Workout imported successfully!</string>
-    <string name="import_error">Error importing workout. Invalid JSON.</string>
+    <string name="import_error_format">Invalid JSON format.</string>
+    <string name="import_error_validation">Invalid workout data (too many exercises or invalid values).</string>
 </resources>

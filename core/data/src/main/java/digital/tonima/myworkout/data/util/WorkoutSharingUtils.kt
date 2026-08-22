@@ -43,4 +43,21 @@ object WorkoutSharingUtils {
             null
         }
     }
+
+    fun WorkoutWithExercises.validate(): Boolean {
+        if (workout.name.isBlank() || workout.name.length > 100) return false
+        if (exercises.isEmpty() || exercises.size > 50) return false
+
+        return exercises.all { ex ->
+            ex.exercise.name.isNotBlank() &&
+                ex.exercise.name.length <= 100 &&
+                ex.sets.isNotEmpty() &&
+                ex.sets.size <= 50 &&
+                ex.sets.all { set ->
+                    set.targetWeight in 0.0..1000.0 &&
+                        set.targetReps in 0..1000 &&
+                        set.restInterval in 0..3600
+                }
+        }
+    }
 }
