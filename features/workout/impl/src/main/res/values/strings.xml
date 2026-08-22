@@ -32,4 +32,11 @@
     <string name="label_workout_name_placeholder">Workout Name (ex: Push Day)</string>
     <string name="label_exercise_name_placeholder">Exercise Name</string>
     <string name="seconds_label">SECONDS</string>
+    <string name="action_share">Share</string>
+    <string name="action_export">Export JSON</string>
+    <string name="action_import">Import Workout</string>
+    <string name="dialog_import_workout_title">Import Workout</string>
+    <string name="label_import_json_hint">Paste JSON code here</string>
+    <string name="import_success">Workout imported successfully!</string>
+    <string name="import_error">Error importing workout. Invalid JSON.</string>
 </resources>

@@ -55,6 +55,8 @@ interface WorkoutRepository {
     suspend fun forceSync()
 
     suspend fun saveRemoteSession(sessionWithLogs: SessionWithLogs)
+
+    suspend fun importWorkout(workout: WorkoutWithExercises)
 }
 
 @Singleton
@@ -160,5 +162,17 @@ class WorkoutRepositoryImpl
             }
             gamificationRepository.processSessionCompletion(newSessionId)
             Log.i("WorkoutRepository", "Remote session and gamification processed successfully")
+        }
+
+        override suspend fun importWorkout(workout: WorkoutWithExercises) {
+            val cleanedWorkout = workout.workout.copy(id = 0)
+            val cleanedExercises =
+                workout.exercises.map { ex ->
+                    ex.copy(
+                        exercise = ex.exercise.copy(id = 0, workoutId = 0),
+                        sets = ex.sets.map { it.copy(id = 0, exerciseId = 0) },
+                    )
+                }
+            addWorkout(cleanedWorkout, cleanedExercises)
         }
     }

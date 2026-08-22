@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Sync
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
@@ -72,7 +73,9 @@ fun WorkoutListScreen(
     val workouts = state.workouts
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showAddDialog by remember { mutableStateOf(false) }
+    var showImportDialog by remember { mutableStateOf(false) }
     var newWorkoutName by remember { mutableStateOf("") }
+    var importJson by remember { mutableStateOf("") }
 
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -95,6 +98,17 @@ fun WorkoutListScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { showImportDialog = true },
+                        colors =
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                    ) {
+                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.action_import))
+                    }
+
                     IconButton(
                         onClick = { onIntent(WorkoutIntent.SyncWorkouts) },
                         colors =
@@ -163,6 +177,21 @@ fun WorkoutListScreen(
                     onIntent(WorkoutIntent.AddWorkout(newWorkoutName))
                     newWorkoutName = ""
                     showAddDialog = false
+                }
+            },
+        )
+    }
+
+    if (showImportDialog) {
+        ImportWorkoutDialog(
+            json = importJson,
+            onJsonChange = { importJson = it },
+            onDismiss = { showImportDialog = false },
+            onConfirm = {
+                if (importJson.isNotBlank()) {
+                    onIntent(WorkoutIntent.ImportWorkout(importJson))
+                    importJson = ""
+                    showImportDialog = false
                 }
             },
         )
@@ -380,6 +409,58 @@ private fun AddWorkoutDialog(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 12.dp),
             ) {
                 Text(stringResource(R.string.action_create).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        shape = RoundedCornerShape(32.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+    )
+}
+
+@Composable
+private fun ImportWorkoutDialog(
+    json: String,
+    onJsonChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.dialog_import_workout_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+            )
+        },
+        text = {
+            OutlinedTextField(
+                value = json,
+                onValueChange = onJsonChange,
+                label = { Text(stringResource(R.string.label_import_json_hint)) },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors =
+                    OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                    ),
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(12.dp),
+            ) {
+                Text(stringResource(R.string.action_import).uppercase(), fontWeight = FontWeight.Bold)
             }
         },
         dismissButton = {

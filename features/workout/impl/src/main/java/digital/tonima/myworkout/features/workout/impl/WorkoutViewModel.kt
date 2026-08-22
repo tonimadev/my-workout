@@ -12,6 +12,9 @@ import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.data.util.WorkoutSharingUtils
+import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toJson
+import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toShareableText
 import digital.tonima.myworkout.ui.util.MviViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -29,6 +32,8 @@ data class WorkoutState(
     val totalRestTime: Int = 0,
     val isLoading: Boolean = false,
     val error: String? = null,
+    val shareText: String? = null,
+    val exportJson: String? = null,
     val shouldNavigateBack: Boolean = false,
 )
 
@@ -92,6 +97,14 @@ sealed interface WorkoutIntent {
         val workoutId: Long,
         val exerciseId: Long,
     ) : WorkoutIntent
+
+    data class ShareWorkout(val workout: WorkoutWithExercises) : WorkoutIntent
+
+    data class ExportWorkout(val workout: WorkoutWithExercises) : WorkoutIntent
+
+    data class ImportWorkout(val json: String) : WorkoutIntent
+
+    data object ClearShareData : WorkoutIntent
 
     data object ResetNavigation : WorkoutIntent
 }
@@ -158,6 +171,10 @@ class WorkoutViewModel
                 is WorkoutIntent.DeleteSet -> deleteSet(intent.workoutId, intent.exerciseId, intent.setId)
                 is WorkoutIntent.DuplicateExercise -> duplicateExercise(intent.workoutId, intent.exerciseId)
                 is WorkoutIntent.DeleteExercise -> deleteExercise(intent.workoutId, intent.exerciseId)
+                is WorkoutIntent.ShareWorkout -> shareWorkout(intent.workout)
+                is WorkoutIntent.ExportWorkout -> exportWorkout(intent.workout)
+                is WorkoutIntent.ImportWorkout -> importWorkout(intent.json)
+                is WorkoutIntent.ClearShareData -> updateState { copy(shareText = null, exportJson = null) }
                 is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
             }
         }
@@ -403,6 +420,25 @@ class WorkoutViewModel
                                 exWithSets.copy(exercise = exWithSets.exercise.copy(order = index))
                             }
                     repository.addWorkout(workoutWithEx.workout, updatedExercises)
+                }
+            }
+        }
+
+        private fun shareWorkout(workout: WorkoutWithExercises) {
+            updateState { copy(shareText = workout.toShareableText()) }
+        }
+
+        private fun exportWorkout(workout: WorkoutWithExercises) {
+            updateState { copy(exportJson = workout.toJson()) }
+        }
+
+        private fun importWorkout(json: String) {
+            viewModelScope.launch {
+                val workout = WorkoutSharingUtils.decodeJsonToWorkout(json)
+                if (workout != null) {
+                    repository.importWorkout(workout)
+                } else {
+                    updateState { copy(error = "Invalid workout data") }
                 }
             }
         }

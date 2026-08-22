@@ -1,5 +1,6 @@
 package digital.tonima.myworkout.features.workout.impl
 
+import android.content.Intent
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -22,10 +23,12 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -48,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,6 +60,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -74,9 +79,38 @@ fun WorkoutEditScreen(
     modifier: Modifier = Modifier,
 ) {
     val workout = state.selectedWorkout
+    val context = LocalContext.current
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
     var editingSet by remember { mutableStateOf<Pair<Long, SetEntity>?>(null) }
+
+    LaunchedEffect(state.shareText) {
+        state.shareText?.let { text ->
+            val sendIntent =
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, text)
+                    type = "text/plain"
+                }
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            context.startActivity(shareIntent)
+            onIntent(WorkoutIntent.ClearShareData)
+        }
+    }
+
+    LaunchedEffect(state.exportJson) {
+        state.exportJson?.let { json ->
+            val sendIntent =
+                Intent().apply {
+                    action = Intent.ACTION_SEND
+                    putExtra(Intent.EXTRA_TEXT, json)
+                    type = "text/plain"
+                }
+            val shareIntent = Intent.createChooser(sendIntent, "Export Workout JSON")
+            context.startActivity(shareIntent)
+            onIntent(WorkoutIntent.ClearShareData)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -102,6 +136,18 @@ fun WorkoutEditScreen(
                 },
                 actions = {
                     if (workout != null) {
+                        IconButton(onClick = { onIntent(WorkoutIntent.ShareWorkout(workout)) }) {
+                            Icon(
+                                Icons.Default.Share,
+                                contentDescription = stringResource(R.string.action_share),
+                            )
+                        }
+                        IconButton(onClick = { onIntent(WorkoutIntent.ExportWorkout(workout)) }) {
+                            Icon(
+                                Icons.Default.Code,
+                                contentDescription = stringResource(R.string.action_export),
+                            )
+                        }
                         IconButton(
                             onClick = { onStartWorkout(workout.workout.id) },
                             colors =
