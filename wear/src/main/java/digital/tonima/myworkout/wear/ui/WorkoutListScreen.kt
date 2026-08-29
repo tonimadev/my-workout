@@ -48,8 +48,7 @@ fun WorkoutListScreen(
             }
 
             items(workouts.size) { index ->
-                val workoutWithExercises = workouts[index]
-                val workout = workoutWithExercises.workout
+                val workout = workouts[index]
                 val itemScope = this
 
                 Button(
@@ -68,7 +67,7 @@ fun WorkoutListScreen(
                     },
                     secondaryLabel = {
                         Text(
-                            text = stringResource(R.string.exercises_count, workoutWithExercises.exercises.size),
+                            text = stringResource(R.string.exercises_count, workout.exercises.size),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )

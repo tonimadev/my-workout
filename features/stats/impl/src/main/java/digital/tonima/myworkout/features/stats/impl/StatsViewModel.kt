@@ -3,14 +3,18 @@ package digital.tonima.myworkout.features.stats.impl
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import digital.tonima.myworkout.data.model.AchievementEntity
-import digital.tonima.myworkout.data.model.MasterExerciseEntity
-import digital.tonima.myworkout.data.model.SessionWithLogs
-import digital.tonima.myworkout.data.model.WorkoutLogEntity
-import digital.tonima.myworkout.data.preferences.GamificationStats
 import digital.tonima.myworkout.data.repository.GamificationRepository
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.ui.model.AchievementUiModel
+import digital.tonima.myworkout.ui.model.GamificationStatsUiModel
+import digital.tonima.myworkout.ui.model.LogUiModel
+import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
+import digital.tonima.myworkout.ui.model.SessionUiModel
 import digital.tonima.myworkout.ui.util.MviViewModel
+import digital.tonima.myworkout.ui.util.toUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -18,12 +22,12 @@ import javax.inject.Inject
 
 @Immutable
 data class StatsState(
-    val masterExercises: List<MasterExerciseEntity> = emptyList(),
+    val masterExercises: ImmutableList<MasterExerciseUiModel> = persistentListOf(),
     val selectedExerciseId: Long? = null,
-    val exerciseLogs: List<WorkoutLogEntity> = emptyList(),
-    val gamificationStats: GamificationStats = GamificationStats(0, 1, 0, 0L),
-    val achievements: List<AchievementEntity> = emptyList(),
-    val sessions: List<SessionWithLogs> = emptyList(),
+    val exerciseLogs: ImmutableList<LogUiModel> = persistentListOf(),
+    val gamificationStats: GamificationStatsUiModel = GamificationStatsUiModel(0, 1, 0, 0L),
+    val achievements: ImmutableList<AchievementUiModel> = persistentListOf(),
+    val sessions: ImmutableList<SessionUiModel> = persistentListOf(),
 )
 
 sealed interface StatsIntent {
@@ -53,10 +57,10 @@ class StatsViewModel
                 ) { masterExercises, stats, achievements, sessions ->
                     updateState {
                         copy(
-                            masterExercises = masterExercises,
-                            gamificationStats = stats,
-                            achievements = achievements,
-                            sessions = sessions,
+                            masterExercises = masterExercises.map { it.toUiModel() }.toImmutableList(),
+                            gamificationStats = stats.toUiModel(),
+                            achievements = achievements.map { it.toUiModel() }.toImmutableList(),
+                            sessions = sessions.map { it.toUiModel() }.toImmutableList(),
                         )
                     }
                 }.collect {}
@@ -77,13 +81,13 @@ class StatsViewModel
         private fun observeExerciseLogs(id: Long?) {
             logsJob?.cancel()
             if (id == null) {
-                updateState { copy(exerciseLogs = emptyList()) }
+                updateState { copy(exerciseLogs = persistentListOf()) }
                 return
             }
             logsJob =
                 viewModelScope.launch {
                     repository.getLogsForMasterExercise(id).collect { logs ->
-                        updateState { copy(exerciseLogs = logs) }
+                        updateState { copy(exerciseLogs = logs.map { it.toUiModel() }.toImmutableList()) }
                     }
                 }
         }

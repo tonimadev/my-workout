@@ -99,9 +99,8 @@ fun WorkoutExecutionScreen(
                         .fillMaxSize()
                         .background(if (isAmbientMode) Color.Black else MaterialTheme.colorScheme.background),
             ) { pageIndex ->
-                val exerciseWithSets = workout.exercises[pageIndex]
-                val exercise = exerciseWithSets.exercise
-                val sets = exerciseWithSets.sets
+                val exercise = workout.exercises[pageIndex]
+                val sets = exercise.sets
 
                 // Find current set for this exercise in the session
                 val exerciseSetIds = remember(sets) { sets.map { it.id }.toSet() }
@@ -195,7 +194,7 @@ fun WorkoutExecutionScreen(
                                 val nextSet = ex.sets.find { it.id !in loggedSetIds }
                                 if (nextSet != null) {
                                     val setIndex = ex.sets.indexOf(nextSet) + 1
-                                    foundNext = "${ex.exercise.name} ($setIndex/${ex.sets.size})"
+                                    foundNext = "${ex.name} ($setIndex/${ex.sets.size})"
                                     break
                                 }
                             }

@@ -3,18 +3,22 @@ package digital.tonima.myworkout.features.history.impl
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import digital.tonima.myworkout.data.model.MasterExerciseEntity
-import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
+import digital.tonima.myworkout.ui.model.SessionUiModel
 import digital.tonima.myworkout.ui.util.MviViewModel
+import digital.tonima.myworkout.ui.util.toUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @Immutable
 data class HistoryState(
-    val sessions: List<SessionWithLogs> = emptyList(),
-    val masterExercises: List<MasterExerciseEntity> = emptyList(),
+    val sessions: ImmutableList<SessionUiModel> = persistentListOf(),
+    val masterExercises: ImmutableList<MasterExerciseUiModel> = persistentListOf(),
 )
 
 sealed interface HistoryIntent {
@@ -39,8 +43,8 @@ class HistoryViewModel
                 ) { sessions, masterExercises ->
                     updateState {
                         copy(
-                            sessions = sessions,
-                            masterExercises = masterExercises,
+                            sessions = sessions.map { it.toUiModel() }.toImmutableList(),
+                            masterExercises = masterExercises.map { it.toUiModel() }.toImmutableList(),
                         )
                     }
                 }.collect {}

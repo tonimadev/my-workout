@@ -46,7 +46,7 @@ interface WorkoutRepository {
 
     suspend fun startSession(workoutId: Long): Long
 
-    suspend fun finishSession(session: WorkoutSessionEntity)
+    suspend fun finishSession(sessionId: Long)
 
     suspend fun addLog(log: WorkoutLogEntity)
 
@@ -126,17 +126,16 @@ class WorkoutRepositoryImpl
             return workoutSessionDao.insertSession(session)
         }
 
-        override suspend fun finishSession(session: WorkoutSessionEntity) {
-            Log.i("WorkoutRepository", "Finishing session locally: ${session.id}")
+        override suspend fun finishSession(sessionId: Long) {
+            Log.i("WorkoutRepository", "Finishing session locally: $sessionId")
+            val sessionWithLogs = workoutSessionDao.getSessionWithLogs(sessionId).first() ?: return
+            val session = sessionWithLogs.session
             val updatedSession = session.copy(endTime = System.currentTimeMillis())
             workoutSessionDao.updateSession(updatedSession)
             gamificationRepository.processSessionCompletion(session.id)
 
-            val fullSession = workoutSessionDao.getSessionWithLogs(session.id).first()
-            if (fullSession != null) {
-                Log.d("WorkoutRepository", "Syncing full session summary to wearable")
-                wearableSyncManager.syncSession(fullSession)
-            }
+            Log.d("WorkoutRepository", "Syncing full session summary to wearable")
+            wearableSyncManager.syncSession(sessionWithLogs)
         }
 
         override suspend fun addLog(log: WorkoutLogEntity) {

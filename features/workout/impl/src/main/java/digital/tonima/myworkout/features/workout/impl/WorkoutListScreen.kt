@@ -13,8 +13,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -63,7 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.ui.model.WorkoutUiModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -171,16 +172,18 @@ fun WorkoutListScreen(
             if (workouts.isEmpty()) {
                 EmptyWorkoutState()
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 340.dp),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    items(workouts, key = { it.workout.id }) { workout ->
+                    items(workouts, key = { it.id }) { workout ->
                         WorkoutCard(
                             workout = workout,
-                            onClick = { onWorkoutClick(workout.workout.id) },
-                            onDelete = { onIntent(WorkoutIntent.DeleteWorkout(workout.workout)) },
+                            onClick = { onWorkoutClick(workout.id) },
+                            onDelete = { onIntent(WorkoutIntent.DeleteWorkout(workout.id)) },
                         )
                     }
                 }
@@ -222,7 +225,7 @@ fun WorkoutListScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WorkoutCard(
-    workout: WorkoutWithExercises,
+    workout: WorkoutUiModel,
     onClick: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
@@ -260,7 +263,7 @@ private fun WorkoutCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = workout.workout.name.uppercase(),
+                    text = workout.name.uppercase(),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     maxLines = 1,

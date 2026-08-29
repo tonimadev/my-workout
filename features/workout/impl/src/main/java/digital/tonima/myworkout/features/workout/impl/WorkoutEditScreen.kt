@@ -50,6 +50,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -66,8 +67,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import digital.tonima.myworkout.data.model.ExerciseWithSets
-import digital.tonima.myworkout.data.model.SetEntity
+import digital.tonima.myworkout.ui.model.ExerciseUiModel
+import digital.tonima.myworkout.ui.model.SetUiModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +83,9 @@ fun WorkoutEditScreen(
     val context = LocalContext.current
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
-    var editingSet by remember { mutableStateOf<Pair<Long, SetEntity>?>(null) }
+    var editingSet by remember { mutableStateOf<Pair<Long, SetUiModel>?>(null) }
+    val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
+    val showBackButton = !windowSizeClass.isWidthAtLeastBreakpoint(600)
 
     LaunchedEffect(state.shareText) {
         state.shareText?.let { text ->
@@ -118,7 +121,7 @@ fun WorkoutEditScreen(
                 title = {
                     Text(
                         text =
-                            workout?.workout?.name?.uppercase() ?: stringResource(
+                            workout?.name?.uppercase() ?: stringResource(
                                 R.string.workout_details,
                             ).uppercase(),
                         style = MaterialTheme.typography.titleMedium,
@@ -127,11 +130,13 @@ fun WorkoutEditScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.content_description_back),
-                        )
+                    if (showBackButton) {
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.content_description_back),
+                            )
+                        }
                     }
                 },
                 actions = {
@@ -149,7 +154,7 @@ fun WorkoutEditScreen(
                             )
                         }
                         IconButton(
-                            onClick = { onStartWorkout(workout.workout.id) },
+                            onClick = { onStartWorkout(workout.id) },
                             colors =
                                 IconButtonDefaults.filledIconButtonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
@@ -189,7 +194,7 @@ fun WorkoutEditScreen(
                 items(workout.exercises) { exercise ->
                     ExerciseSection(
                         exercise = exercise,
-                        workoutId = workout.workout.id,
+                        workoutId = workout.id,
                         onAddSet = { wId, eId -> onIntent(WorkoutIntent.AddSet(wId, eId)) },
                         onDeleteSet = { wId, eId, sId -> onIntent(WorkoutIntent.DeleteSet(wId, eId, sId)) },
                         onEditSet = { editingSet = it },
@@ -231,7 +236,7 @@ fun WorkoutEditScreen(
             onDismiss = { showAddExerciseDialog = false },
             onConfirm = {
                 if (newExerciseName.isNotBlank()) {
-                    onIntent(WorkoutIntent.AddExercise(workout.workout.id, newExerciseName))
+                    onIntent(WorkoutIntent.AddExercise(workout.id, newExerciseName))
                     newExerciseName = ""
                     showAddExerciseDialog = false
                 }
@@ -244,7 +249,7 @@ fun WorkoutEditScreen(
             set = set,
             onDismiss = { editingSet = null },
             onSave = { w, r, restInt ->
-                workout?.workout?.id?.let { workoutId ->
+                workout?.id?.let { workoutId ->
                     onIntent(WorkoutIntent.UpdateSet(workoutId, exerciseId, set.id, w, r, restInt))
                 }
                 editingSet = null
@@ -255,11 +260,11 @@ fun WorkoutEditScreen(
 
 @Composable
 fun ExerciseSection(
-    exercise: ExerciseWithSets,
+    exercise: ExerciseUiModel,
     workoutId: Long,
     onAddSet: (Long, Long) -> Unit,
     onDeleteSet: (Long, Long, Long) -> Unit,
-    onEditSet: (Pair<Long, SetEntity>) -> Unit,
+    onEditSet: (Pair<Long, SetUiModel>) -> Unit,
     onDuplicate: (Long, Long) -> Unit,
     onDeleteExercise: (Long, Long) -> Unit,
 ) {
@@ -292,7 +297,7 @@ fun ExerciseSection(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = exercise.exercise.name.uppercase(),
+                    text = exercise.name.uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
                     color = Color.Black,
@@ -314,7 +319,7 @@ fun ExerciseSection(
                                 )
                             },
                             onClick = {
-                                onDuplicate(workoutId, exercise.exercise.id)
+                                onDuplicate(workoutId, exercise.id)
                                 showMenu = false
                             },
                             leadingIcon = { Icon(Icons.Default.ContentCopy, null) },
@@ -328,7 +333,7 @@ fun ExerciseSection(
                                 )
                             },
                             onClick = {
-                                onDeleteExercise(workoutId, exercise.exercise.id)
+                                onDeleteExercise(workoutId, exercise.id)
                                 showMenu = false
                             },
                             leadingIcon = {
@@ -348,8 +353,8 @@ fun ExerciseSection(
                     SetItemRow(
                         index = index,
                         set = set,
-                        onEdit = { onEditSet(exercise.exercise.id to set) },
-                        onDelete = { onDeleteSet(workoutId, exercise.exercise.id, set.id) },
+                        onEdit = { onEditSet(exercise.id to set) },
+                        onDelete = { onDeleteSet(workoutId, exercise.id, set.id) },
                     )
                     if (index < exercise.sets.size - 1) {
                         Spacer(Modifier.height(12.dp))
@@ -359,7 +364,7 @@ fun ExerciseSection(
                 Spacer(Modifier.height(20.dp))
 
                 Button(
-                    onClick = { onAddSet(workoutId, exercise.exercise.id) },
+                    onClick = { onAddSet(workoutId, exercise.id) },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors =
@@ -381,7 +386,7 @@ fun ExerciseSection(
 @Composable
 fun SetItemRow(
     index: Int,
-    set: SetEntity,
+    set: SetUiModel,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -503,7 +508,7 @@ fun AddExerciseDialog(
 
 @Composable
 fun EditSetDialog(
-    set: SetEntity,
+    set: SetUiModel,
     onDismiss: () -> Unit,
     onSave: (Double, Int, Int) -> Unit,
 ) {

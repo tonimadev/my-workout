@@ -14,8 +14,8 @@ android {
         applicationId = "digital.tonima.myworkout"
         minSdk = 30
         targetSdk = 37
-        versionCode = 134
-        versionName = "2.16-wear"
+        versionCode = 136
+        versionName = "2.17-wear"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.play.services.wearable)
     implementation(platform(libs.androidx.compose.bom))
     implementation(project(":core:data"))
+    implementation(project(":core:ui"))
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

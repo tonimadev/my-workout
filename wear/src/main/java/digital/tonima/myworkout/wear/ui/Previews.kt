@@ -7,11 +7,10 @@ import androidx.wear.tooling.preview.devices.WearDevices.LARGE_ROUND
 import androidx.wear.tooling.preview.devices.WearDevices.RECT
 import androidx.wear.tooling.preview.devices.WearDevices.SMALL_ROUND
 import androidx.wear.tooling.preview.devices.WearDevices.SQUARE
-import digital.tonima.myworkout.data.model.ExerciseEntity
-import digital.tonima.myworkout.data.model.ExerciseWithSets
-import digital.tonima.myworkout.data.model.SetEntity
-import digital.tonima.myworkout.data.model.WorkoutEntity
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.ui.model.ExerciseUiModel
+import digital.tonima.myworkout.ui.model.SetUiModel
+import digital.tonima.myworkout.ui.model.WorkoutUiModel
+import kotlinx.collections.immutable.persistentListOf
 
 @Preview(device = SMALL_ROUND)
 @Preview(device = LARGE_ROUND)
@@ -24,20 +23,26 @@ fun WorkoutListScreenPreview() {
             state =
                 WorkoutState(
                     workouts =
-                        listOf(
-                            WorkoutWithExercises(
-                                workout = WorkoutEntity(id = 1, name = "Workout A"),
+                        persistentListOf(
+                            WorkoutUiModel(
+                                id = 1,
+                                name = "Workout A",
+                                description = "",
                                 exercises =
-                                    listOf(
-                                        ExerciseWithSets(
-                                            exercise = ExerciseEntity(id = 1, workoutId = 1, name = "Squat", order = 1),
+                                    persistentListOf(
+                                        ExerciseUiModel(
+                                            id = 1,
+                                            masterExerciseId = 1,
+                                            name = "Squat",
+                                            order = 1,
                                             sets =
-                                                listOf(
-                                                    SetEntity(
+                                                persistentListOf(
+                                                    SetUiModel(
                                                         id = 1,
-                                                        exerciseId = 1,
                                                         targetWeight = 100.0,
                                                         targetReps = 5,
+                                                        restInterval = 60,
+                                                        notes = "",
                                                         order = 1,
                                                     ),
                                                 ),
@@ -62,26 +67,33 @@ fun WorkoutExecutionScreenPreview() {
             state =
                 WorkoutState(
                     currentWorkout =
-                        WorkoutWithExercises(
-                            workout = WorkoutEntity(id = 1, name = "Workout A"),
+                        WorkoutUiModel(
+                            id = 1,
+                            name = "Workout A",
+                            description = "",
                             exercises =
-                                listOf(
-                                    ExerciseWithSets(
-                                        exercise = ExerciseEntity(id = 1, workoutId = 1, name = "Squat", order = 1),
+                                persistentListOf(
+                                    ExerciseUiModel(
+                                        id = 1,
+                                        masterExerciseId = 1,
+                                        name = "Squat",
+                                        order = 1,
                                         sets =
-                                            listOf(
-                                                SetEntity(
+                                            persistentListOf(
+                                                SetUiModel(
                                                     id = 1,
-                                                    exerciseId = 1,
                                                     targetWeight = 100.0,
                                                     targetReps = 5,
+                                                    restInterval = 60,
+                                                    notes = "",
                                                     order = 1,
                                                 ),
-                                                SetEntity(
+                                                SetUiModel(
                                                     id = 2,
-                                                    exerciseId = 1,
                                                     targetWeight = 100.0,
                                                     targetReps = 5,
+                                                    restInterval = 60,
+                                                    notes = "",
                                                     order = 2,
                                                 ),
                                             ),

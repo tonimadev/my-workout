@@ -23,6 +23,8 @@ android {
 }
 
 dependencies {
+    api(libs.kotlinx.collections.immutable)
+
     implementation(libs.androidx.compose.material.icons.core)
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.material3)
@@ -32,4 +34,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(project(":core:common"))
+    implementation(project(":core:data"))
 }

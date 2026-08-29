@@ -10,15 +10,19 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.myworkout.BuildConfig
 import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
-import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.ui.model.SessionUiModel
+import digital.tonima.myworkout.ui.model.WorkoutUiModel
+import digital.tonima.myworkout.ui.util.toUiModel
 import digital.tonima.myworkout.wear.WorkoutService
 import digital.tonima.myworkout.wear.ui.util.MviViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -28,9 +32,9 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Immutable
 data class WorkoutState(
-    val workouts: List<WorkoutWithExercises> = emptyList(),
-    val activeSession: SessionWithLogs? = null,
-    val currentWorkout: WorkoutWithExercises? = null,
+    val workouts: ImmutableList<WorkoutUiModel> = persistentListOf(),
+    val activeSession: SessionUiModel? = null,
+    val currentWorkout: WorkoutUiModel? = null,
     val restTimeRemaining: Long = 0,
     val totalRestTime: Long = 0,
     val isResting: Boolean = false,
@@ -81,7 +85,7 @@ class WorkoutViewModel
         private fun observeWorkouts() {
             viewModelScope.launch {
                 repository.getAllWorkouts().collect { workouts ->
-                    updateState { copy(workouts = workouts) }
+                    updateState { copy(workouts = workouts.map { it.toUiModel() }.toImmutableList()) }
                 }
             }
         }
@@ -199,25 +203,25 @@ class WorkoutViewModel
         private fun loadWorkout(workoutId: Long) {
             viewModelScope.launch {
                 repository.getWorkoutById(workoutId).collect { workout ->
-                    updateState { copy(currentWorkout = workout) }
+                    updateState { copy(currentWorkout = workout?.toUiModel()) }
                 }
             }
         }
 
         private fun startSession(workoutId: Long) {
-            if (currentState.activeSession?.session?.workoutId == workoutId) return
+            if (currentState.activeSession?.workoutId == workoutId) return
 
             viewModelScope.launch {
                 val sessionId = repository.startSession(workoutId)
                 repository.getSessionById(sessionId).collect { session ->
-                    updateState { copy(activeSession = session) }
+                    updateState { copy(activeSession = session?.toUiModel()) }
 
                     val workout = currentState.currentWorkout
                     if (session != null && workout != null) {
                         val intent =
                             Intent(context, WorkoutService::class.java).apply {
-                                putExtra("workout_name", workout.workout.name)
-                                putExtra("workout_id", workout.workout.id)
+                                putExtra("workout_name", workout.name)
+                                putExtra("workout_id", workout.id)
                             }
                         context.startForegroundService(intent)
                     }
@@ -234,13 +238,31 @@ class WorkoutViewModel
         ) {
             val session = currentState.activeSession ?: return
             viewModelScope.launch {
+                val workoutId = session.workoutId
+                val currentWorkout = currentState.currentWorkout
+
                 val masterExerciseId =
-                    currentState.currentWorkout?.exercises
-                        ?.find { it.exercise.id == exerciseId }?.exercise?.masterExerciseId ?: 0L
+                    currentWorkout?.exercises
+                        ?.find { it.id == exerciseId }?.masterExerciseId ?: 0L
+
+                // Auto-update workout template if weight or reps changed
+                if (workoutId != null && currentWorkout != null) {
+                    val currentSet =
+                        currentWorkout.exercises
+                            .flatMap { it.sets }
+                            .find { it.id == setId }
+
+                    if (currentSet != null && (
+                            currentSet.targetWeight != weight.toDouble() || currentSet.targetReps != reps
+                        )
+                    ) {
+                        updateWorkoutTemplate(workoutId, exerciseId, setId, weight.toDouble(), reps, restInterval)
+                    }
+                }
 
                 val log =
                     WorkoutLogEntity(
-                        sessionId = session.session.id,
+                        sessionId = session.id,
                         masterExerciseId = masterExerciseId,
                         setId = setId,
                         actualWeight = weight.toDouble(),
@@ -317,7 +339,7 @@ class WorkoutViewModel
         private fun finishSession() {
             val session = currentState.activeSession ?: return
             viewModelScope.launch {
-                repository.finishSession(session.session)
+                repository.finishSession(session.id)
                 updateState { copy(activeSession = null, currentWorkout = null, shouldNavigateBack = true) }
 
                 val intent =
@@ -325,6 +347,40 @@ class WorkoutViewModel
                         action = WorkoutService.ACTION_STOP
                     }
                 context.startService(intent)
+            }
+        }
+
+        private suspend fun updateWorkoutTemplate(
+            workoutId: Long,
+            exerciseId: Long,
+            setId: Long,
+            weight: Double,
+            reps: Int,
+            rest: Int,
+        ) {
+            val workoutWithEx = repository.getWorkoutById(workoutId).first()
+            if (workoutWithEx != null) {
+                val updatedExercises =
+                    workoutWithEx.exercises.map { exWithSets ->
+                        if (exWithSets.exercise.id == exerciseId) {
+                            var foundTarget = false
+                            val updatedSets =
+                                exWithSets.sets.map { set ->
+                                    if (set.id == setId) {
+                                        foundTarget = true
+                                        set.copy(targetWeight = weight, targetReps = reps, restInterval = rest)
+                                    } else if (foundTarget) {
+                                        set.copy(targetWeight = weight, targetReps = reps)
+                                    } else {
+                                        set
+                                    }
+                                }
+                            exWithSets.copy(sets = updatedSets)
+                        } else {
+                            exWithSets
+                        }
+                    }
+                repository.addWorkout(workoutWithEx.workout, updatedExercises)
             }
         }
     }

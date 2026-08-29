@@ -1,6 +1,12 @@
 package digital.tonima.myworkout.features.workout.impl
 
+import digital.tonima.myworkout.data.model.ExerciseEntity
+import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
+import digital.tonima.myworkout.data.model.WorkoutSessionEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
 import digital.tonima.myworkout.data.util.AlertManager
 import io.mockk.coEvery
@@ -47,9 +53,14 @@ class WorkoutViewModelTest {
     @Test
     fun `deleteWorkout should call repository`() =
         runTest {
-            val workout = WorkoutEntity(id = 1, name = "Test")
-            viewModel.onIntent(WorkoutIntent.DeleteWorkout(workout))
-            coVerify { repository.deleteWorkout(workout) }
+            val workoutId = 1L
+            val workoutEntity = WorkoutEntity(id = workoutId, name = "Test")
+            val workoutWithEx = WorkoutWithExercises(workoutEntity, emptyList())
+            coEvery { repository.getWorkoutById(workoutId) } returns flowOf(workoutWithEx)
+
+            viewModel.onIntent(WorkoutIntent.DeleteWorkout(workoutId))
+
+            coVerify { repository.deleteWorkout(workoutEntity) }
         }
 
     @Test
@@ -61,5 +72,55 @@ class WorkoutViewModelTest {
             viewModel.onIntent(WorkoutIntent.StartWorkout(1L))
 
             coVerify { repository.startSession(1L) }
+        }
+
+    @Test
+    fun `logSet should update workout template weight if it changed`() =
+        runTest {
+            val workoutId = 1L
+            val exerciseId = 2L
+            val setId = 3L
+            val newWeight = 50.0
+            val reps = 10
+            val rest = 60
+
+            val workout = WorkoutEntity(id = workoutId, name = "Test Workout")
+            val exercise = ExerciseEntity(id = exerciseId, workoutId = workoutId, name = "Squat", order = 0)
+            val set =
+                SetEntity(
+                    id = setId,
+                    exerciseId = exerciseId,
+                    targetWeight = 40.0,
+                    targetReps = 10,
+                    restInterval = rest,
+                    order = 0,
+                )
+            val exerciseWithSets = ExerciseWithSets(exercise, listOf(set))
+            val workoutWithEx = WorkoutWithExercises(workout, listOf(exerciseWithSets))
+
+            val session = WorkoutSessionEntity(id = 10L, workoutId = workoutId, startTime = 0L)
+            val sessionWithLogs = SessionWithLogs(session, workout, emptyList())
+
+            coEvery { repository.getWorkoutById(workoutId) } returns flowOf(workoutWithEx)
+            coEvery { repository.startSession(workoutId) } returns 10L
+            coEvery { repository.getSessionById(10L) } returns flowOf(sessionWithLogs)
+
+            // Start workout to set the state
+            viewModel.onIntent(WorkoutIntent.StartWorkout(workoutId))
+
+            // Log set with new weight
+            viewModel.onIntent(WorkoutIntent.LogSet(10L, exerciseId, setId, newWeight, reps, rest))
+
+            // Verify that addWorkout was called with the updated weight in the template
+            coVerify(timeout = 2000) {
+                repository.addWorkout(
+                    eq(workout),
+                    match { exercises ->
+                        exercises.any { ex ->
+                            ex.sets.any { s -> s.id == setId && s.targetWeight == newWeight }
+                        }
+                    },
+                )
+            }
         }
 }

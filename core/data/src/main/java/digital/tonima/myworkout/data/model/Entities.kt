@@ -1,6 +1,5 @@
 package digital.tonima.myworkout.data.model
 
-import androidx.compose.runtime.Immutable
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -8,7 +7,6 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import kotlinx.serialization.Serializable
 
-@Immutable
 @Serializable
 @Entity(tableName = "master_exercises")
 data class MasterExerciseEntity(
@@ -17,7 +15,6 @@ data class MasterExerciseEntity(
     val description: String = "",
 )
 
-@Immutable
 @Serializable
 @Entity(tableName = "workouts")
 data class WorkoutEntity(
@@ -26,7 +23,6 @@ data class WorkoutEntity(
     val description: String = "",
 )
 
-@Immutable
 @Serializable
 @Entity(
     tableName = "exercises",
@@ -53,7 +49,6 @@ data class ExerciseEntity(
     val order: Int,
 )
 
-@Immutable
 @Serializable
 @Entity(
     tableName = "sets",
@@ -76,7 +71,6 @@ data class SetEntity(
     val order: Int,
 )
 
-@Immutable
 @Serializable
 @Entity(
     tableName = "workout_sessions",
@@ -98,7 +92,6 @@ data class WorkoutSessionEntity(
     val xpGained: Int = 0,
 )
 
-@Immutable
 @Serializable
 @Entity(
     tableName = "workout_logs",
@@ -134,7 +127,6 @@ data class WorkoutLogEntity(
     val timestamp: Long,
 )
 
-@Immutable
 @Serializable
 @Entity(tableName = "achievements")
 data class AchievementEntity(
@@ -146,7 +138,6 @@ data class AchievementEntity(
     val level: Int = 1,
 )
 
-@Immutable
 @Serializable
 data class WorkoutWithExercises(
     @Embedded val workout: WorkoutEntity,
@@ -158,7 +149,6 @@ data class WorkoutWithExercises(
     val exercises: List<ExerciseWithSets>,
 )
 
-@Immutable
 @Serializable
 data class ExerciseWithSets(
     @Embedded val exercise: ExerciseEntity,
@@ -169,7 +159,6 @@ data class ExerciseWithSets(
     val sets: List<SetEntity>,
 )
 
-@Immutable
 @Serializable
 data class SessionWithLogs(
     @Embedded val session: WorkoutSessionEntity,

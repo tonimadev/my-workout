@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import digital.tonima.myworkout.data.model.MasterExerciseEntity
 import digital.tonima.myworkout.data.repository.GamificationRepository
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.ui.util.toUiModel
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -53,7 +54,7 @@ class StatsViewModelTest {
             viewModel.state.test {
                 // With UnconfinedTestDispatcher, we might get the updated state immediately
                 val item = awaitItem()
-                assertEquals(exercises, item.masterExercises)
+                assertEquals(exercises.map { it.toUiModel() }, item.masterExercises)
             }
         }
 

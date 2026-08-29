@@ -18,8 +18,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -46,6 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,8 +66,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import digital.tonima.myworkout.data.model.SessionWithLogs
-import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.ui.model.SessionUiModel
+import digital.tonima.myworkout.ui.model.WorkoutUiModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +87,7 @@ fun WorkoutTrackingScreen(
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        text = workout?.workout?.name?.uppercase() ?: "",
+                        text = workout?.name?.uppercase() ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Black,
                         letterSpacing = 1.sp,
@@ -143,14 +145,16 @@ fun WorkoutTrackingScreen(
                     CircularProgressIndicator(strokeWidth = 6.dp)
                 }
             } else {
-                LazyColumn(
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(minSize = 340.dp),
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 100.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     itemsIndexed(
                         items = workout.exercises,
-                        key = { _, exercise -> exercise.exercise.id },
+                        key = { _, exercise -> exercise.id },
                     ) { exerciseIndex, exercise ->
                         val isLastExercise = exerciseIndex == workout.exercises.size - 1
 
@@ -189,7 +193,7 @@ fun WorkoutTrackingScreen(
                                         )
                                         Spacer(Modifier.width(8.dp))
                                         Text(
-                                            text = exercise.exercise.name.uppercase(),
+                                            text = exercise.name.uppercase(),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Black,
                                             color = Color.Black,
@@ -215,8 +219,8 @@ fun WorkoutTrackingScreen(
                                                 val rest = if (isLastExercise && isLastSet) 0 else set.restInterval
                                                 onIntent(
                                                     WorkoutIntent.LogSet(
-                                                        activeSession.session.id,
-                                                        exercise.exercise.id,
+                                                        activeSession.id,
+                                                        exercise.id,
                                                         set.id,
                                                         weight,
                                                         reps,
@@ -266,6 +270,14 @@ fun SetTrackingRow(
 ) {
     var weightInput by remember { mutableStateOf(targetWeight.toString()) }
     var repsInput by remember { mutableStateOf(targetReps.toString()) }
+
+    // Update inputs when target values change externally (e.g. from previous set log)
+    LaunchedEffect(targetWeight, targetReps) {
+        if (!isLogged) {
+            weightInput = targetWeight.toString()
+            repsInput = targetReps.toString()
+        }
+    }
 
     Row(
         modifier =
@@ -412,8 +424,8 @@ fun SetTrackingRow(
 fun RestTimerOverlay(
     remaining: Int,
     total: Int,
-    workout: WorkoutWithExercises?,
-    activeSession: SessionWithLogs?,
+    workout: WorkoutUiModel?,
+    activeSession: SessionUiModel?,
     onSkip: () -> Unit,
 ) {
     val nextSetInfo =
@@ -425,7 +437,7 @@ fun RestTimerOverlay(
                     val nextSet = ex.sets.find { it.id !in loggedSetIds }
                     if (nextSet != null) {
                         val setIndex = ex.sets.indexOf(nextSet) + 1
-                        foundNext = "${ex.exercise.name} ($setIndex/${ex.sets.size})"
+                        foundNext = "${ex.name} ($setIndex/${ex.sets.size})"
                         break
                     }
                 }

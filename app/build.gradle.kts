@@ -16,8 +16,8 @@ android {
         applicationId = "digital.tonima.myworkout"
         minSdk = 24
         targetSdk = 37
-        versionCode = 133
-        versionName = "2.16"
+        versionCode = 135
+        versionName = "2.17"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

@@ -10,7 +10,6 @@ import digital.tonima.myworkout.data.repository.WorkoutRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import javax.inject.Inject
@@ -58,10 +57,8 @@ class WearableSyncService : WearableListenerService() {
                 Log.i("WearableSyncService", "Finish session request received for ID: $sessionId")
                 scope.launch {
                     try {
-                        repository.getSessionById(sessionId).first()?.let {
-                            repository.finishSession(it.session)
-                            Log.d("WearableSyncService", "Session $sessionId finished on phone")
-                        }
+                        repository.finishSession(sessionId)
+                        Log.d("WearableSyncService", "Session $sessionId finished on phone")
                     } catch (e: Exception) {
                         Log.e("WearableSyncService", "Error finishing session", e)
                     }

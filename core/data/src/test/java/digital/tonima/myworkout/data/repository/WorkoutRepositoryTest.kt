@@ -86,14 +86,15 @@ class WorkoutRepositoryTest {
     @Test
     fun `finishSession should update session, process gamification and sync to wearable`() =
         runTest {
-            val session = WorkoutSessionEntity(id = 1, workoutId = 1, startTime = 0L)
+            val sessionId = 1L
+            val session = WorkoutSessionEntity(id = sessionId, workoutId = 1, startTime = 0L)
             val sessionWithLogs = SessionWithLogs(session, null, emptyList())
-            coEvery { workoutSessionDao.getSessionWithLogs(session.id) } returns flowOf(sessionWithLogs)
+            coEvery { workoutSessionDao.getSessionWithLogs(sessionId) } returns flowOf(sessionWithLogs)
 
-            repository.finishSession(session)
+            repository.finishSession(sessionId)
 
-            coVerify { workoutSessionDao.updateSession(match { it.endTime != null }) }
-            coVerify { gamificationRepository.processSessionCompletion(session.id) }
+            coVerify { workoutSessionDao.updateSession(match { it.id == sessionId && it.endTime != null }) }
+            coVerify { gamificationRepository.processSessionCompletion(sessionId) }
             coVerify { wearableSyncManager.syncSession(sessionWithLogs) }
         }
 }

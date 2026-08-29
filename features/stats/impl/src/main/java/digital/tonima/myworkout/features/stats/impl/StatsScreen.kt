@@ -17,8 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -61,11 +64,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import digital.tonima.myworkout.data.model.AchievementEntity
-import digital.tonima.myworkout.data.model.MasterExerciseEntity
-import digital.tonima.myworkout.data.model.SessionWithLogs
-import digital.tonima.myworkout.data.model.WorkoutLogEntity
-import digital.tonima.myworkout.data.preferences.GamificationStats
+import digital.tonima.myworkout.ui.model.AchievementUiModel
+import digital.tonima.myworkout.ui.model.GamificationStatsUiModel
+import digital.tonima.myworkout.ui.model.LogUiModel
+import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
+import digital.tonima.myworkout.ui.model.SessionUiModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -155,23 +160,25 @@ fun StatsScreen(
 
 @Composable
 fun AthleteDashboard(
-    stats: GamificationStats?,
-    achievements: List<AchievementEntity>,
-    sessions: List<SessionWithLogs>,
-    exercises: List<MasterExerciseEntity>,
+    stats: GamificationStatsUiModel?,
+    achievements: ImmutableList<AchievementUiModel>,
+    sessions: ImmutableList<SessionUiModel>,
+    exercises: ImmutableList<MasterExerciseUiModel>,
     onSelectExercise: (Long) -> Unit,
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 340.dp),
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(32.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
     ) {
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             GamificationHeader(stats)
         }
 
         if (achievements.isNotEmpty()) {
-            item {
+            item(span = { GridItemSpan(maxLineSpan) }) {
                 AchievementSection(achievements)
             }
         }
@@ -234,7 +241,7 @@ fun AthleteDashboard(
 }
 
 @Composable
-fun GamificationHeader(stats: GamificationStats?) {
+fun GamificationHeader(stats: GamificationStatsUiModel?) {
     val currentLevel = stats?.currentLevel ?: 1
     val nextLevelXp = (currentLevel * currentLevel) * 100
     val currentLevelXp = ((currentLevel - 1) * (currentLevel - 1)) * 100
@@ -369,7 +376,7 @@ fun GamificationHeader(stats: GamificationStats?) {
 }
 
 @Composable
-fun AchievementSection(achievements: List<AchievementEntity>) {
+fun AchievementSection(achievements: ImmutableList<AchievementUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = stringResource(R.string.recent_achievements_label).uppercase(),
@@ -390,7 +397,7 @@ fun AchievementSection(achievements: List<AchievementEntity>) {
 }
 
 @Composable
-fun AchievementBadge(achievement: AchievementEntity) {
+fun AchievementBadge(achievement: AchievementUiModel) {
     ElevatedCard(
         shape = RoundedCornerShape(24.dp),
         modifier = Modifier.width(180.dp),
@@ -447,7 +454,7 @@ fun AchievementBadge(achievement: AchievementEntity) {
 }
 
 @Composable
-fun VolumeSection(sessions: List<SessionWithLogs>) {
+fun VolumeSection(sessions: ImmutableList<SessionUiModel>) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             text = stringResource(R.string.weekly_volume_label).uppercase(),
@@ -466,10 +473,10 @@ fun VolumeSection(sessions: List<SessionWithLogs>) {
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
-                val weekVolume = sessions.take(7).map { it.session.totalVolume }
+                val weekVolume = sessions.take(7).map { it.totalVolume }
                 if (weekVolume.isNotEmpty()) {
                     SimpleBarChart(
-                        data = weekVolume.reversed(),
+                        data = weekVolume.reversed().toImmutableList(),
                         modifier = Modifier.fillMaxWidth().height(160.dp),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -509,7 +516,7 @@ fun VolumeSection(sessions: List<SessionWithLogs>) {
 
 @Composable
 fun SimpleBarChart(
-    data: List<Double>,
+    data: ImmutableList<Double>,
     modifier: Modifier = Modifier,
 ) {
     val max = (data.maxOrNull() ?: 1.0).coerceAtLeast(1.0)
@@ -532,15 +539,17 @@ fun SimpleBarChart(
 
 @Composable
 fun ExerciseStats(
-    exercise: MasterExerciseEntity?,
-    logs: List<WorkoutLogEntity>,
+    exercise: MasterExerciseUiModel?,
+    logs: ImmutableList<LogUiModel>,
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(minSize = 340.dp),
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(32.dp),
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
     ) {
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(24.dp),
@@ -592,7 +601,7 @@ fun ExerciseStats(
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth().height(260.dp),
                 shape = RoundedCornerShape(28.dp),
@@ -616,7 +625,7 @@ fun ExerciseStats(
             }
         }
 
-        item {
+        item(span = { GridItemSpan(maxLineSpan) }) {
             Text(
                 text = stringResource(R.string.load_history_label).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
@@ -672,7 +681,7 @@ fun ExerciseStats(
 
 @Composable
 fun WeightChart(
-    logs: List<WorkoutLogEntity>,
+    logs: ImmutableList<LogUiModel>,
     modifier: Modifier = Modifier,
 ) {
     if (logs.isEmpty()) return

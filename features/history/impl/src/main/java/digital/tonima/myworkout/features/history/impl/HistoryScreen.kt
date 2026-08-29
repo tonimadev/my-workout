@@ -11,8 +11,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -44,8 +45,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import digital.tonima.myworkout.data.model.MasterExerciseEntity
-import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
+import digital.tonima.myworkout.ui.model.SessionUiModel
+import kotlinx.collections.immutable.ImmutableList
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -94,14 +96,16 @@ fun HistoryScreen(
         if (sessions.isEmpty()) {
             EmptyHistoryState(modifier = Modifier.padding(padding))
         } else {
-            LazyColumn(
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 400.dp),
                 modifier = Modifier.fillMaxSize().padding(padding),
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp),
+                horizontalArrangement = Arrangement.spacedBy(20.dp),
             ) {
                 items(
                     items = sessions,
-                    key = { it.session.id },
+                    key = { it.id },
                 ) { session ->
                     HistoryItem(session, masterExercises)
                 }
@@ -112,15 +116,15 @@ fun HistoryScreen(
 
 @Composable
 fun HistoryItem(
-    session: SessionWithLogs,
-    masterExercises: List<MasterExerciseEntity>,
+    session: SessionUiModel,
+    masterExercises: ImmutableList<MasterExerciseUiModel>,
 ) {
     val dateFormat = remember { SimpleDateFormat("EEEE, dd 'de' MMMM", Locale.forLanguageTag("pt-BR")) }
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     val duration =
-        session.session.endTime?.let { end ->
-            (end - session.session.startTime).milliseconds
+        session.endTime?.let { end ->
+            (end - session.startTime).milliseconds
         }
 
     ElevatedCard(
@@ -141,13 +145,13 @@ fun HistoryItem(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = session.workout?.name?.uppercase() ?: "TREINO AVULSO",
+                        text = session.workoutName?.uppercase() ?: "TREINO AVULSO",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
                     Text(
-                        text = dateFormat.format(Date(session.session.startTime)).replaceFirstChar { it.uppercase() },
+                        text = dateFormat.format(Date(session.startTime)).replaceFirstChar { it.uppercase() },
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.outline,
                         fontWeight = FontWeight.SemiBold,
@@ -159,7 +163,7 @@ fun HistoryItem(
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
                 ) {
                     Text(
-                        text = timeFormat.format(Date(session.session.startTime)),
+                        text = timeFormat.format(Date(session.startTime)),
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
@@ -183,13 +187,13 @@ fun HistoryItem(
                 )
                 StatChip(
                     icon = Icons.Default.MonitorWeight,
-                    label = "${session.session.totalVolume.toInt()} KG",
+                    label = "${session.totalVolume.toInt()} KG",
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                 )
                 StatChip(
                     icon = Icons.Default.LocalFireDepartment,
-                    label = "+${session.session.xpGained} XP",
+                    label = "+${session.xpGained} XP",
                     color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.weight(1f),
                 )
@@ -208,7 +212,7 @@ fun HistoryItem(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            val exerciseGroups = session.logs.groupBy { it.masterExerciseId }
+            val exerciseGroups = session.logs.groupBy { it.exerciseId }
             val entries = exerciseGroups.entries.toList()
             entries.forEachIndexed { index: Int, entry ->
                 val masterId = entry.key
