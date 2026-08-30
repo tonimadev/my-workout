@@ -97,6 +97,10 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE id = :sessionId")
     fun getSessionWithLogs(sessionId: Long): Flow<SessionWithLogs?>
 
+    @Transaction
+    @Query("SELECT * FROM workout_sessions WHERE endTime IS NULL ORDER BY startTime DESC LIMIT 1")
+    fun getActiveSession(): Flow<SessionWithLogs?>
+
     @Query("SELECT * FROM workout_logs WHERE sessionId = :sessionId")
     fun getLogsForSession(sessionId: Long): Flow<List<WorkoutLogEntity>>
 }

@@ -48,6 +48,8 @@ interface WorkoutRepository {
 
     suspend fun finishSession(sessionId: Long)
 
+    fun getActiveSession(): Flow<SessionWithLogs?>
+
     suspend fun addLog(log: WorkoutLogEntity)
 
     suspend fun requestSync()
@@ -116,6 +118,8 @@ class WorkoutRepositoryImpl
         override fun getAllSessions(): Flow<List<SessionWithLogs>> = workoutSessionDao.getAllSessionsWithLogs()
 
         override fun getSessionById(id: Long): Flow<SessionWithLogs?> = workoutSessionDao.getSessionWithLogs(id)
+
+        override fun getActiveSession(): Flow<SessionWithLogs?> = workoutSessionDao.getActiveSession()
 
         override suspend fun startSession(workoutId: Long): Long {
             val session =

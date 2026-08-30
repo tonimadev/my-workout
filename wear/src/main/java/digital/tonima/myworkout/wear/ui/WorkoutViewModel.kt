@@ -2,7 +2,6 @@ package digital.tonima.myworkout.wear.ui
 
 import android.content.Context
 import android.content.Intent
-import android.os.SystemClock
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +13,6 @@ import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.repository.WorkoutRepository
-import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.ui.model.SessionUiModel
 import digital.tonima.myworkout.ui.model.WorkoutUiModel
 import digital.tonima.myworkout.ui.util.toUiModel
@@ -23,7 +21,6 @@ import digital.tonima.myworkout.wear.ui.util.MviViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -69,14 +66,13 @@ class WorkoutViewModel
     @Inject
     constructor(
         private val repository: WorkoutRepository,
-        private val alertManager: AlertManager,
         @ApplicationContext private val context: Context,
     ) : MviViewModel<WorkoutState, WorkoutIntent>(WorkoutState()) {
-        private var restJob: Job? = null
-
         init {
             onIntent(WorkoutIntent.RequestSync)
             observeWorkouts()
+            observeActiveSession()
+            observeServiceTimer()
             if (BuildConfig.DEBUG) {
                 injectDebugData()
             }
@@ -86,6 +82,37 @@ class WorkoutViewModel
             viewModelScope.launch {
                 repository.getAllWorkouts().collect { workouts ->
                     updateState { copy(workouts = workouts.map { it.toUiModel() }.toImmutableList()) }
+                }
+            }
+        }
+
+        private fun observeActiveSession() {
+            viewModelScope.launch {
+                repository.getActiveSession().collect { session ->
+                    updateState { copy(activeSession = session?.toUiModel()) }
+                    session?.session?.workoutId?.let { workoutId ->
+                        if (currentState.currentWorkout?.id != workoutId) {
+                            loadWorkout(workoutId)
+                        }
+                    }
+                }
+            }
+        }
+
+        private fun observeServiceTimer() {
+            viewModelScope.launch {
+                WorkoutService.restTimeRemaining.collect { remaining ->
+                    updateState { copy(restTimeRemaining = remaining) }
+                }
+            }
+            viewModelScope.launch {
+                WorkoutService.totalRestTime.collect { total ->
+                    updateState { copy(totalRestTime = total) }
+                }
+            }
+            viewModelScope.launch {
+                WorkoutService.isResting.collect { resting ->
+                    updateState { copy(isResting = resting) }
                 }
             }
         }
@@ -281,59 +308,23 @@ class WorkoutViewModel
                 }
 
                 if (restInterval > 0) {
-                    val endTime = SystemClock.elapsedRealtime() + (restInterval * 1000L)
                     val intent =
                         Intent(context, WorkoutService::class.java).apply {
                             action = WorkoutService.ACTION_UPDATE_TIMER
-                            putExtra("rest_end_time", endTime)
+                            putExtra("rest_seconds", restInterval)
                         }
                     context.startService(intent)
-
-                    startRestTimer(restInterval)
                 }
             }
         }
 
-        private fun startRestTimer(seconds: Int) {
-            restJob?.cancel()
-            restJob =
-                viewModelScope.launch {
-                    updateState {
-                        copy(
-                            totalRestTime = seconds.toLong(),
-                            restTimeRemaining = seconds.toLong(),
-                            isResting = true,
-                        )
-                    }
-                    while (currentState.restTimeRemaining > 0) {
-                        delay(1000.milliseconds)
-                        updateState { copy(restTimeRemaining = restTimeRemaining - 1) }
-                    }
-                    // Wait for the last second of animation to complete on screen
-                    delay(1100.milliseconds)
-                    updateState { copy(isResting = false) }
-
-                    val resetIntent =
-                        Intent(context, WorkoutService::class.java).apply {
-                            action = WorkoutService.ACTION_UPDATE_TIMER
-                            putExtra("rest_end_time", 0L)
-                        }
-                    context.startService(resetIntent)
-
-                    alertManager.triggerCompletionAlert()
-                }
-        }
-
         private fun skipRest() {
-            restJob?.cancel()
-            updateState { copy(restTimeRemaining = 0, isResting = false) }
-
-            val resetIntent =
+            val intent =
                 Intent(context, WorkoutService::class.java).apply {
                     action = WorkoutService.ACTION_UPDATE_TIMER
-                    putExtra("rest_end_time", 0L)
+                    putExtra("rest_seconds", 0)
                 }
-            context.startService(resetIntent)
+            context.startService(intent)
         }
 
         private fun finishSession() {
