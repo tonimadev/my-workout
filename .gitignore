@@ -30,3 +30,5 @@ Thumbs.db
 .artifacts/
 .agent/
 /.kotlin/
+/app/google-services.json
+/wear/google-services.json
