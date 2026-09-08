@@ -107,12 +107,12 @@ class WorkoutService : Service() {
 
         restJob =
             serviceScope.launch {
-                var remaining = seconds.toLong()
-                while (remaining > 0) {
-                    delay(1000.milliseconds)
-                    remaining--
-                    _restTimeRemaining.value = remaining
+                while (SystemClock.elapsedRealtime() < endTime) {
+                    val remaining = (endTime - SystemClock.elapsedRealtime() + 999) / 1000L
+                    _restTimeRemaining.value = remaining.coerceAtLeast(0L)
+                    delay(500.milliseconds)
                 }
+                _restTimeRemaining.value = 0
                 _isResting.value = false
                 alertManager.triggerCompletionAlert()
                 showNotification(0L)
