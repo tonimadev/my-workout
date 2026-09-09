@@ -1,5 +1,6 @@
 package digital.tonima.myworkout.wear
 
+import android.Manifest.permission.POST_NOTIFICATIONS
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -9,7 +10,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -18,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.ui.NavDisplay
 import androidx.wear.ambient.AmbientLifecycleObserver
@@ -85,7 +86,7 @@ fun WearApp(
             ) { _ -> }
 
         LaunchedEffect(Unit) {
-            permissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            permissionLauncher.launch(POST_NOTIFICATIONS)
         }
     }
 
@@ -117,8 +118,7 @@ fun WearApp(
             ) { key ->
                 NavEntry(key) {
                     val viewModel: WorkoutViewModel = hiltViewModel()
-                    val state by viewModel.state.collectAsState()
-                    val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
+                    val state by viewModel.state.collectAsStateWithLifecycle()
 
                     LaunchedEffect(state.shouldNavigateBack) {
                         if (state.shouldNavigateBack) {
@@ -147,7 +147,7 @@ fun WearApp(
                             WorkoutExecutionScreen(
                                 state = state,
                                 isAmbientMode = isAmbientMode,
-                                onIntent = onIntent,
+                                onIntent = viewModel::onIntent,
                             )
                         }
                     }

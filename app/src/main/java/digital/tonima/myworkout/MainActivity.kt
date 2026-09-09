@@ -19,11 +19,11 @@ import androidx.compose.material3.adaptive.navigationsuite.ExperimentalMaterial3
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.ui.NavDisplay
@@ -34,14 +34,15 @@ import digital.tonima.myworkout.features.history.impl.HistoryViewModel
 import digital.tonima.myworkout.features.onboarding.impl.OnboardingScreen
 import digital.tonima.myworkout.features.onboarding.impl.OnboardingViewModel
 import digital.tonima.myworkout.features.stats.bridge.StatsDestination.Stats
-import digital.tonima.myworkout.features.stats.impl.StatsIntent
 import digital.tonima.myworkout.features.stats.impl.StatsScreen
 import digital.tonima.myworkout.features.stats.impl.StatsViewModel
 import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutEdit
 import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutList
 import digital.tonima.myworkout.features.workout.bridge.WorkoutDestination.WorkoutTracking
 import digital.tonima.myworkout.features.workout.impl.WorkoutEditScreen
-import digital.tonima.myworkout.features.workout.impl.WorkoutIntent
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.LoadWorkout
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ResetNavigation
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.StartWorkout
 import digital.tonima.myworkout.features.workout.impl.WorkoutListScreen
 import digital.tonima.myworkout.features.workout.impl.WorkoutTrackingScreen
 import digital.tonima.myworkout.features.workout.impl.WorkoutViewModel
@@ -71,7 +72,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun AppNavigation() {
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
-    val onboardingCompleted by onboardingViewModel.onboardingCompleted.collectAsState()
+    val onboardingCompleted by onboardingViewModel.onboardingCompleted.collectAsStateWithLifecycle()
 
     if (!onboardingCompleted) {
         OnboardingScreen(onComplete = { onboardingViewModel.completeOnboarding() })
@@ -94,23 +95,20 @@ fun MainAppContent() {
             topLevelRoutes = topLevelRoutes,
         )
     val navigator = remember { Navigator(navigationState) }
-
     val listDetailStrategy = rememberListDetailSceneStrategy<NavKey>()
 
     val entryProvider =
-        entryProvider<NavKey> {
+        entryProvider {
             entry<WorkoutList>(
                 metadata = ListDetailSceneStrategy.listPane(),
             ) {
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val state by viewModel.state.collectAsState()
-                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
-                val onWorkoutClick = remember { { id: Long -> navigator.navigate(WorkoutEdit(id)) } }
+                val state by viewModel.state.collectAsStateWithLifecycle()
 
                 WorkoutListScreen(
                     state = state,
-                    onIntent = onIntent,
-                    onWorkoutClick = onWorkoutClick,
+                    onIntent = viewModel::onIntent,
+                    onWorkoutClick = { id -> navigator.navigate(WorkoutEdit(id)) },
                 )
             }
 
@@ -118,62 +116,57 @@ fun MainAppContent() {
                 metadata = detailPane(),
             ) { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val state by viewModel.state.collectAsState()
-                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
-                val onBack = remember { { navigator.goBack() } }
-                val onStartWorkout = remember { { id: Long -> navigator.navigate(WorkoutTracking(id)) } }
+                val state by viewModel.state.collectAsStateWithLifecycle()
 
                 LaunchedEffect(key.workoutId) {
-                    key.workoutId?.let { viewModel.onIntent(WorkoutIntent.LoadWorkout(it)) }
+                    key.workoutId?.let { viewModel.onIntent(LoadWorkout(it)) }
                 }
 
                 WorkoutEditScreen(
                     state = state,
-                    onIntent = onIntent,
-                    onBack = onBack,
-                    onStartWorkout = onStartWorkout,
+                    onIntent = viewModel::onIntent,
+                    onBack = { navigator.goBack() },
+                    onStartWorkout = { id -> navigator.navigate(WorkoutTracking(id)) },
                 )
             }
 
             entry<WorkoutTracking> { key ->
                 val viewModel: WorkoutViewModel = hiltViewModel()
-                val state by viewModel.state.collectAsState()
-                val onIntent = remember(viewModel) { { intent: WorkoutIntent -> viewModel.onIntent(intent) } }
-                val onCancel = remember { { navigator.goBack() } }
+                val state by viewModel.state.collectAsStateWithLifecycle()
 
                 LaunchedEffect(key.workoutId) {
-                    viewModel.onIntent(WorkoutIntent.LoadWorkout(key.workoutId))
-                    viewModel.onIntent(WorkoutIntent.StartWorkout(key.workoutId))
+                    viewModel.onIntent(LoadWorkout(key.workoutId))
+                    viewModel.onIntent(StartWorkout(key.workoutId))
                 }
 
                 LaunchedEffect(state.shouldNavigateBack) {
                     if (state.shouldNavigateBack) {
                         navigator.goBack()
-                        viewModel.onIntent(WorkoutIntent.ResetNavigation)
+                        viewModel.onIntent(ResetNavigation)
                     }
                 }
 
                 WorkoutTrackingScreen(
                     state = state,
-                    onIntent = onIntent,
-                    onCancel = onCancel,
+                    onIntent = viewModel::onIntent,
+                    onCancel = { navigator.goBack() },
                 )
             }
 
             entry<History> {
                 val viewModel: HistoryViewModel = hiltViewModel()
-                val state by viewModel.state.collectAsState()
+                val state by viewModel.state.collectAsStateWithLifecycle()
+
                 HistoryScreen(state = state)
             }
 
             entry<Stats> {
                 val viewModel: StatsViewModel = hiltViewModel()
-                val state by viewModel.state.collectAsState()
-                val onIntent = remember(viewModel) { { intent: StatsIntent -> viewModel.onIntent(intent) } }
+                val state by viewModel.state.collectAsStateWithLifecycle()
 
                 StatsScreen(
                     state = state,
-                    onIntent = onIntent,
+                    onIntent = viewModel::onIntent,
                 )
             }
         }

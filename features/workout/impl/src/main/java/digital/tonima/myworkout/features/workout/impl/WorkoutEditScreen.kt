@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults.elevatedCardElevation
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -67,6 +68,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.AddExercise
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.AddSet
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.DeleteExercise
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.DeleteSet
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.DuplicateExercise
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ExportWorkout
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ShareWorkout
+import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.UpdateSet
 import digital.tonima.myworkout.ui.model.ExerciseUiModel
 import digital.tonima.myworkout.ui.model.SetUiModel
 
@@ -141,13 +150,13 @@ fun WorkoutEditScreen(
                 },
                 actions = {
                     if (workout != null) {
-                        IconButton(onClick = { onIntent(WorkoutIntent.ShareWorkout(workout)) }) {
+                        IconButton(onClick = { onIntent(ShareWorkout(workout)) }) {
                             Icon(
                                 Icons.Default.Share,
                                 contentDescription = stringResource(R.string.action_share),
                             )
                         }
-                        IconButton(onClick = { onIntent(WorkoutIntent.ExportWorkout(workout)) }) {
+                        IconButton(onClick = { onIntent(ExportWorkout(workout)) }) {
                             Icon(
                                 Icons.Default.Code,
                                 contentDescription = stringResource(R.string.action_export),
@@ -195,11 +204,11 @@ fun WorkoutEditScreen(
                     ExerciseSection(
                         exercise = exercise,
                         workoutId = workout.id,
-                        onAddSet = { wId, eId -> onIntent(WorkoutIntent.AddSet(wId, eId)) },
-                        onDeleteSet = { wId, eId, sId -> onIntent(WorkoutIntent.DeleteSet(wId, eId, sId)) },
+                        onAddSet = { wId, eId -> onIntent(AddSet(wId, eId)) },
+                        onDeleteSet = { wId, eId, sId -> onIntent(DeleteSet(wId, eId, sId)) },
                         onEditSet = { editingSet = it },
-                        onDuplicate = { wId, eId -> onIntent(WorkoutIntent.DuplicateExercise(wId, eId)) },
-                        onDeleteExercise = { wId, eId -> onIntent(WorkoutIntent.DeleteExercise(wId, eId)) },
+                        onDuplicate = { wId, eId -> onIntent(DuplicateExercise(wId, eId)) },
+                        onDeleteExercise = { wId, eId -> onIntent(DeleteExercise(wId, eId)) },
                     )
                 }
                 item {
@@ -236,7 +245,7 @@ fun WorkoutEditScreen(
             onDismiss = { showAddExerciseDialog = false },
             onConfirm = {
                 if (newExerciseName.isNotBlank()) {
-                    onIntent(WorkoutIntent.AddExercise(workout.id, newExerciseName))
+                    onIntent(AddExercise(workout.id, newExerciseName))
                     newExerciseName = ""
                     showAddExerciseDialog = false
                 }
@@ -250,7 +259,7 @@ fun WorkoutEditScreen(
             onDismiss = { editingSet = null },
             onSave = { w, r, restInt ->
                 workout?.id?.let { workoutId ->
-                    onIntent(WorkoutIntent.UpdateSet(workoutId, exerciseId, set.id, w, r, restInt))
+                    onIntent(UpdateSet(workoutId, exerciseId, set.id, w, r, restInt))
                 }
                 editingSet = null
             },
@@ -275,7 +284,7 @@ fun ExerciseSection(
             androidx.compose.material3.CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
             ),
-        elevation = androidx.compose.material3.CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        elevation = elevatedCardElevation(defaultElevation = 2.dp),
     ) {
         Column {
             // Header
