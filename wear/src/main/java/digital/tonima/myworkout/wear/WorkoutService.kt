@@ -1,9 +1,11 @@
 package digital.tonima.myworkout.wear
 
+import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -36,6 +38,7 @@ class WorkoutService : Service() {
         const val NOTIFICATION_ID = 101
         const val ACTION_STOP = "digital.tonima.myworkout.wear.ACTION_STOP"
         const val ACTION_UPDATE_TIMER = "digital.tonima.myworkout.wear.ACTION_UPDATE_TIMER"
+        const val ACTION_TIMER_EXPIRED = "digital.tonima.myworkout.wear.ACTION_TIMER_EXPIRED"
 
         private val _restTimeRemaining = MutableStateFlow(0L)
         val restTimeRemaining = _restTimeRemaining.asStateFlow()
@@ -63,6 +66,7 @@ class WorkoutService : Service() {
     ): Int {
         when (intent?.action) {
             ACTION_STOP -> {
+                cancelExpiredAlarm()
                 restJob?.cancel()
                 _isResting.value = false
                 stopForeground(STOP_FOREGROUND_REMOVE)
@@ -71,6 +75,10 @@ class WorkoutService : Service() {
             }
             ACTION_UPDATE_TIMER -> {
                 handleActionUpdate(intent)
+                return START_STICKY
+            }
+            ACTION_TIMER_EXPIRED -> {
+                onTimerExpired()
                 return START_STICKY
             }
         }
@@ -87,6 +95,7 @@ class WorkoutService : Service() {
             val endTime = SystemClock.elapsedRealtime() + (restSeconds * 1000L)
             startRestTimer(restSeconds, endTime)
         } else {
+            cancelExpiredAlarm()
             restJob?.cancel()
             _isResting.value = false
             _restTimeRemaining.value = 0
@@ -99,11 +108,13 @@ class WorkoutService : Service() {
         endTime: Long,
     ) {
         restJob?.cancel()
+        cancelExpiredAlarm()
         _totalRestTime.value = seconds.toLong()
         _restTimeRemaining.value = seconds.toLong()
         _isResting.value = true
 
         showNotification(endTime)
+        scheduleExpiredAlarm(endTime)
 
         restJob =
             serviceScope.launch {
@@ -112,11 +123,65 @@ class WorkoutService : Service() {
                     _restTimeRemaining.value = remaining.coerceAtLeast(0L)
                     delay(500.milliseconds)
                 }
-                _restTimeRemaining.value = 0
-                _isResting.value = false
-                alertManager.triggerCompletionAlert()
-                showNotification(0L)
+                onTimerExpired()
             }
+    }
+
+    private fun onTimerExpired() {
+        if (_isResting.value) {
+            restJob?.cancel()
+            _isResting.value = false
+            _restTimeRemaining.value = 0
+            alertManager.triggerCompletionAlert()
+            showNotification(0L)
+        }
+    }
+
+    private fun scheduleExpiredAlarm(endTimeMillis: Long) {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent =
+            Intent(this, WorkoutService::class.java).apply {
+                action = ACTION_TIMER_EXPIRED
+            }
+        val pendingIntent =
+            PendingIntent.getService(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        try {
+            alarmManager.setExactAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                endTimeMillis,
+                pendingIntent,
+            )
+        } catch (e: SecurityException) {
+            alarmManager.setAndAllowWhileIdle(
+                AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                endTimeMillis,
+                pendingIntent,
+            )
+        }
+    }
+
+    private fun cancelExpiredAlarm() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val intent =
+            Intent(this, WorkoutService::class.java).apply {
+                action = ACTION_TIMER_EXPIRED
+            }
+        val pendingIntent =
+            PendingIntent.getService(
+                this,
+                0,
+                intent,
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+            )
+        if (pendingIntent != null) {
+            alarmManager.cancel(pendingIntent)
+        }
     }
 
     private fun showNotification(restEndTime: Long) {
@@ -175,6 +240,7 @@ class WorkoutService : Service() {
     }
 
     override fun onDestroy() {
+        cancelExpiredAlarm()
         restJob?.cancel()
         super.onDestroy()
     }
