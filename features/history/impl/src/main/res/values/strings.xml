@@ -6,4 +6,14 @@
     <string name="sets_logged_count">%1$d sets logged</string>
     <string name="set_summary">Set %1$d: %2$.1fkg x %3$d (%4$ds rest)</string>
     <string name="exercises_count">%1$d exercises</string>
+    <string name="history_screen_title">History</string>
+    <string name="history_screen_subtitle">Your progress over time</string>
+    <string name="standalone_workout_name">Standalone workout</string>
+    <string name="workout_summary_label">Workout summary</string>
+    <string name="sets_count_label">%1$d sets</string>
+    <string name="duration_minutes">%1$d min</string>
+    <string name="no_history_title">No workouts found</string>
+    <string name="no_history_subtitle">Your finished workouts will appear here so you can track your progress.</string>
+    <string name="default_exercise_name">Exercise</string>
+    <string name="sessions_count_label">%1$d sessions</string>
 </resources>

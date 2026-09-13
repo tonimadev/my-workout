@@ -1,0 +1,10 @@
+<resources>
+    <string name="notification_channel_ongoing_name">Descanso do treino</string>
+    <string name="notification_channel_ongoing_desc">Mostra a contagem regressiva do descanso entre séries</string>
+    <string name="notification_channel_complete_name">Descanso concluído</string>
+    <string name="notification_channel_complete_desc">Avisa quando seu intervalo de descanso termina</string>
+    <string name="notification_resting_title">Descansando…</string>
+    <string name="notification_resting_text">Avisaremos quando for hora da próxima série</string>
+    <string name="notification_rest_complete_title">Descanso concluído!</string>
+    <string name="notification_rest_complete_text">Hora da próxima série</string>
+</resources>

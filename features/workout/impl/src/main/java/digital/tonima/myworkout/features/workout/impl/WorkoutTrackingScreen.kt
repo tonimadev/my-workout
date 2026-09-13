@@ -2,6 +2,7 @@ package digital.tonima.myworkout.features.workout.impl
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +33,7 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Timer
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -81,6 +85,13 @@ fun WorkoutTrackingScreen(
     val activeSession = state.activeSession
     val restTimeLeft = state.restTimeRemaining
     val totalRestTime = state.totalRestTime
+    var showFinishConfirmation by remember { mutableStateOf(false) }
+    val remainingSets =
+        if (workout != null && activeSession != null) {
+            workout.exercises.sumOf { it.sets.size } - activeSession.logs.size
+        } else {
+            0
+        }
 
     Scaffold(
         topBar = {
@@ -114,7 +125,13 @@ fun WorkoutTrackingScreen(
                 tonalElevation = 8.dp,
             ) {
                 Button(
-                    onClick = { onIntent(WorkoutIntent.FinishWorkout) },
+                    onClick = {
+                        if (remainingSets > 0) {
+                            showFinishConfirmation = true
+                        } else {
+                            onIntent(WorkoutIntent.FinishWorkout)
+                        }
+                    },
                     modifier =
                         Modifier
                             .fillMaxWidth()
@@ -152,6 +169,11 @@ fun WorkoutTrackingScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
+                        val totalSets = workout.exercises.sumOf { it.sets.size }
+                        val completedSets = activeSession.logs.size
+                        WorkoutProgressHeader(completed = completedSets, total = totalSets)
+                    }
                     itemsIndexed(
                         items = workout.exercises,
                         key = { _, exercise -> exercise.id },
@@ -160,10 +182,10 @@ fun WorkoutTrackingScreen(
 
                         ElevatedCard(
                             modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(28.dp),
+                            shape = RoundedCornerShape(24.dp),
                             elevation =
                                 androidx.compose.material3.CardDefaults.elevatedCardElevation(
-                                    defaultElevation = 2.dp,
+                                    defaultElevation = 3.dp,
                                 ),
                         ) {
                             Column {
@@ -188,7 +210,7 @@ fun WorkoutTrackingScreen(
                                         Icon(
                                             Icons.Default.FitnessCenter,
                                             contentDescription = null,
-                                            tint = Color.Black,
+                                            tint = MaterialTheme.colorScheme.onPrimary,
                                             modifier = Modifier.size(20.dp),
                                         )
                                         Spacer(Modifier.width(8.dp))
@@ -196,7 +218,7 @@ fun WorkoutTrackingScreen(
                                             text = exercise.name.uppercase(),
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Black,
-                                            color = Color.Black,
+                                            color = MaterialTheme.colorScheme.onPrimary,
                                             letterSpacing = 0.5.sp,
                                         )
                                     }
@@ -254,6 +276,109 @@ fun WorkoutTrackingScreen(
                     onSkip = { onIntent(WorkoutIntent.SkipRest) },
                 )
             }
+        }
+    }
+
+    if (showFinishConfirmation) {
+        FinishWorkoutEarlyDialog(
+            remainingSets = remainingSets,
+            onDismiss = { showFinishConfirmation = false },
+            onConfirm = {
+                showFinishConfirmation = false
+                onIntent(WorkoutIntent.FinishWorkout)
+            },
+        )
+    }
+}
+
+@Composable
+private fun FinishWorkoutEarlyDialog(
+    remainingSets: Int,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = stringResource(R.string.dialog_finish_workout_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.dialog_finish_workout_message, remainingSets),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+        confirmButton = {
+            Button(onClick = onConfirm, shape = RoundedCornerShape(12.dp)) {
+                Text(stringResource(R.string.finish_workout).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            OutlinedButton(onClick = onDismiss, shape = RoundedCornerShape(12.dp)) {
+                Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        shape = RoundedCornerShape(32.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+    )
+}
+
+@Composable
+private fun WorkoutProgressHeader(
+    completed: Int,
+    total: Int,
+) {
+    val progressTarget = if (total > 0) completed.toFloat() / total.toFloat() else 0f
+    val animatedProgress by animateFloatAsState(
+        targetValue = progressTarget.coerceIn(0f, 1f),
+        animationSpec = tween(400),
+        label = "WorkoutProgress",
+    )
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(R.string.sets_progress_label, completed, total).uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 1.sp,
+            )
+            Text(
+                text = "${(animatedProgress * 100).toInt()}%",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(10.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+        ) {
+            Box(
+                modifier =
+                    Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .fillMaxHeight()
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.secondary),
+                            ),
+                        ),
+            )
         }
     }
 }
@@ -319,7 +444,7 @@ fun SetTrackingRow(
                 text = setNum.toString(),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Black,
-                color = if (isLogged) Color.Black else MaterialTheme.colorScheme.onSurface,
+                color = if (isLogged) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
             )
         }
 
@@ -467,7 +592,7 @@ fun RestTimerOverlay(
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Black,
                 letterSpacing = 4.sp,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             Spacer(Modifier.height(48.dp))
@@ -515,7 +640,7 @@ fun RestTimerOverlay(
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text = "PRÓXIMO:",
+                            text = stringResource(R.string.next_up_label).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary,

@@ -174,6 +174,16 @@ fun OnboardingPage(
 
         Spacer(modifier = Modifier.height(48.dp))
 
+        Box(
+            modifier =
+                Modifier
+                    .size(width = 32.dp, height = 4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(color),
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Text(
             text = title.uppercase(),
             style = MaterialTheme.typography.displaySmall,
@@ -189,7 +199,7 @@ fun OnboardingPage(
             text = description,
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
             lineHeight = 24.sp,
         )

@@ -40,4 +40,21 @@
     <string name="import_success">Workout imported successfully!</string>
     <string name="import_error_format">Invalid JSON format.</string>
     <string name="import_error_validation">Invalid workout data (too many exercises or invalid values).</string>
+    <string name="action_sync_wearable">Sync wearable</string>
+    <string name="content_description_start_workout">Start workout</string>
+    <string name="content_description_exercise_options">Exercise options</string>
+    <string name="content_description_workout_options">Workout options</string>
+    <string name="workout_count_label">%1$d workouts</string>
+    <string name="dialog_delete_workout_title">Delete workout?</string>
+    <string name="dialog_delete_workout_message">"\"%1$s\" and all of its exercises and sets will be permanently deleted. This can\'t be undone."</string>
+    <string name="dialog_delete_exercise_title">Delete exercise?</string>
+    <string name="dialog_delete_exercise_message">"\"%1$s\" and all of its logged sets will be permanently deleted. This can\'t be undone."</string>
+    <string name="error_invalid_number">Enter a valid number</string>
+    <string name="next_up_label">Next</string>
+    <string name="sets_progress_label">%1$d / %2$d sets</string>
+    <string name="dialog_delete_set_title">Delete set?</string>
+    <string name="dialog_delete_set_message">This logged set will be permanently deleted. This can\'t be undone.</string>
+    <string name="dialog_finish_workout_title">Finish workout early?</string>
+    <string name="dialog_finish_workout_message">You still have %1$d set(s) left to log. Finish anyway?</string>
+    <string name="sync_success_message">Synced with your watch</string>
 </resources>

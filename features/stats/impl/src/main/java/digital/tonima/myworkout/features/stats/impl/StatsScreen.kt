@@ -1,7 +1,10 @@
 package digital.tonima.myworkout.features.stats.impl
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,12 +24,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -45,12 +48,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -71,9 +76,11 @@ import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
 import digital.tonima.myworkout.ui.model.SessionUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import androidx.compose.foundation.lazy.itemsIndexed as rowItemsIndexed
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,7 +118,7 @@ fun StatsScreen(
                         )
                         if (selectedExerciseId == null) {
                             Text(
-                                text = "ACOMPANHE SUA EVOLUÇÃO",
+                                text = stringResource(R.string.dashboard_subtitle).uppercase(),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Medium,
@@ -193,46 +200,57 @@ fun AthleteDashboard(
                     text = stringResource(R.string.technical_evolution_label).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Black,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp,
                 )
 
-                exercises.forEach { exercise ->
-                    ElevatedCard(
-                        onClick = { onSelectExercise(exercise.id) },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors =
-                            CardDefaults.elevatedCardColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                            ),
-                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                exercises.forEachIndexed { index, exercise ->
+                    var visible by remember(exercise.id) { mutableStateOf(false) }
+                    LaunchedEffect(exercise.id) {
+                        delay((index * 40L))
+                        visible = true
+                    }
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter = fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 6 },
                     ) {
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = exercise.name.uppercase(),
-                                    fontWeight = FontWeight.Black,
-                                    letterSpacing = 0.5.sp,
-                                )
-                            },
-                            supportingContent = {
-                                Text(
-                                    text = stringResource(R.string.view_load_history).uppercase(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            },
-                            trailingContent = {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    null,
-                                    modifier = Modifier.size(16.dp).rotate(180f),
-                                )
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                        )
+                        ElevatedCard(
+                            onClick = { onSelectExercise(exercise.id) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(24.dp),
+                            colors =
+                                CardDefaults.elevatedCardColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                ),
+                            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+                        ) {
+                            ListItem(
+                                headlineContent = {
+                                    Text(
+                                        text = exercise.name.uppercase(),
+                                        fontWeight = FontWeight.Black,
+                                        letterSpacing = 0.5.sp,
+                                    )
+                                },
+                                supportingContent = {
+                                    Text(
+                                        text = stringResource(R.string.view_load_history).uppercase(),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary,
+                                    )
+                                },
+                                trailingContent = {
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(16.dp),
+                                    )
+                                },
+                                colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            )
+                        }
                     }
                 }
             }
@@ -257,7 +275,7 @@ fun GamificationHeader(stats: GamificationStatsUiModel?) {
 
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(24.dp),
         colors =
             CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
@@ -297,7 +315,7 @@ fun GamificationHeader(stats: GamificationStatsUiModel?) {
                         text = stringResource(R.string.accumulated_xp_label, stats?.totalXp ?: 0).uppercase(),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
 
@@ -313,13 +331,13 @@ fun GamificationHeader(stats: GamificationStatsUiModel?) {
                         Icon(
                             Icons.Default.LocalFireDepartment,
                             contentDescription = null,
-                            tint = Color.Black,
+                            tint = MaterialTheme.colorScheme.onSecondary,
                             modifier = Modifier.size(20.dp),
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${stats?.currentStreak ?: 0} DIAS",
-                            color = Color.Black,
+                            text = stringResource(R.string.streak_days_label, stats?.currentStreak ?: 0).uppercase(),
+                            color = MaterialTheme.colorScheme.onSecondary,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
                         )
@@ -362,7 +380,7 @@ fun GamificationHeader(stats: GamificationStatsUiModel?) {
                     text = stringResource(R.string.next_level_xp_label, nextLevelXp).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.outline,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
                     text = "${(progressTarget * 100).toInt()}%",
@@ -382,15 +400,25 @@ fun AchievementSection(achievements: ImmutableList<AchievementUiModel>) {
             text = stringResource(R.string.recent_achievements_label).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 1.sp,
         )
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(end = 16.dp),
         ) {
-            items(achievements) { achievement ->
-                AchievementBadge(achievement)
+            rowItemsIndexed(achievements, key = { _, achievement -> achievement.id }) { index, achievement ->
+                var visible by remember(achievement.id) { mutableStateOf(false) }
+                LaunchedEffect(achievement.id) {
+                    delay(index * 60L)
+                    visible = true
+                }
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 4 },
+                ) {
+                    AchievementBadge(achievement)
+                }
             }
         }
     }
@@ -443,7 +471,7 @@ fun AchievementBadge(achievement: AchievementUiModel) {
             Text(
                 text = achievement.description,
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 2,
                 minLines = 2,
                 textAlign = TextAlign.Center,
@@ -460,7 +488,7 @@ fun VolumeSection(sessions: ImmutableList<SessionUiModel>) {
             text = stringResource(R.string.weekly_volume_label).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Black,
-            color = MaterialTheme.colorScheme.outline,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             letterSpacing = 1.sp,
         )
         ElevatedCard(
@@ -493,7 +521,7 @@ fun VolumeSection(sessions: ImmutableList<SessionUiModel>) {
                         )
                         Spacer(Modifier.width(8.dp))
                         Text(
-                            text = "ESTIMATIVA DE PROGRESSO SEMANAL",
+                            text = stringResource(R.string.weekly_progress_estimate_label).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary,
@@ -505,7 +533,7 @@ fun VolumeSection(sessions: ImmutableList<SessionUiModel>) {
                             text = stringResource(R.string.insufficient_data_chart).uppercase(),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.outline,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -573,14 +601,14 @@ fun ExerciseStats(
                         Icon(
                             Icons.Default.Star,
                             null,
-                            tint = Color.Black,
+                            tint = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(24.dp),
                         )
                     }
                     Spacer(Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = (exercise?.name ?: "EXERCÍCIO").uppercase(),
+                            text = (exercise?.name ?: stringResource(R.string.default_exercise_name)).uppercase(),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Black,
                             color = MaterialTheme.colorScheme.primary,
@@ -589,9 +617,13 @@ fun ExerciseStats(
                             text =
                                 if (logs.isNotEmpty()) {
                                     val max = logs.maxBy { it.actualWeight }
-                                    "${max.actualWeight} KG PARA ${max.actualReps} REPS"
+                                    stringResource(
+                                        R.string.max_weight_for_reps_label,
+                                        max.actualWeight,
+                                        max.actualReps,
+                                    ).uppercase()
                                 } else {
-                                    "SEM DADOS"
+                                    stringResource(R.string.no_records_label).uppercase()
                                 },
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Black,
@@ -604,7 +636,7 @@ fun ExerciseStats(
         item(span = { GridItemSpan(maxLineSpan) }) {
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth().height(260.dp),
-                shape = RoundedCornerShape(28.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors =
                     CardDefaults.elevatedCardColors(
                         containerColor = MaterialTheme.colorScheme.surface,
@@ -613,10 +645,10 @@ fun ExerciseStats(
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
                     Text(
-                        text = "CARGA MÁXIMA (KG)",
+                        text = stringResource(R.string.max_load_kg_label).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Black,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 1.sp,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
@@ -630,50 +662,66 @@ fun ExerciseStats(
                 text = stringResource(R.string.load_history_label).uppercase(),
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.outline,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 letterSpacing = 1.sp,
             )
         }
 
-        items(logs.reversed()) { log ->
+        val reversedLogs = logs.reversed()
+        itemsIndexed(reversedLogs, key = { _, log -> log.id }) { index, log ->
             val date =
                 remember(log.timestamp) {
                     SimpleDateFormat("dd MMM, HH:mm", Locale.getDefault()).format(Date(log.timestamp))
                 }
-            ElevatedCard(
-                shape = RoundedCornerShape(20.dp),
-                modifier = Modifier.fillMaxWidth(),
-                colors =
-                    CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surface,
-                    ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+            var visible by remember(log.id) { mutableStateOf(false) }
+            LaunchedEffect(log.id) {
+                delay(index * 30L)
+                visible = true
+            }
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 6 },
             ) {
-                ListItem(
-                    headlineContent = {
-                        Text(
-                            text = stringResource(R.string.kg_x_reps, log.actualWeight, log.actualReps).uppercase(),
-                            fontWeight = FontWeight.Black,
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            text = date.uppercase(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.outline,
-                        )
-                    },
-                    trailingContent = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.TrendingUp,
-                            null,
-                            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
-                        )
-                    },
-                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                )
+                ElevatedCard(
+                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    colors =
+                        CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                        ),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp),
+                ) {
+                    ListItem(
+                        headlineContent = {
+                            Text(
+                                text =
+                                    stringResource(
+                                        R.string.kg_x_reps,
+                                        log.actualWeight,
+                                        log.actualReps,
+                                    ).uppercase(),
+                                fontWeight = FontWeight.Black,
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text = date.uppercase(),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        trailingContent = {
+                            Icon(
+                                Icons.AutoMirrored.Filled.TrendingUp,
+                                null,
+                                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
             }
         }
     }
@@ -692,6 +740,7 @@ fun WeightChart(
 
     val primary = MaterialTheme.colorScheme.primary
     val tertiary = MaterialTheme.colorScheme.tertiary
+    val surface = MaterialTheme.colorScheme.surface
 
     Canvas(modifier = modifier) {
         val width = size.width
@@ -737,7 +786,9 @@ fun WeightChart(
         }
 
         points.forEach { point ->
-            drawCircle(color = Color.White, radius = 6.dp.toPx(), center = point)
+            // Ring matches the card surface so the dot reads as a "cutout" in both themes,
+            // instead of a hardcoded white ring that disappears on a light card.
+            drawCircle(color = surface, radius = 6.dp.toPx(), center = point)
             drawCircle(color = primary, radius = 4.dp.toPx(), center = point)
         }
     }

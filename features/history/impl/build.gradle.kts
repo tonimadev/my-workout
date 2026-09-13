@@ -7,10 +7,10 @@ plugins {
 
 android {
     namespace = "digital.tonima.myworkout.features.history.impl"
-    compileSdk = 37
+    compileSdk = libs.versions.compileSdk.get().toInt()
 
     defaultConfig {
-        minSdk = 24
+        minSdk = libs.versions.minSdk.get().toInt()
     }
 
     buildFeatures {

@@ -1,5 +1,11 @@
 [versions]
 agp = "9.4.0"
+# Single source of truth for the SDK levels every module builds against. Referenced from each
+# module's build.gradle.kts as libs.versions.compileSdk.get().toInt() (and so on) instead of
+# repeating the numbers per module.
+compileSdk = "37"
+minSdk = "26"
+targetSdk = "37"
 coreKtx = "1.19.0"
 hiltNavigationCompose = "1.4.0"
 junit = "4.13.2"

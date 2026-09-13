@@ -6,6 +6,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import digital.tonima.myworkout.data.util.AlertManager
 import digital.tonima.myworkout.data.util.PhoneAlertManager
+import digital.tonima.myworkout.data.util.PhoneRestTimerController
+import digital.tonima.myworkout.data.util.RestTimerController
 import javax.inject.Singleton
 
 @Module
@@ -14,4 +16,8 @@ abstract class MainModule {
     @Binds
     @Singleton
     abstract fun bindAlertManager(phoneAlertManager: PhoneAlertManager): AlertManager
+
+    @Binds
+    @Singleton
+    abstract fun bindRestTimerController(controller: PhoneRestTimerController): RestTimerController
 }

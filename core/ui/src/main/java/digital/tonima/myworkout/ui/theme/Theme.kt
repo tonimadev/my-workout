@@ -1,6 +1,7 @@
 package digital.tonima.myworkout.ui.theme
 
 import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -22,7 +23,15 @@ private val DarkColorScheme =
         onSecondary = Color.Black,
         onBackground = Color.White,
         onSurface = Color.White,
+        onSurfaceVariant = DarkOnSurfaceVariant,
         outline = BorderColor,
+        secondaryContainer = DarkSecondaryContainer,
+        onSecondaryContainer = DarkOnSecondaryContainer,
+        surfaceContainerLowest = DarkSurfaceContainerLowest,
+        surfaceContainerLow = DarkSurfaceContainerLow,
+        surfaceContainer = DarkSurfaceContainer,
+        surfaceContainerHigh = DarkSurfaceContainerHigh,
+        surfaceContainerHighest = DarkSurfaceContainerHighest,
     )
 
 private val LightColorScheme =
@@ -33,16 +42,26 @@ private val LightColorScheme =
         background = Color(0xFFFDFDFD),
         surface = Color.White,
         surfaceVariant = Color(0xFFF5F5F5),
-        onPrimary = Color.White,
-        onSecondary = Color.White,
+        // Black, not white: GymPrimary/GymSecondary are mid-brightness oranges where white text
+        // fails WCAG AA (~2.5:1); black clears it comfortably (~5.5-6.6:1).
+        onPrimary = Color.Black,
+        onSecondary = Color.Black,
         onBackground = Color(0xFF1A1A1A),
         onSurface = Color(0xFF1A1A1A),
-        outline = Color(0xFFE0E0E0),
+        onSurfaceVariant = LightOnSurfaceVariant,
+        outline = LightOutline,
+        secondaryContainer = LightSecondaryContainer,
+        onSecondaryContainer = LightOnSecondaryContainer,
+        surfaceContainerLowest = LightSurfaceContainerLowest,
+        surfaceContainerLow = LightSurfaceContainerLow,
+        surfaceContainer = LightSurfaceContainer,
+        surfaceContainerHigh = LightSurfaceContainerHigh,
+        surfaceContainerHighest = LightSurfaceContainerHighest,
     )
 
 @Composable
 fun MyWorkoutTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = isSystemInDarkTheme(),
     // Dynamic color is available on Android 12+
     dynamicColor: Boolean = false, // Disabled by default for consistent fitness brand
     content: @Composable () -> Unit,

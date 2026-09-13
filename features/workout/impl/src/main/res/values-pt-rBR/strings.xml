@@ -40,4 +40,21 @@
     <string name="import_success">Treino importado com sucesso!</string>
     <string name="import_error_format">Formato JSON inválido.</string>
     <string name="import_error_validation">Dados do treino inválidos (muitos exercícios ou valores fora do limite).</string>
+    <string name="action_sync_wearable">Sincronizar wearable</string>
+    <string name="content_description_start_workout">Iniciar treino</string>
+    <string name="content_description_exercise_options">Opções do exercício</string>
+    <string name="content_description_workout_options">Opções do treino</string>
+    <string name="workout_count_label">%1$d treinos</string>
+    <string name="dialog_delete_workout_title">Excluir treino?</string>
+    <string name="dialog_delete_workout_message">"\"%1$s\" e todos os seus exercícios e séries serão excluídos permanentemente. Essa ação não pode ser desfeita."</string>
+    <string name="dialog_delete_exercise_title">Excluir exercício?</string>
+    <string name="dialog_delete_exercise_message">"\"%1$s\" e todas as suas séries registradas serão excluídas permanentemente. Essa ação não pode ser desfeita."</string>
+    <string name="error_invalid_number">Digite um número válido</string>
+    <string name="next_up_label">Próximo</string>
+    <string name="sets_progress_label">%1$d / %2$d séries</string>
+    <string name="dialog_delete_set_title">Excluir série?</string>
+    <string name="dialog_delete_set_message">Essa série registrada será excluída permanentemente. Essa ação não pode ser desfeita.</string>
+    <string name="dialog_finish_workout_title">Finalizar treino antes da hora?</string>
+    <string name="dialog_finish_workout_message">Ainda restam %1$d série(s) para registrar. Finalizar mesmo assim?</string>
+    <string name="sync_success_message">Sincronizado com o relógio</string>
 </resources>

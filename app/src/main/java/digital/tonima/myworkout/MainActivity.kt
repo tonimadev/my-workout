@@ -1,9 +1,13 @@
 package digital.tonima.myworkout
 
+import android.Manifest.permission.POST_NOTIFICATIONS
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ShowChart
@@ -71,6 +75,16 @@ class MainActivity : ComponentActivity() {
 )
 @Composable
 fun AppNavigation() {
+    // Needed on Android 13+ so the rest-timer completion alert can post a notification when the
+    // app is backgrounded mid-rest.
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val permissionLauncher =
+            rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { _ -> }
+        LaunchedEffect(Unit) {
+            permissionLauncher.launch(POST_NOTIFICATIONS)
+        }
+    }
+
     val onboardingViewModel: OnboardingViewModel = hiltViewModel()
     val onboardingCompleted by onboardingViewModel.onboardingCompleted.collectAsStateWithLifecycle()
 

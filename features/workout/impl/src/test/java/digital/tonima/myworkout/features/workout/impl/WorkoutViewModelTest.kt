@@ -8,13 +8,15 @@ import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutSessionEntity
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.repository.WorkoutRepository
-import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.data.util.RestTimerController
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -27,7 +29,7 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModelTest {
     private val repository = mockk<WorkoutRepository>(relaxed = true)
-    private val alertManager = mockk<AlertManager>(relaxed = true)
+    private val restTimerController = mockk<RestTimerController>(relaxed = true)
     private lateinit var viewModel: WorkoutViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -35,7 +37,9 @@ class WorkoutViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { repository.getAllWorkouts() } returns flowOf(emptyList())
-        viewModel = WorkoutViewModel(repository, alertManager)
+        every { restTimerController.restTimeRemaining } returns MutableStateFlow(0)
+        every { restTimerController.totalRestTime } returns MutableStateFlow(0)
+        viewModel = WorkoutViewModel(repository, restTimerController)
     }
 
     @After
@@ -123,4 +127,44 @@ class WorkoutViewModelTest {
                 )
             }
         }
+
+    @Test
+    fun `logSet with a rest interval should start the rest timer`() =
+        runTest {
+            val workoutId = 1L
+            val exerciseId = 2L
+            val setId = 3L
+
+            val workout = WorkoutEntity(id = workoutId, name = "Test Workout")
+            val exercise = ExerciseEntity(id = exerciseId, workoutId = workoutId, name = "Squat", order = 0)
+            val set =
+                SetEntity(
+                    id = setId,
+                    exerciseId = exerciseId,
+                    targetWeight = 40.0,
+                    targetReps = 10,
+                    restInterval = 60,
+                    order = 0,
+                )
+            val workoutWithEx = WorkoutWithExercises(workout, listOf(ExerciseWithSets(exercise, listOf(set))))
+
+            val session = WorkoutSessionEntity(id = 10L, workoutId = workoutId, startTime = 0L)
+            val sessionWithLogs = SessionWithLogs(session, workout, emptyList())
+
+            coEvery { repository.getWorkoutById(workoutId) } returns flowOf(workoutWithEx)
+            coEvery { repository.startSession(workoutId) } returns 10L
+            coEvery { repository.getSessionById(10L) } returns flowOf(sessionWithLogs)
+
+            viewModel.onIntent(WorkoutIntent.StartWorkout(workoutId))
+            viewModel.onIntent(WorkoutIntent.LogSet(10L, exerciseId, setId, 40.0, 10, 60))
+
+            coVerify(timeout = 2000) { restTimerController.startRest(60) }
+        }
+
+    @Test
+    fun `skipRest should stop the rest timer`() {
+        viewModel.onIntent(WorkoutIntent.SkipRest)
+
+        verify { restTimerController.stop() }
+    }
 }

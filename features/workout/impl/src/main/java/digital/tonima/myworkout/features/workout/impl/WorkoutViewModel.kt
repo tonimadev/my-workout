@@ -9,7 +9,7 @@ import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.repository.WorkoutRepository
-import digital.tonima.myworkout.data.util.AlertManager
+import digital.tonima.myworkout.data.util.RestTimerController
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toJson
 import digital.tonima.myworkout.data.util.WorkoutSharingUtils.toShareableText
@@ -20,12 +20,9 @@ import digital.tonima.myworkout.ui.util.toUiModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 @Immutable
 data class WorkoutState(
@@ -35,9 +32,11 @@ data class WorkoutState(
     val restTimeRemaining: Int = 0,
     val totalRestTime: Int = 0,
     val isLoading: Boolean = false,
+    val isSyncing: Boolean = false,
     val error: String? = null,
     val shareText: String? = null,
     val exportJson: String? = null,
+    val syncMessage: String? = null,
     val shouldNavigateBack: Boolean = false,
 )
 
@@ -112,6 +111,8 @@ sealed interface WorkoutIntent {
 
     data object ClearError : WorkoutIntent
 
+    data object ClearSyncMessage : WorkoutIntent
+
     data object ResetNavigation : WorkoutIntent
 }
 
@@ -120,12 +121,27 @@ class WorkoutViewModel
     @Inject
     constructor(
         private val repository: WorkoutRepository,
-        private val alertManager: AlertManager,
+        private val restTimerController: RestTimerController,
     ) : MviViewModel<WorkoutState, WorkoutIntent>(WorkoutState()) {
-        private var restJob: Job? = null
-
         init {
             observeWorkouts()
+            observeRestTimer()
+        }
+
+        // The countdown itself lives in RestTimerController (backed by a foreground service on
+        // Android) so rest alerts still fire on time if the app is backgrounded or the screen is
+        // off mid-rest; this just mirrors that state into the UI.
+        private fun observeRestTimer() {
+            viewModelScope.launch {
+                restTimerController.restTimeRemaining.collect { remaining ->
+                    updateState { copy(restTimeRemaining = remaining) }
+                }
+            }
+            viewModelScope.launch {
+                restTimerController.totalRestTime.collect { total ->
+                    updateState { copy(totalRestTime = total) }
+                }
+            }
         }
 
         private fun observeWorkouts() {
@@ -182,6 +198,7 @@ class WorkoutViewModel
                 is WorkoutIntent.ImportWorkout -> importWorkout(intent.json)
                 is WorkoutIntent.ClearShareData -> updateState { copy(shareText = null, exportJson = null) }
                 is WorkoutIntent.ClearError -> updateState { copy(error = null) }
+                is WorkoutIntent.ClearSyncMessage -> updateState { copy(syncMessage = null) }
                 is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
             }
         }
@@ -197,10 +214,9 @@ class WorkoutViewModel
 
         private fun syncWorkouts() {
             viewModelScope.launch {
-                val all = repository.getAllWorkouts().first()
-                all.forEach {
-                    repository.addWorkout(it.workout, it.exercises)
-                }
+                updateState { copy(isSyncing = true) }
+                repository.forceSync()
+                updateState { copy(isSyncing = false, syncMessage = "sync_success") }
             }
         }
 
@@ -262,27 +278,13 @@ class WorkoutViewModel
                     ),
                 )
                 if (restInterval > 0) {
-                    startRestTimer(restInterval)
+                    restTimerController.startRest(restInterval)
                 }
             }
         }
 
-        private fun startRestTimer(seconds: Int) {
-            restJob?.cancel()
-            restJob =
-                viewModelScope.launch {
-                    updateState { copy(totalRestTime = seconds, restTimeRemaining = seconds) }
-                    while (currentState.restTimeRemaining > 0) {
-                        delay(1000.milliseconds)
-                        updateState { copy(restTimeRemaining = restTimeRemaining - 1) }
-                    }
-                    alertManager.triggerCompletionAlert()
-                }
-        }
-
         private fun skipRest() {
-            restJob?.cancel()
-            updateState { copy(restTimeRemaining = 0, totalRestTime = 0) }
+            restTimerController.stop()
         }
 
         private fun finishWorkout() {
@@ -290,6 +292,7 @@ class WorkoutViewModel
                 val sessionId = currentState.activeSession?.id
                 if (sessionId != null) {
                     repository.finishSession(sessionId)
+                    restTimerController.stop()
                     updateState { copy(activeSession = null, shouldNavigateBack = true) }
                 }
             }

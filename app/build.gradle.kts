@@ -12,15 +12,15 @@ plugins {
 android {
     namespace = "digital.tonima.myworkout"
     compileSdk {
-        version = release(37)
+        version = release(libs.versions.compileSdk.get().toInt())
     }
 
     defaultConfig {
         applicationId = "digital.tonima.myworkout"
-        minSdk = 24
-        targetSdk = 37
-        versionCode = 141
-        versionName = "2.20"
+        minSdk = libs.versions.minSdk.get().toInt()
+        targetSdk = libs.versions.targetSdk.get().toInt()
+        versionCode = 143
+        versionName = "2.21"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

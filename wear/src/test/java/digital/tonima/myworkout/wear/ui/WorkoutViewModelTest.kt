@@ -2,7 +2,6 @@ package digital.tonima.myworkout.wear.ui
 
 import android.content.Context
 import digital.tonima.myworkout.data.repository.WorkoutRepository
-import digital.tonima.myworkout.data.util.AlertManager
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -20,7 +19,6 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class WorkoutViewModelTest {
     private val repository = mockk<WorkoutRepository>(relaxed = true)
-    private val alertManager = mockk<AlertManager>(relaxed = true)
     private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: WorkoutViewModel
     private val testDispatcher = UnconfinedTestDispatcher()
@@ -29,7 +27,7 @@ class WorkoutViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { repository.getAllWorkouts() } returns flowOf(emptyList())
-        viewModel = WorkoutViewModel(repository, alertManager, context)
+        viewModel = WorkoutViewModel(repository, context)
     }
 
     @After

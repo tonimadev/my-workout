@@ -1,6 +1,10 @@
 package digital.tonima.myworkout.features.workout.impl
 
 import android.content.Intent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -78,6 +82,7 @@ import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ShareWorkout
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.UpdateSet
 import digital.tonima.myworkout.ui.model.ExerciseUiModel
 import digital.tonima.myworkout.ui.model.SetUiModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +98,8 @@ fun WorkoutEditScreen(
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
     var editingSet by remember { mutableStateOf<Pair<Long, SetUiModel>?>(null) }
+    var exercisePendingDelete by remember { mutableStateOf<Triple<Long, Long, String>?>(null) }
+    var setPendingDelete by remember { mutableStateOf<Triple<Long, Long, Long>?>(null) }
     val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
     val showBackButton = !windowSizeClass.isWidthAtLeastBreakpoint(600)
 
@@ -173,7 +180,7 @@ fun WorkoutEditScreen(
                         ) {
                             Icon(
                                 Icons.Default.PlayArrow,
-                                contentDescription = null,
+                                contentDescription = stringResource(R.string.content_description_start_workout),
                                 modifier =
                                     Modifier.size(
                                         28.dp,
@@ -200,38 +207,64 @@ fun WorkoutEditScreen(
                 contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 32.dp),
                 verticalArrangement = Arrangement.spacedBy(24.dp),
             ) {
-                items(workout.exercises) { exercise ->
-                    ExerciseSection(
-                        exercise = exercise,
-                        workoutId = workout.id,
-                        onAddSet = { wId, eId -> onIntent(AddSet(wId, eId)) },
-                        onDeleteSet = { wId, eId, sId -> onIntent(DeleteSet(wId, eId, sId)) },
-                        onEditSet = { editingSet = it },
-                        onDuplicate = { wId, eId -> onIntent(DuplicateExercise(wId, eId)) },
-                        onDeleteExercise = { wId, eId -> onIntent(DeleteExercise(wId, eId)) },
-                    )
+                itemsIndexed(workout.exercises, key = { _, exercise -> exercise.id }) { index, exercise ->
+                    var visible by remember(exercise.id) { mutableStateOf(false) }
+                    LaunchedEffect(exercise.id) {
+                        delay(index * 40L)
+                        visible = true
+                    }
+                    AnimatedVisibility(
+                        visible = visible,
+                        enter = fadeIn(tween(220)) + slideInVertically(tween(220)) { it / 6 },
+                    ) {
+                        ExerciseSection(
+                            exercise = exercise,
+                            workoutId = workout.id,
+                            onAddSet = { wId, eId -> onIntent(AddSet(wId, eId)) },
+                            onDeleteSet = { wId, eId, sId -> setPendingDelete = Triple(wId, eId, sId) },
+                            onEditSet = { editingSet = it },
+                            onDuplicate = { wId, eId -> onIntent(DuplicateExercise(wId, eId)) },
+                            onDeleteExercise = { wId, eId ->
+                                exercisePendingDelete = Triple(wId, eId, exercise.name)
+                            },
+                        )
+                    }
                 }
                 item {
-                    Button(
+                    // Bold "add slot" placeholder - a dashed outline reads as an actionable empty
+                    // slot rather than a generic button, consistent with the app's block-based cards.
+                    Surface(
                         onClick = { showAddExerciseDialog = true },
                         modifier =
                             Modifier
                                 .fillMaxWidth()
                                 .height(64.dp),
                         shape = RoundedCornerShape(20.dp),
-                        colors =
-                            ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.primary,
+                        color = Color.Transparent,
+                        border =
+                            BorderStroke(
+                                2.dp,
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
                             ),
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = stringResource(R.string.action_add_exercise).uppercase(),
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 1.sp,
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxSize(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Text(
+                                text = stringResource(R.string.action_add_exercise).uppercase(),
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = 1.sp,
+                            )
+                        }
                     }
                 }
             }
@@ -265,6 +298,27 @@ fun WorkoutEditScreen(
             },
         )
     }
+
+    exercisePendingDelete?.let { (workoutId, exerciseId, exerciseName) ->
+        DeleteExerciseDialog(
+            exerciseName = exerciseName,
+            onDismiss = { exercisePendingDelete = null },
+            onConfirm = {
+                onIntent(DeleteExercise(workoutId, exerciseId))
+                exercisePendingDelete = null
+            },
+        )
+    }
+
+    setPendingDelete?.let { (workoutId, exerciseId, setId) ->
+        DeleteSetDialog(
+            onDismiss = { setPendingDelete = null },
+            onConfirm = {
+                onIntent(DeleteSet(workoutId, exerciseId, setId))
+                setPendingDelete = null
+            },
+        )
+    }
 }
 
 @Composable
@@ -279,12 +333,12 @@ fun ExerciseSection(
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
+        shape = RoundedCornerShape(24.dp),
         colors =
             androidx.compose.material3.CardDefaults.elevatedCardColors(
                 containerColor = MaterialTheme.colorScheme.surface,
             ),
-        elevation = elevatedCardElevation(defaultElevation = 2.dp),
+        elevation = elevatedCardElevation(defaultElevation = 3.dp),
     ) {
         Column {
             // Header
@@ -309,7 +363,7 @@ fun ExerciseSection(
                     text = exercise.name.uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Black,
-                    color = Color.Black,
+                    color = MaterialTheme.colorScheme.onPrimary,
                     modifier = Modifier.weight(1f),
                     letterSpacing = 0.5.sp,
                 )
@@ -317,7 +371,11 @@ fun ExerciseSection(
                 var showMenu by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { showMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = null, tint = Color.Black)
+                        Icon(
+                            Icons.Default.MoreVert,
+                            contentDescription = stringResource(R.string.content_description_exercise_options),
+                            tint = MaterialTheme.colorScheme.onPrimary,
+                        )
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
@@ -438,13 +496,13 @@ fun SetItemRow(
                         imageVector = Icons.Default.Timer,
                         contentDescription = null,
                         modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.outline,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = "${stringResource(R.string.rest_interval_label).uppercase()}: ${set.restInterval}S",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.outline,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontWeight = FontWeight.Bold,
                     )
                 }
@@ -516,6 +574,97 @@ fun AddExerciseDialog(
 }
 
 @Composable
+fun DeleteExerciseDialog(
+    exerciseName: String,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = {
+            Text(
+                text = stringResource(R.string.dialog_delete_exercise_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.dialog_delete_exercise_message, exerciseName),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(12.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+            ) {
+                Text(stringResource(R.string.action_delete).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        shape = RoundedCornerShape(32.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+    )
+}
+
+@Composable
+fun DeleteSetDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+        title = {
+            Text(
+                text = stringResource(R.string.dialog_delete_set_title),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Black,
+            )
+        },
+        text = {
+            Text(
+                text = stringResource(R.string.dialog_delete_set_message),
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                shape = RoundedCornerShape(12.dp),
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+            ) {
+                Text(stringResource(R.string.action_delete).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
+            }
+        },
+        shape = RoundedCornerShape(32.dp),
+        containerColor = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp,
+    )
+}
+
+@Composable
 fun EditSetDialog(
     set: SetUiModel,
     onDismiss: () -> Unit,
@@ -524,6 +673,14 @@ fun EditSetDialog(
     var weight by remember { mutableStateOf(set.targetWeight.toString()) }
     var reps by remember { mutableStateOf(set.targetReps.toString()) }
     var rest by remember { mutableStateOf(set.restInterval.toString()) }
+
+    val weightValue = weight.toDoubleOrNull()
+    val repsValue = reps.toIntOrNull()
+    val restValue = rest.toIntOrNull()
+    val weightError = weightValue == null
+    val repsError = repsValue == null
+    val restError = restValue == null
+    val invalidValueMessage = stringResource(R.string.error_invalid_number)
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -540,6 +697,13 @@ fun EditSetDialog(
                     value = weight,
                     onValueChange = { weight = it },
                     label = { Text(stringResource(R.string.label_weight_kg)) },
+                    isError = weightError,
+                    supportingText =
+                        if (weightError) {
+                            { Text(invalidValueMessage) }
+                        } else {
+                            null
+                        },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -548,6 +712,13 @@ fun EditSetDialog(
                     value = reps,
                     onValueChange = { reps = it },
                     label = { Text(stringResource(R.string.label_reps)) },
+                    isError = repsError,
+                    supportingText =
+                        if (repsError) {
+                            { Text(invalidValueMessage) }
+                        } else {
+                            null
+                        },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -556,6 +727,13 @@ fun EditSetDialog(
                     value = rest,
                     onValueChange = { rest = it },
                     label = { Text(stringResource(R.string.label_rest_interval)) },
+                    isError = restError,
+                    supportingText =
+                        if (restError) {
+                            { Text(invalidValueMessage) }
+                        } else {
+                            null
+                        },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
@@ -564,12 +742,8 @@ fun EditSetDialog(
         },
         confirmButton = {
             Button(
-                onClick = {
-                    val w = weight.toDoubleOrNull() ?: set.targetWeight
-                    val r = reps.toIntOrNull() ?: set.targetReps
-                    val rs = rest.toIntOrNull() ?: set.restInterval
-                    onSave(w, r, rs)
-                },
+                onClick = { onSave(weightValue!!, repsValue!!, restValue!!) },
+                enabled = !weightError && !repsError && !restError,
                 shape = RoundedCornerShape(12.dp),
             ) {
                 Text(stringResource(R.string.action_save).uppercase(), fontWeight = FontWeight.Bold)

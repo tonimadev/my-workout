@@ -15,4 +15,10 @@
     <string name="load_history_label">HISTÓRICO DE CARGA</string>
     <string name="kg_x_reps">%1$.1f KG X %2$d</string>
     <string name="content_description_back">Voltar</string>
+    <string name="dashboard_subtitle">Acompanhe sua evolução</string>
+    <string name="streak_days_label">%1$d dias</string>
+    <string name="weekly_progress_estimate_label">Estimativa de progresso semanal</string>
+    <string name="max_weight_for_reps_label">%1$.1f kg para %2$d reps</string>
+    <string name="no_records_label">Sem dados</string>
+    <string name="max_load_kg_label">Carga máxima (kg)</string>
 </resources>

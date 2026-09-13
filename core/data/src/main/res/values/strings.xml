@@ -1,0 +1,10 @@
+<resources>
+    <string name="notification_channel_ongoing_name">Workout rest</string>
+    <string name="notification_channel_ongoing_desc">Shows the rest countdown between sets</string>
+    <string name="notification_channel_complete_name">Rest complete</string>
+    <string name="notification_channel_complete_desc">Alerts you when your rest interval ends</string>
+    <string name="notification_resting_title">Resting…</string>
+    <string name="notification_resting_text">We\'ll let you know when it\'s time for your next set</string>
+    <string name="notification_rest_complete_title">Rest complete!</string>
+    <string name="notification_rest_complete_text">Time for your next set</string>
+</resources>
