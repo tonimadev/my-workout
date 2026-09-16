@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import androidx.room.Upsert
 import digital.tonima.myworkout.data.model.AchievementEntity
 import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
@@ -21,19 +22,19 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WorkoutDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertWorkout(workout: WorkoutEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertMasterExercise(exercise: MasterExerciseEntity): Long
 
     @Query("SELECT * FROM master_exercises")
     fun getAllMasterExercises(): Flow<List<MasterExerciseEntity>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertExercise(exercise: ExerciseEntity): Long
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Upsert
     suspend fun insertSet(set: SetEntity): Long
 
     @Transaction
@@ -63,11 +64,16 @@ interface WorkoutDao {
         workout: WorkoutEntity,
         exercises: List<ExerciseWithSets>,
     ) {
-        val workoutId = insertWorkout(workout)
-        // Note: CASCADE DELETE should handle removing old exercises if workout was replaced.
-        // However, we ensure exercises have the correct workoutId.
+        // @Upsert updates existing rows in place (no delete+reinsert), so cascading
+        // children (exercises/sets and, transitively, this session's workout_logs)
+        // are never wiped out just because the template was edited mid-workout.
+        // Its return value is only meaningful for a brand-new row (id == 0); for an
+        // existing row we already know the real id, so prefer that.
+        val insertedWorkoutId = insertWorkout(workout)
+        val workoutId = if (workout.id != 0L) workout.id else insertedWorkoutId
         exercises.forEach { exWithSets ->
-            val exerciseId = insertExercise(exWithSets.exercise.copy(workoutId = workoutId))
+            val insertedExerciseId = insertExercise(exWithSets.exercise.copy(workoutId = workoutId))
+            val exerciseId = if (exWithSets.exercise.id != 0L) exWithSets.exercise.id else insertedExerciseId
             exWithSets.sets.forEach { set ->
                 insertSet(set.copy(exerciseId = exerciseId))
             }
