@@ -21,11 +21,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.MoreVert
@@ -46,6 +49,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -74,6 +78,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import digital.tonima.myworkout.data.catalog.WorkoutTemplateCatalog
+import digital.tonima.myworkout.ui.components.templates.WorkoutTemplateList
 import digital.tonima.myworkout.ui.model.WorkoutUiModel
 import kotlinx.coroutines.delay
 
@@ -89,10 +95,18 @@ fun WorkoutListScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
+    var showTemplateSheet by remember { mutableStateOf(false) }
     var newWorkoutName by remember { mutableStateOf("") }
     var importJson by remember { mutableStateOf("") }
     var workoutPendingDelete by remember { mutableStateOf<WorkoutUiModel?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.newlyCreatedWorkoutId) {
+        state.newlyCreatedWorkoutId?.let { workoutId ->
+            onWorkoutClick(workoutId)
+            onIntent(WorkoutIntent.ClearNewWorkoutId)
+        }
+    }
 
     val errorFormat = stringResource(R.string.import_error_format)
     val errorValidation = stringResource(R.string.import_error_validation)
@@ -165,6 +179,20 @@ fun WorkoutListScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { showTemplateSheet = true },
+                        colors =
+                            IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                    ) {
+                        Icon(
+                            Icons.Default.AutoAwesome,
+                            contentDescription = stringResource(R.string.action_use_template),
+                        )
+                    }
+
                     IconButton(
                         onClick = { showImportDialog = true },
                         colors =
@@ -285,6 +313,36 @@ fun WorkoutListScreen(
                 }
             },
         )
+    }
+
+    if (showTemplateSheet) {
+        ModalBottomSheet(
+            onDismissRequest = { showTemplateSheet = false },
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.dialog_use_template_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Black,
+                )
+                WorkoutTemplateList(
+                    templates = WorkoutTemplateCatalog.all,
+                    onTemplateClick = { template ->
+                        onIntent(WorkoutIntent.ApplyTemplate(template))
+                        showTemplateSheet = false
+                    },
+                )
+            }
+        }
     }
 
     workoutPendingDelete?.let { workout ->

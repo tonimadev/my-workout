@@ -21,4 +21,6 @@
     <string name="max_weight_for_reps_label">%1$.1f kg para %2$d reps</string>
     <string name="no_records_label">Sem dados</string>
     <string name="max_load_kg_label">Carga máxima (kg)</string>
+    <string name="muscles_worked_label">MÚSCULOS TRABALHADOS</string>
+    <string name="muscle_heatmap_label">MAPA MUSCULAR</string>
 </resources>

@@ -57,4 +57,8 @@
     <string name="dialog_finish_workout_title">Finish workout early?</string>
     <string name="dialog_finish_workout_message">You still have %1$d set(s) left to log. Finish anyway?</string>
     <string name="sync_success_message">Synced with your watch</string>
+    <string name="label_primary_muscle">Primary muscle (tap the diagram)</string>
+    <string name="label_secondary_muscles">Secondary muscles</string>
+    <string name="action_use_template">Use a template</string>
+    <string name="dialog_use_template_title">Ready-made workouts</string>
 </resources>

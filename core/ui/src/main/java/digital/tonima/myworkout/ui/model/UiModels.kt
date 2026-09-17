@@ -1,7 +1,9 @@
 package digital.tonima.myworkout.ui.model
 
 import androidx.compose.runtime.Immutable
+import digital.tonima.myworkout.data.model.MuscleGroup
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Immutable
 data class GamificationStatsUiModel(
@@ -16,6 +18,8 @@ data class MasterExerciseUiModel(
     val id: Long,
     val name: String,
     val description: String,
+    val primaryMuscle: MuscleGroup? = null,
+    val secondaryMuscles: ImmutableList<MuscleGroup> = persistentListOf(),
 )
 
 @Immutable

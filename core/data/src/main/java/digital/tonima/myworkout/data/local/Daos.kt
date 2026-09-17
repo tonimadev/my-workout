@@ -63,7 +63,7 @@ interface WorkoutDao {
     suspend fun upsertWorkoutWithExercises(
         workout: WorkoutEntity,
         exercises: List<ExerciseWithSets>,
-    ) {
+    ): Long {
         // @Upsert updates existing rows in place (no delete+reinsert), so cascading
         // children (exercises/sets and, transitively, this session's workout_logs)
         // are never wiped out just because the template was edited mid-workout.
@@ -78,6 +78,7 @@ interface WorkoutDao {
                 insertSet(set.copy(exerciseId = exerciseId))
             }
         }
+        return workoutId
     }
 }
 

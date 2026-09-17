@@ -13,6 +13,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import digital.tonima.myworkout.data.local.AchievementDao
 import digital.tonima.myworkout.data.local.AppDatabase
+import digital.tonima.myworkout.data.local.MIGRATION_3_4
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
 import digital.tonima.myworkout.data.repository.GamificationRepository
@@ -46,7 +47,9 @@ abstract class DataModule {
                 context,
                 AppDatabase::class.java,
                 "my_workout_db",
-            ).fallbackToDestructiveMigration(false).build()
+            ).addMigrations(MIGRATION_3_4)
+                .fallbackToDestructiveMigration(false)
+                .build()
         }
 
         @Provides

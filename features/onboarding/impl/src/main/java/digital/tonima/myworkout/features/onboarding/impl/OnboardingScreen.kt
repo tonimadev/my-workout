@@ -14,10 +14,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ShowChart
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Button
@@ -27,8 +30,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,12 +46,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import digital.tonima.myworkout.data.catalog.WorkoutTemplate
+import digital.tonima.myworkout.data.catalog.WorkoutTemplateCatalog
+import digital.tonima.myworkout.ui.components.templates.WorkoutTemplateList
 import kotlinx.coroutines.launch
 
+private const val PAGE_COUNT = 4
+private const val TEMPLATES_PAGE = 3
+
 @Composable
-fun OnboardingScreen(onComplete: () -> Unit) {
-    val pagerState = rememberPagerState(pageCount = { 3 })
+fun OnboardingScreen(
+    onComplete: () -> Unit,
+    onApplyTemplates: (Set<WorkoutTemplate>) -> Unit,
+) {
+    val pagerState = rememberPagerState(pageCount = { PAGE_COUNT })
     val scope = rememberCoroutineScope()
+    var selectedTemplates by remember { mutableStateOf(emptySet<WorkoutTemplate>()) }
+
+    fun finish() {
+        onApplyTemplates(selectedTemplates)
+        onComplete()
+    }
 
     Scaffold(
         bottomBar = {
@@ -57,7 +80,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
             ) {
                 // Page Indicator
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    repeat(3) { index ->
+                    repeat(PAGE_COUNT) { index ->
                         val isSelected = pagerState.currentPage == index
                         Box(
                             modifier =
@@ -75,34 +98,42 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                     }
                 }
 
-                Button(
-                    onClick = {
-                        if (pagerState.currentPage < 2) {
-                            scope.launch {
-                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                            }
-                        } else {
-                            onComplete()
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (pagerState.currentPage == TEMPLATES_PAGE) {
+                        TextButton(onClick = ::finish) {
+                            Text(stringResource(R.string.action_skip).uppercase(), fontWeight = FontWeight.Bold)
                         }
-                    },
-                    modifier = Modifier.height(56.dp).width(140.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors =
-                        ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.primary,
-                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                        ),
-                ) {
-                    Text(
-                        text =
-                            if (pagerState.currentPage < 2) {
-                                stringResource(R.string.action_next).uppercase()
+                        Spacer(Modifier.width(8.dp))
+                    }
+                    Button(
+                        onClick = {
+                            if (pagerState.currentPage < PAGE_COUNT - 1) {
+                                scope.launch {
+                                    pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                }
                             } else {
-                                stringResource(R.string.action_start_using).uppercase()
-                            },
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 1.sp,
-                    )
+                                finish()
+                            }
+                        },
+                        modifier = Modifier.height(56.dp).width(140.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors =
+                            ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                    ) {
+                        Text(
+                            text =
+                                if (pagerState.currentPage < PAGE_COUNT - 1) {
+                                    stringResource(R.string.action_next).uppercase()
+                                } else {
+                                    stringResource(R.string.action_start_using).uppercase()
+                                },
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 1.sp,
+                        )
+                    }
                 }
             }
         },
@@ -137,8 +168,63 @@ fun OnboardingScreen(onComplete: () -> Unit) {
                         icon = Icons.Default.Watch,
                         color = MaterialTheme.colorScheme.tertiary,
                     )
+                TEMPLATES_PAGE ->
+                    OnboardingTemplatesPage(
+                        selectedTemplates = selectedTemplates,
+                        onToggleTemplate = { template ->
+                            selectedTemplates =
+                                if (selectedTemplates.contains(template)) {
+                                    selectedTemplates - template
+                                } else {
+                                    selectedTemplates + template
+                                }
+                        },
+                    )
             }
         }
+    }
+}
+
+@Composable
+private fun OnboardingTemplatesPage(
+    selectedTemplates: Set<WorkoutTemplate>,
+    onToggleTemplate: (WorkoutTemplate) -> Unit,
+) {
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp, vertical = 16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Icon(
+            imageVector = Icons.Default.AutoAwesome,
+            contentDescription = null,
+            modifier = Modifier.size(56.dp),
+            tint = MaterialTheme.colorScheme.primary,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = stringResource(R.string.onboarding_templates_title).uppercase(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Black,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.onboarding_templates_desc),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(24.dp))
+        WorkoutTemplateList(
+            templates = WorkoutTemplateCatalog.all,
+            selectedTemplates = selectedTemplates,
+            onTemplateClick = onToggleTemplate,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
 }
 

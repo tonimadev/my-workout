@@ -10,6 +10,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -21,9 +23,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -44,10 +48,12 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -72,6 +78,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import digital.tonima.myworkout.data.catalog.CatalogExercise
+import digital.tonima.myworkout.data.catalog.ExerciseCatalog
+import digital.tonima.myworkout.data.model.BodyView
+import digital.tonima.myworkout.data.model.MuscleGroup
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.AddExercise
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.AddSet
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.DeleteExercise
@@ -80,8 +90,13 @@ import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.DuplicateExe
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ExportWorkout
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.ShareWorkout
 import digital.tonima.myworkout.features.workout.impl.WorkoutIntent.UpdateSet
+import digital.tonima.myworkout.ui.components.musclebody.MuscleBodyDiagram
 import digital.tonima.myworkout.ui.model.ExerciseUiModel
 import digital.tonima.myworkout.ui.model.SetUiModel
+import digital.tonima.myworkout.ui.util.labelRes
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -97,6 +112,9 @@ fun WorkoutEditScreen(
     val context = LocalContext.current
     var showAddExerciseDialog by remember { mutableStateOf(false) }
     var newExerciseName by remember { mutableStateOf("") }
+    var newExercisePrimaryMuscle by remember { mutableStateOf<MuscleGroup?>(null) }
+    var newExerciseSecondaryMuscles by remember { mutableStateOf(persistentListOf<MuscleGroup>()) }
+    var newExerciseBodyView by remember { mutableStateOf(BodyView.FRONT) }
     var editingSet by remember { mutableStateOf<Pair<Long, SetUiModel>?>(null) }
     var exercisePendingDelete by remember { mutableStateOf<Triple<Long, Long, String>?>(null) }
     var setPendingDelete by remember { mutableStateOf<Triple<Long, Long, Long>?>(null) }
@@ -272,15 +290,54 @@ fun WorkoutEditScreen(
     }
 
     if (showAddExerciseDialog && workout != null) {
+        fun resetNewExerciseState() {
+            newExerciseName = ""
+            newExercisePrimaryMuscle = null
+            newExerciseSecondaryMuscles = persistentListOf()
+            newExerciseBodyView = BodyView.FRONT
+        }
+
         AddExerciseDialog(
             name = newExerciseName,
             onNameChange = { newExerciseName = it },
-            onDismiss = { showAddExerciseDialog = false },
+            primaryMuscle = newExercisePrimaryMuscle,
+            onPrimaryMuscleChange = { muscle ->
+                newExercisePrimaryMuscle = muscle
+                newExerciseSecondaryMuscles = newExerciseSecondaryMuscles.removing(muscle)
+            },
+            secondaryMuscles = newExerciseSecondaryMuscles,
+            onSecondaryMuscleToggle = { muscle ->
+                newExerciseSecondaryMuscles =
+                    if (newExerciseSecondaryMuscles.contains(muscle)) {
+                        newExerciseSecondaryMuscles.removing(muscle)
+                    } else {
+                        newExerciseSecondaryMuscles.adding(muscle)
+                    }
+            },
+            bodyView = newExerciseBodyView,
+            onBodyViewChange = { newExerciseBodyView = it },
+            onSuggestionSelected = { suggestion ->
+                newExerciseName = suggestion.name
+                newExercisePrimaryMuscle = suggestion.primaryMuscle
+                newExerciseSecondaryMuscles = suggestion.secondaryMuscles.toPersistentList()
+                newExerciseBodyView = suggestion.primaryMuscle.view
+            },
+            onDismiss = {
+                showAddExerciseDialog = false
+                resetNewExerciseState()
+            },
             onConfirm = {
                 if (newExerciseName.isNotBlank()) {
-                    onIntent(AddExercise(workout.id, newExerciseName))
-                    newExerciseName = ""
+                    onIntent(
+                        AddExercise(
+                            workoutId = workout.id,
+                            name = newExerciseName,
+                            primaryMuscle = newExercisePrimaryMuscle,
+                            secondaryMuscles = newExerciseSecondaryMuscles,
+                        ),
+                    )
                     showAddExerciseDialog = false
+                    resetNewExerciseState()
                 }
             },
         )
@@ -523,54 +580,130 @@ fun SetItemRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun AddExerciseDialog(
     name: String,
     onNameChange: (String) -> Unit,
+    primaryMuscle: MuscleGroup?,
+    onPrimaryMuscleChange: (MuscleGroup) -> Unit,
+    secondaryMuscles: ImmutableList<MuscleGroup>,
+    onSecondaryMuscleToggle: (MuscleGroup) -> Unit,
+    bodyView: BodyView,
+    onBodyViewChange: (BodyView) -> Unit,
+    onSuggestionSelected: (CatalogExercise) -> Unit,
     onDismiss: () -> Unit,
     onConfirm: () -> Unit,
 ) {
-    AlertDialog(
+    val suggestions =
+        remember(name) {
+            if (name.isBlank()) {
+                emptyList()
+            } else {
+                ExerciseCatalog.all.filter { it.name.contains(name, ignoreCase = true) }.take(5)
+            }
+        }
+
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = {
+        containerColor = MaterialTheme.colorScheme.surface,
+    ) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
+                    .padding(bottom = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
             Text(
                 text = stringResource(R.string.dialog_add_exercise_title),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Black,
             )
-        },
-        text = {
-            OutlinedTextField(
-                value = name,
-                onValueChange = onNameChange,
-                label = { Text(stringResource(R.string.label_exercise_name_placeholder)) },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                colors =
-                    OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = MaterialTheme.colorScheme.primary,
-                        unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-                    ),
+
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = onNameChange,
+                    label = { Text(stringResource(R.string.label_exercise_name_placeholder)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true,
+                    colors =
+                        OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                        ),
+                )
+                suggestions.forEach { suggestion ->
+                    Surface(
+                        onClick = { onSuggestionSelected(suggestion) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f),
+                    ) {
+                        Text(
+                            text = suggestion.name,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                        )
+                    }
+                }
+            }
+
+            Text(
+                text = stringResource(R.string.label_primary_muscle).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                shape = RoundedCornerShape(12.dp),
+            MuscleBodyDiagram(
+                view = bodyView,
+                onViewToggle = onBodyViewChange,
+                primaryMuscle = primaryMuscle,
+                secondaryMuscles = secondaryMuscles,
+                interactive = true,
+                onMuscleSelected = onPrimaryMuscleChange,
+                modifier = Modifier.fillMaxWidth().height(280.dp),
+            )
+
+            Text(
+                text = stringResource(R.string.label_secondary_muscles).uppercase(),
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                MuscleGroup.entries.filter { it != primaryMuscle }.forEach { muscle ->
+                    FilterChip(
+                        selected = secondaryMuscles.contains(muscle),
+                        onClick = { onSecondaryMuscleToggle(muscle) },
+                        label = { Text(stringResource(muscle.labelRes())) },
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
             ) {
-                Text(stringResource(R.string.action_add).uppercase(), fontWeight = FontWeight.Bold)
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
+                }
+                Spacer(Modifier.width(8.dp))
+                Button(
+                    onClick = onConfirm,
+                    enabled = name.isNotBlank(),
+                    shape = RoundedCornerShape(12.dp),
+                ) {
+                    Text(stringResource(R.string.action_add).uppercase(), fontWeight = FontWeight.Bold)
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.action_cancel).uppercase(), fontWeight = FontWeight.Bold)
-            }
-        },
-        shape = RoundedCornerShape(32.dp),
-        containerColor = MaterialTheme.colorScheme.surface,
-        tonalElevation = 6.dp,
-    )
+        }
+    }
 }
 
 @Composable

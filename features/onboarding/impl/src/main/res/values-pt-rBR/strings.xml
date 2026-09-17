@@ -7,4 +7,7 @@
     <string name="onboarding_stats_desc">Visualize a evolução de carga de cada exercício ao longo do tempo.</string>
     <string name="onboarding_wear_title">Treine com seu Relógio</string>
     <string name="onboarding_wear_desc">Sincronize seus treinos com seu relógio Wear OS e registre suas séries direto do pulso.</string>
+    <string name="action_skip">Pular</string>
+    <string name="onboarding_templates_title">Comece com um treino pronto</string>
+    <string name="onboarding_templates_desc">Escolha um ou mais treinos abaixo para adicioná-los agora, ou pule e monte o seu depois.</string>
 </resources>

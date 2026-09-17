@@ -69,12 +69,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import digital.tonima.myworkout.data.model.BodyView
+import digital.tonima.myworkout.ui.components.musclebody.MuscleBodyDiagram
 import digital.tonima.myworkout.ui.model.AchievementUiModel
 import digital.tonima.myworkout.ui.model.GamificationStatsUiModel
 import digital.tonima.myworkout.ui.model.LogUiModel
 import digital.tonima.myworkout.ui.model.MasterExerciseUiModel
 import digital.tonima.myworkout.ui.model.SessionUiModel
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
@@ -188,6 +191,10 @@ fun AthleteDashboard(
             item(span = { GridItemSpan(maxLineSpan) }) {
                 AchievementSection(achievements)
             }
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            MuscleHeatMapSection(sessions = sessions, exercises = exercises)
         }
 
         item {
@@ -629,6 +636,41 @@ fun ExerciseStats(
                             fontWeight = FontWeight.Black,
                         )
                     }
+                }
+            }
+        }
+
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            ElevatedCard(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(24.dp),
+                colors =
+                    CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                    ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+            ) {
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text = stringResource(R.string.muscles_worked_label).uppercase(),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        letterSpacing = 1.sp,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    var bodyView by
+                        remember(exercise?.id) {
+                            mutableStateOf(exercise?.primaryMuscle?.view ?: BodyView.FRONT)
+                        }
+                    MuscleBodyDiagram(
+                        view = bodyView,
+                        onViewToggle = { bodyView = it },
+                        primaryMuscle = exercise?.primaryMuscle,
+                        secondaryMuscles = exercise?.secondaryMuscles ?: persistentListOf(),
+                        interactive = false,
+                        modifier = Modifier.fillMaxWidth().height(240.dp),
+                    )
                 }
             }
         }

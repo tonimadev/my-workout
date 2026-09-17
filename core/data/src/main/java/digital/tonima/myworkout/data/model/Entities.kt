@@ -13,6 +13,8 @@ data class MasterExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val description: String = "",
+    val primaryMuscle: String? = null, // MuscleGroup.name, null = not classified yet
+    val secondaryMuscles: String = "", // MuscleGroup.name values, comma-separated
 )
 
 @Serializable

@@ -1,0 +1,17 @@
+<resources>
+    <string name="muscle_chest">Peito</string>
+    <string name="muscle_shoulders">Ombros</string>
+    <string name="muscle_biceps">Bíceps</string>
+    <string name="muscle_triceps">Tríceps</string>
+    <string name="muscle_forearms">Antebraço</string>
+    <string name="muscle_abs">Abdômen</string>
+    <string name="muscle_trapezius">Trapézio</string>
+    <string name="muscle_lats">Dorsais</string>
+    <string name="muscle_lower_back">Lombar</string>
+    <string name="muscle_glutes">Glúteos</string>
+    <string name="muscle_quadriceps">Quadríceps</string>
+    <string name="muscle_hamstrings">Posterior de Coxa</string>
+    <string name="muscle_calves">Panturrilha</string>
+    <string name="body_view_front">Frente</string>
+    <string name="body_view_back">Costas</string>
+</resources>

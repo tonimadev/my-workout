@@ -89,7 +89,10 @@ fun AppNavigation() {
     val onboardingCompleted by onboardingViewModel.onboardingCompleted.collectAsStateWithLifecycle()
 
     if (!onboardingCompleted) {
-        OnboardingScreen(onComplete = { onboardingViewModel.completeOnboarding() })
+        OnboardingScreen(
+            onComplete = { onboardingViewModel.completeOnboarding() },
+            onApplyTemplates = { templates -> onboardingViewModel.applyTemplates(templates) },
+        )
     } else {
         MainAppContent()
     }

@@ -3,8 +3,10 @@ package digital.tonima.myworkout.features.workout.impl
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.myworkout.data.catalog.WorkoutTemplate
 import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.MuscleGroup
 import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
@@ -38,6 +40,7 @@ data class WorkoutState(
     val exportJson: String? = null,
     val syncMessage: String? = null,
     val shouldNavigateBack: Boolean = false,
+    val newlyCreatedWorkoutId: Long? = null,
 )
 
 sealed interface WorkoutIntent {
@@ -69,7 +72,11 @@ sealed interface WorkoutIntent {
     data class AddExercise(
         val workoutId: Long,
         val name: String,
+        val primaryMuscle: MuscleGroup? = null,
+        val secondaryMuscles: List<MuscleGroup> = emptyList(),
     ) : WorkoutIntent
+
+    data class ApplyTemplate(val template: WorkoutTemplate) : WorkoutIntent
 
     data class AddSet(
         val workoutId: Long,
@@ -108,6 +115,8 @@ sealed interface WorkoutIntent {
     data class ImportWorkout(val json: String) : WorkoutIntent
 
     data object ClearShareData : WorkoutIntent
+
+    data object ClearNewWorkoutId : WorkoutIntent
 
     data object ClearError : WorkoutIntent
 
@@ -179,7 +188,9 @@ class WorkoutViewModel
                     )
                 is WorkoutIntent.SkipRest -> skipRest()
                 is WorkoutIntent.FinishWorkout -> finishWorkout()
-                is WorkoutIntent.AddExercise -> addExercise(intent.workoutId, intent.name)
+                is WorkoutIntent.AddExercise ->
+                    addExercise(intent.workoutId, intent.name, intent.primaryMuscle, intent.secondaryMuscles)
+                is WorkoutIntent.ApplyTemplate -> applyTemplate(intent.template)
                 is WorkoutIntent.AddSet -> addSet(intent.workoutId, intent.exerciseId)
                 is WorkoutIntent.UpdateSet ->
                     updateSet(
@@ -197,6 +208,7 @@ class WorkoutViewModel
                 is WorkoutIntent.ExportWorkout -> exportWorkout(intent.workout)
                 is WorkoutIntent.ImportWorkout -> importWorkout(intent.json)
                 is WorkoutIntent.ClearShareData -> updateState { copy(shareText = null, exportJson = null) }
+                is WorkoutIntent.ClearNewWorkoutId -> updateState { copy(newlyCreatedWorkoutId = null) }
                 is WorkoutIntent.ClearError -> updateState { copy(error = null) }
                 is WorkoutIntent.ClearSyncMessage -> updateState { copy(syncMessage = null) }
                 is WorkoutIntent.ResetNavigation -> updateState { copy(shouldNavigateBack = false) }
@@ -303,12 +315,11 @@ class WorkoutViewModel
         private fun addExercise(
             workoutId: Long,
             name: String,
+            primaryMuscle: MuscleGroup?,
+            secondaryMuscles: List<MuscleGroup>,
         ) {
             viewModelScope.launch {
-                val masterExercises = repository.getAllMasterExercises().first()
-                val masterId =
-                    masterExercises.find { it.name.equals(name, ignoreCase = true) }?.id
-                        ?: repository.addMasterExercise(name)
+                val masterId = repository.resolveOrCreateMasterExercise(name, primaryMuscle, secondaryMuscles)
 
                 val workoutWithEx = repository.getWorkoutById(workoutId).first()
                 if (workoutWithEx != null) {
@@ -324,6 +335,13 @@ class WorkoutViewModel
                         workoutWithEx.exercises + ExerciseWithSets(newExercise, emptyList()),
                     )
                 }
+            }
+        }
+
+        private fun applyTemplate(template: WorkoutTemplate) {
+            viewModelScope.launch {
+                val workoutId = repository.applyWorkoutTemplate(template)
+                updateState { copy(newlyCreatedWorkoutId = workoutId) }
             }
         }
 

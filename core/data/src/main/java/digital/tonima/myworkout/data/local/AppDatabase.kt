@@ -20,7 +20,7 @@ import digital.tonima.myworkout.data.model.WorkoutSessionEntity
         WorkoutLogEntity::class,
         AchievementEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

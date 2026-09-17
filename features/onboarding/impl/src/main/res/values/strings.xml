@@ -7,4 +7,7 @@
     <string name="onboarding_stats_desc">Visualize your weight evolution for each exercise over time.</string>
     <string name="onboarding_wear_title">Train with Your Watch</string>
     <string name="onboarding_wear_desc">Sync your workouts to your Wear OS watch and log your sets directly from your wrist.</string>
+    <string name="action_skip">Skip</string>
+    <string name="onboarding_templates_title">Start with a ready-made workout</string>
+    <string name="onboarding_templates_desc">Pick one or more workouts below to add them right away, or skip and build your own later.</string>
 </resources>

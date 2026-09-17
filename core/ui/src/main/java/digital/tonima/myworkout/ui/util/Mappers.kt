@@ -6,6 +6,8 @@ import digital.tonima.myworkout.data.model.MasterExerciseEntity
 import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.data.model.primaryMuscleGroup
+import digital.tonima.myworkout.data.model.secondaryMuscleGroups
 import digital.tonima.myworkout.data.preferences.GamificationStats
 import digital.tonima.myworkout.ui.model.AchievementUiModel
 import digital.tonima.myworkout.ui.model.ExerciseUiModel
@@ -76,6 +78,8 @@ fun MasterExerciseEntity.toUiModel(): MasterExerciseUiModel {
         id = id,
         name = name,
         description = description,
+        primaryMuscle = primaryMuscleGroup(),
+        secondaryMuscles = secondaryMuscleGroups().toImmutableList(),
     )
 }
 

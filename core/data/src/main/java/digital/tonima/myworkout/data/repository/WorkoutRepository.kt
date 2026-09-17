@@ -1,16 +1,23 @@
 package digital.tonima.myworkout.data.repository
 
 import android.util.Log
+import digital.tonima.myworkout.data.catalog.WorkoutTemplate
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
+import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
 import digital.tonima.myworkout.data.model.MasterExerciseEntity
+import digital.tonima.myworkout.data.model.MuscleGroup
 import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.model.WorkoutSessionEntity
 import digital.tonima.myworkout.data.model.WorkoutWithExercises
+import digital.tonima.myworkout.data.model.primaryMuscleGroup
+import digital.tonima.myworkout.data.model.toEntityPrimaryMuscle
+import digital.tonima.myworkout.data.model.toEntitySecondaryMuscles
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -34,9 +41,25 @@ interface WorkoutRepository {
     suspend fun addMasterExercise(
         name: String,
         description: String = "",
+        primaryMuscle: MuscleGroup? = null,
+        secondaryMuscles: List<MuscleGroup> = emptyList(),
     ): Long
 
     suspend fun upsertMasterExercise(masterExercise: MasterExerciseEntity)
+
+    /**
+     * Finds a master exercise by name (case-insensitive) or creates one. If a match already
+     * exists but has no primary muscle yet, backfills it with [primaryMuscle]/[secondaryMuscles];
+     * an already-classified exercise is never overwritten silently.
+     */
+    suspend fun resolveOrCreateMasterExercise(
+        name: String,
+        primaryMuscle: MuscleGroup? = null,
+        secondaryMuscles: List<MuscleGroup> = emptyList(),
+    ): Long
+
+    /** Creates a new workout from a [WorkoutTemplate], resolving/creating each catalog exercise. */
+    suspend fun applyWorkoutTemplate(template: WorkoutTemplate): Long
 
     fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>>
 
@@ -104,12 +127,82 @@ class WorkoutRepositoryImpl
         override suspend fun addMasterExercise(
             name: String,
             description: String,
+            primaryMuscle: MuscleGroup?,
+            secondaryMuscles: List<MuscleGroup>,
         ): Long {
-            return workoutDao.insertMasterExercise(MasterExerciseEntity(name = name, description = description))
+            return workoutDao.insertMasterExercise(
+                MasterExerciseEntity(
+                    name = name,
+                    description = description,
+                    primaryMuscle = primaryMuscle.toEntityPrimaryMuscle(),
+                    secondaryMuscles = secondaryMuscles.toEntitySecondaryMuscles(),
+                ),
+            )
         }
 
         override suspend fun upsertMasterExercise(masterExercise: MasterExerciseEntity) {
             workoutDao.insertMasterExercise(masterExercise)
+        }
+
+        override suspend fun resolveOrCreateMasterExercise(
+            name: String,
+            primaryMuscle: MuscleGroup?,
+            secondaryMuscles: List<MuscleGroup>,
+        ): Long {
+            val existing =
+                workoutDao.getAllMasterExercises().first().find { it.name.equals(name, ignoreCase = true) }
+            return when {
+                existing == null ->
+                    addMasterExercise(name, primaryMuscle = primaryMuscle, secondaryMuscles = secondaryMuscles)
+                existing.primaryMuscleGroup() == null && primaryMuscle != null -> {
+                    upsertMasterExercise(
+                        existing.copy(
+                            primaryMuscle = primaryMuscle.toEntityPrimaryMuscle(),
+                            secondaryMuscles = secondaryMuscles.toEntitySecondaryMuscles(),
+                        ),
+                    )
+                    existing.id
+                }
+                else -> existing.id
+            }
+        }
+
+        override suspend fun applyWorkoutTemplate(template: WorkoutTemplate): Long {
+            val exercises =
+                template.exercises.mapIndexed { index, catalogExercise ->
+                    val masterId =
+                        resolveOrCreateMasterExercise(
+                            name = catalogExercise.name,
+                            primaryMuscle = catalogExercise.primaryMuscle,
+                            secondaryMuscles = catalogExercise.secondaryMuscles,
+                        )
+                    ExerciseWithSets(
+                        exercise =
+                            ExerciseEntity(
+                                workoutId = 0,
+                                masterExerciseId = masterId,
+                                name = catalogExercise.name,
+                                order = index,
+                            ),
+                        sets =
+                            catalogExercise.defaultSets.mapIndexed { setIndex, setSpec ->
+                                SetEntity(
+                                    exerciseId = 0,
+                                    targetWeight = 0.0,
+                                    targetReps = setSpec.targetReps,
+                                    restInterval = setSpec.restInterval,
+                                    order = setIndex,
+                                )
+                            },
+                    )
+                }
+            val workoutId =
+                workoutDao.upsertWorkoutWithExercises(
+                    WorkoutEntity(name = template.name, description = template.description),
+                    exercises,
+                )
+            syncWorkoutsToWearable()
+            return workoutId
         }
 
         override fun getLogsForMasterExercise(masterExerciseId: Long): Flow<List<WorkoutLogEntity>> =
