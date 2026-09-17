@@ -807,7 +807,10 @@ fun EditSetDialog(
     var reps by remember { mutableStateOf(set.targetReps.toString()) }
     var rest by remember { mutableStateOf(set.restInterval.toString()) }
 
-    val weightValue = weight.toDoubleOrNull()
+    // The numeric keyboard's decimal key inserts a locale-specific separator (e.g. "," on
+    // pt-BR devices), but toDoubleOrNull() only accepts ".". Normalize before parsing so the
+    // Save button below isn't permanently disabled for anyone typing a decimal weight.
+    val weightValue = weight.replace(',', '.').toDoubleOrNull()
     val repsValue = reps.toIntOrNull()
     val restValue = rest.toIntOrNull()
     val weightError = weightValue == null

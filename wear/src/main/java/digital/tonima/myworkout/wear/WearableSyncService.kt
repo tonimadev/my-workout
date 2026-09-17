@@ -9,11 +9,11 @@ import com.google.android.gms.wearable.WearableListenerService
 import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.data.model.SyncData
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.data.wearable.WearableJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -49,7 +49,7 @@ class WearableSyncService : WearableListenerService() {
         Log.i("WearableSyncService", "Starting processing of workouts JSON")
         scope.launch {
             try {
-                val syncData = Json.decodeFromString<SyncData>(json)
+                val syncData = WearableJson.decodeFromString<SyncData>(json)
                 Log.d(
                     "WearableSyncService",
                     "Decoded ${syncData.workouts.size} workouts and ${syncData.masterExercises.size} master exercises",

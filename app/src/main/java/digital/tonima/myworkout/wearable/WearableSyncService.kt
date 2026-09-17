@@ -7,11 +7,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.myworkout.data.model.SessionWithLogs
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.repository.WorkoutRepository
+import digital.tonima.myworkout.data.wearable.WearableJson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,7 +28,7 @@ class WearableSyncService : WearableListenerService() {
                 val logJson = String(messageEvent.data)
                 scope.launch {
                     try {
-                        val log = Json.decodeFromString<WorkoutLogEntity>(logJson)
+                        val log = WearableJson.decodeFromString<WorkoutLogEntity>(logJson)
                         Log.d("WearableSyncService", "Processing log for exerciseId: ${log.masterExerciseId}")
                         repository.addLog(log)
                     } catch (e: Exception) {
@@ -40,7 +40,7 @@ class WearableSyncService : WearableListenerService() {
                 val sessionJson = String(messageEvent.data)
                 scope.launch {
                     try {
-                        val sessionWithLogs = Json.decodeFromString<SessionWithLogs>(sessionJson)
+                        val sessionWithLogs = WearableJson.decodeFromString<SessionWithLogs>(sessionJson)
                         Log.i(
                             "WearableSyncService",
                             "Received full session from wear. Logs count: ${sessionWithLogs.logs.size}",
