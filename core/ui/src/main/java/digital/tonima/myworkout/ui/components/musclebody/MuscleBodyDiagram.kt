@@ -19,9 +19,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -88,27 +90,48 @@ fun MuscleBodyDiagram(
         }
 
         BoxWithConstraints(modifier = modifier) {
-            val scaleX = constraints.maxWidth / BODY_WIDTH
-            val scaleY = constraints.maxHeight / BODY_HEIGHT
+            // A uniform scale (instead of independent X/Y) keeps the body's true proportions no
+            // matter the container's aspect ratio; the drawing is then centered in the extra space.
+            val scale = minOf(constraints.maxWidth / BODY_WIDTH, constraints.maxHeight / BODY_HEIGHT)
+            val offsetX = (constraints.maxWidth - BODY_WIDTH * scale) / 2f
+            val offsetY = (constraints.maxHeight - BODY_HEIGHT * scale) / 2f
             val parts = bodyPartsFor(view)
 
             Canvas(modifier = Modifier.fillMaxSize()) {
-                scale(scaleX = scaleX, scaleY = scaleY, pivot = Offset.Zero) {
-                    val strokeWidth = 1f / minOf(scaleX, scaleY)
-                    parts.forEach { part ->
-                        val fillColor =
-                            colorForMuscle(
-                                muscle = part.muscle,
-                                highlightMode = highlightMode,
-                                primaryMuscle = primaryMuscle,
-                                secondaryMuscles = secondaryMuscles,
-                                intensityByMuscle = intensityByMuscle,
-                                baseFillColor = baseFillColor,
-                                primaryColor = primaryColor,
-                                secondaryColor = secondaryColor,
-                            )
-                        drawPath(part.path, color = fillColor)
-                        drawPath(part.path, color = outlineColor, style = Stroke(width = strokeWidth))
+                translate(left = offsetX, top = offsetY) {
+                    scale(scale = scale, pivot = Offset.Zero) {
+                        val strokeWidth = 1f / scale
+                        parts.forEach { part ->
+                            val fillColor =
+                                colorForMuscle(
+                                    muscle = part.muscle,
+                                    highlightMode = highlightMode,
+                                    primaryMuscle = primaryMuscle,
+                                    secondaryMuscles = secondaryMuscles,
+                                    intensityByMuscle = intensityByMuscle,
+                                    baseFillColor = baseFillColor,
+                                    primaryColor = primaryColor,
+                                    secondaryColor = secondaryColor,
+                                )
+                            // Highlighted muscles get a soft radial gradient (lighter core fading
+                            // to the flat fill color) so they read as a rounded, fleshed-out bulge
+                            // rather than a flat sticker; neutral/decorative parts stay flat.
+                            if (fillColor != baseFillColor) {
+                                val bounds = part.path.getBounds()
+                                drawPath(
+                                    part.path,
+                                    brush =
+                                        Brush.radialGradient(
+                                            colors = listOf(lerp(fillColor, Color.White, 0.25f), fillColor),
+                                            center = bounds.center,
+                                            radius = maxOf(bounds.width, bounds.height) * 0.75f,
+                                        ),
+                                )
+                            } else {
+                                drawPath(part.path, color = fillColor)
+                            }
+                            drawPath(part.path, color = outlineColor, style = Stroke(width = strokeWidth))
+                        }
                     }
                 }
             }
@@ -123,12 +146,12 @@ fun MuscleBodyDiagram(
                             Modifier
                                 .offset {
                                     IntOffset(
-                                        (bounds.left * scaleX).roundToInt(),
-                                        (bounds.top * scaleY).roundToInt(),
+                                        (offsetX + bounds.left * scale).roundToInt(),
+                                        (offsetY + bounds.top * scale).roundToInt(),
                                     )
                                 }.size(
-                                    width = with(density) { (bounds.width * scaleX).toDp() },
-                                    height = with(density) { (bounds.height * scaleY).toDp() },
+                                    width = with(density) { (bounds.width * scale).toDp() },
+                                    height = with(density) { (bounds.height * scale).toDp() },
                                 ).clickable(
                                     onClickLabel = label,
                                     role = Role.Button,
