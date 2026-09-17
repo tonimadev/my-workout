@@ -373,7 +373,10 @@ class WorkoutViewModel
                         if (exWithSets.exercise.id == exerciseId) {
                             var foundTarget = false
                             val updatedSets =
-                                exWithSets.sets.map { set ->
+                                // Sets aren't guaranteed to come back in display order (Room's
+                                // @Relation query has no ORDER BY), so "subsequent" must be
+                                // determined by the `order` field, not by list position.
+                                exWithSets.sets.sortedBy { it.order }.map { set ->
                                     if (set.id == setId) {
                                         foundTarget = true
                                         set.copy(targetWeight = weight, targetReps = reps, restInterval = rest)
@@ -435,6 +438,7 @@ class WorkoutViewModel
                             if (exWithSets.exercise.id == exerciseId) {
                                 val updatedSets =
                                     exWithSets.sets.filterNot { it.id == setId }
+                                        .sortedBy { it.order }
                                         .mapIndexed { index, set -> set.copy(order = index) }
                                 exWithSets.copy(sets = updatedSets)
                             } else {

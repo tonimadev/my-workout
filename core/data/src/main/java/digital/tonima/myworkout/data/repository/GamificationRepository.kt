@@ -7,7 +7,9 @@ import digital.tonima.myworkout.data.preferences.GamificationStats
 import digital.tonima.myworkout.data.preferences.UserPreferencesRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
-import java.util.concurrent.TimeUnit
+import java.time.Instant
+import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.sqrt
@@ -81,23 +83,6 @@ class GamificationRepositoryImpl
             checkForAchievements(newStreak, totalVolume, logs.size)
         }
 
-        private fun calculateNewStreak(
-            lastTimestamp: Long,
-            currentTimestamp: Long,
-            currentStreak: Int,
-        ): Int {
-            if (lastTimestamp == 0L) return 1
-
-            val diff = currentTimestamp - lastTimestamp
-            val days = TimeUnit.MILLISECONDS.toDays(diff)
-
-            return when {
-                days == 0L -> currentStreak // Same day, keep streak
-                days == 1L -> currentStreak + 1 // Consecutive day
-                else -> 1 // Streak broken
-            }
-        }
-
         override fun calculateLevel(totalXp: Int): Int {
             // Level 1: 0 XP
             // Level 2: 100 XP
@@ -156,3 +141,28 @@ class GamificationRepositoryImpl
             }
         }
     }
+
+/**
+ * Compares [lastTimestamp] and [currentTimestamp] by calendar date (in the device's local time
+ * zone), not by raw elapsed milliseconds: a naive 24h-bucket check would wrongly reset a streak
+ * for a workout done shortly after midnight (real elapsed time < 24h but a new calendar day), and
+ * would wrongly keep extending it for workouts done ~30-47h apart that actually skipped a day.
+ */
+internal fun calculateNewStreak(
+    lastTimestamp: Long,
+    currentTimestamp: Long,
+    currentStreak: Int,
+): Int {
+    if (lastTimestamp == 0L) return 1
+
+    val zone = ZoneId.systemDefault()
+    val lastDate = Instant.ofEpochMilli(lastTimestamp).atZone(zone).toLocalDate()
+    val currentDate = Instant.ofEpochMilli(currentTimestamp).atZone(zone).toLocalDate()
+    val daysBetween = ChronoUnit.DAYS.between(lastDate, currentDate)
+
+    return when {
+        daysBetween == 0L -> currentStreak // Same calendar day, keep streak
+        daysBetween == 1L -> currentStreak + 1 // Consecutive calendar day
+        else -> 1 // Streak broken (or clock moved backwards)
+    }
+}

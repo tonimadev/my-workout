@@ -264,8 +264,13 @@ class WorkoutRepositoryImpl
             val cleanedWorkout = workout.workout.copy(id = 0)
             val cleanedExercises =
                 workout.exercises.map { ex ->
+                    // The imported masterExerciseId is a foreign-key value from whichever device
+                    // exported this JSON; it must never be reused as-is, or it will silently point
+                    // at an unrelated (or nonexistent) exercise in this database. Re-resolve it
+                    // locally by name instead, same as manually adding an exercise does.
+                    val localMasterExerciseId = resolveOrCreateMasterExercise(name = ex.exercise.name)
                     ex.copy(
-                        exercise = ex.exercise.copy(id = 0, workoutId = 0),
+                        exercise = ex.exercise.copy(id = 0, workoutId = 0, masterExerciseId = localMasterExerciseId),
                         sets = ex.sets.map { it.copy(id = 0, exerciseId = 0) },
                     )
                 }

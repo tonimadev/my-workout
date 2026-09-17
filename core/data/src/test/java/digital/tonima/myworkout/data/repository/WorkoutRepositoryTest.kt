@@ -3,11 +3,15 @@ package digital.tonima.myworkout.data.repository
 import android.util.Log
 import digital.tonima.myworkout.data.local.WorkoutDao
 import digital.tonima.myworkout.data.local.WorkoutSessionDao
+import digital.tonima.myworkout.data.model.ExerciseEntity
 import digital.tonima.myworkout.data.model.ExerciseWithSets
+import digital.tonima.myworkout.data.model.MasterExerciseEntity
 import digital.tonima.myworkout.data.model.SessionWithLogs
+import digital.tonima.myworkout.data.model.SetEntity
 import digital.tonima.myworkout.data.model.WorkoutEntity
 import digital.tonima.myworkout.data.model.WorkoutLogEntity
 import digital.tonima.myworkout.data.model.WorkoutSessionEntity
+import digital.tonima.myworkout.data.model.WorkoutWithExercises
 import digital.tonima.myworkout.data.wearable.WearableSyncManager
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -81,6 +85,41 @@ class WorkoutRepositoryTest {
 
             coVerify { workoutSessionDao.insertLog(log) }
             coVerify { wearableSyncManager.syncLog(log) }
+        }
+
+    @Test
+    fun `importWorkout should re-resolve exercises to local master exercises by name`() =
+        runTest {
+            // The imported workout was exported from a different install: its masterExerciseId
+            // (777) is a foreign-key value from that other device's database and must never be
+            // trusted as-is, or it will silently point at an unrelated (or nonexistent) exercise
+            // once inserted locally. The exercise must be re-resolved locally by name instead.
+            val importedExercise =
+                ExerciseEntity(id = 99L, workoutId = 5L, masterExerciseId = 777L, name = "Supino Reto", order = 0)
+            val importedSet =
+                SetEntity(id = 1L, exerciseId = 99L, targetWeight = 40.0, targetReps = 10, order = 0)
+            val importedWorkout =
+                WorkoutWithExercises(
+                    workout = WorkoutEntity(id = 5L, name = "Shared Workout"),
+                    exercises = listOf(ExerciseWithSets(importedExercise, listOf(importedSet))),
+                )
+
+            val localMasterExercise = MasterExerciseEntity(id = 42L, name = "Supino Reto")
+            coEvery { workoutDao.getAllMasterExercises() } returns flowOf(listOf(localMasterExercise))
+            coEvery { workoutDao.getAllWorkoutsWithExercisesSync() } returns emptyList()
+
+            repository.importWorkout(importedWorkout)
+
+            coVerify {
+                workoutDao.upsertWorkoutWithExercises(
+                    match { it.id == 0L && it.name == "Shared Workout" },
+                    match { exercises ->
+                        exercises.single().exercise.masterExerciseId == localMasterExercise.id &&
+                            exercises.single().exercise.id == 0L &&
+                            exercises.single().exercise.workoutId == 0L
+                    },
+                )
+            }
         }
 
     @Test

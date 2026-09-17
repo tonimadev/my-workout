@@ -36,11 +36,11 @@ import androidx.compose.ui.unit.dp
 import digital.tonima.myworkout.data.model.BodyView
 import digital.tonima.myworkout.data.model.MuscleGroup
 import digital.tonima.myworkout.ui.util.labelRes
-import kotlin.math.roundToInt
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.persistentMapOf
+import kotlin.math.roundToInt
 
 enum class MuscleHighlightMode { NONE, DISCRETE, INTENSITY }
 

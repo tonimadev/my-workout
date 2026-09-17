@@ -129,6 +129,93 @@ class WorkoutViewModelTest {
         }
 
     @Test
+    fun `logSet should propagate weight to sets ordered after the target by 'order', not by list position`() =
+        runTest {
+            val workoutId = 1L
+            val exerciseId = 2L
+            val newWeight = 55.0
+            val reps = 8
+            val rest = 60
+
+            val workout = WorkoutEntity(id = workoutId, name = "Test Workout")
+            val exercise = ExerciseEntity(id = exerciseId, workoutId = workoutId, name = "Squat", order = 0)
+
+            // Sets are returned out of `order` sequence (id 10 has the highest `order` but is
+            // first in the list) to mirror Room's @Relation query, which has no ORDER BY and does
+            // not guarantee list position matches the `order` field.
+            val setOrder2 =
+                SetEntity(id = 10L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 2)
+            val setOrder0 =
+                SetEntity(id = 11L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 0)
+            val setOrder1 =
+                SetEntity(id = 12L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 1)
+            val exerciseWithSets = ExerciseWithSets(exercise, listOf(setOrder2, setOrder0, setOrder1))
+            val workoutWithEx = WorkoutWithExercises(workout, listOf(exerciseWithSets))
+
+            val session = WorkoutSessionEntity(id = 10L, workoutId = workoutId, startTime = 0L)
+            val sessionWithLogs = SessionWithLogs(session, workout, emptyList())
+
+            coEvery { repository.getWorkoutById(workoutId) } returns flowOf(workoutWithEx)
+            coEvery { repository.startSession(workoutId) } returns 10L
+            coEvery { repository.getSessionById(10L) } returns flowOf(sessionWithLogs)
+
+            viewModel.onIntent(WorkoutIntent.StartWorkout(workoutId))
+
+            // Log the set with `order = 0` (the first one by display order, even though it is not
+            // first in the raw list): everything with a higher `order` must be propagated to.
+            viewModel.onIntent(WorkoutIntent.LogSet(10L, exerciseId, setOrder0.id, newWeight, reps, rest))
+
+            coVerify(timeout = 2000) {
+                repository.addWorkout(
+                    eq(workout),
+                    match { exercises ->
+                        val sets = exercises.single().sets.associateBy { it.id }
+                        sets.getValue(setOrder0.id).targetWeight == newWeight &&
+                            sets.getValue(setOrder1.id).targetWeight == newWeight &&
+                            sets.getValue(setOrder2.id).targetWeight == newWeight
+                    },
+                )
+            }
+        }
+
+    @Test
+    fun `deleteSet should reindex remaining sets by 'order', not by list position`() =
+        runTest {
+            val workoutId = 1L
+            val exerciseId = 2L
+
+            val workout = WorkoutEntity(id = workoutId, name = "Test Workout")
+            val exercise = ExerciseEntity(id = exerciseId, workoutId = workoutId, name = "Squat", order = 0)
+
+            // Same out-of-sequence list shape as above: id 10 has the highest `order` but is first
+            // in the raw list.
+            val setOrder2 =
+                SetEntity(id = 10L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 2)
+            val setOrder0 =
+                SetEntity(id = 11L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 0)
+            val setOrder1 =
+                SetEntity(id = 12L, exerciseId = exerciseId, targetWeight = 40.0, targetReps = 10, order = 1)
+            val exerciseWithSets = ExerciseWithSets(exercise, listOf(setOrder2, setOrder0, setOrder1))
+            val workoutWithEx = WorkoutWithExercises(workout, listOf(exerciseWithSets))
+
+            coEvery { repository.getWorkoutById(workoutId) } returns flowOf(workoutWithEx)
+
+            // Delete the first set by display order (order = 0); the remaining two must keep their
+            // relative order (order = 1 becomes 0, order = 2 becomes 1).
+            viewModel.onIntent(WorkoutIntent.DeleteSet(workoutId, exerciseId, setOrder0.id))
+
+            coVerify(timeout = 2000) {
+                repository.addWorkout(
+                    eq(workout),
+                    match { exercises ->
+                        val sets = exercises.single().sets.associateBy { it.id }
+                        sets.getValue(setOrder1.id).order == 0 && sets.getValue(setOrder2.id).order == 1
+                    },
+                )
+            }
+        }
+
+    @Test
     fun `logSet with a rest interval should start the rest timer`() =
         runTest {
             val workoutId = 1L

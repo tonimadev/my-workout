@@ -35,4 +35,6 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(project(":core:common"))
     implementation(project(":core:data"))
+
+    testImplementation(libs.junit)
 }

@@ -11,8 +11,10 @@ data class CatalogExercise(
     val defaultSets: List<CatalogSetSpec> = defaultThreeSets(12),
 )
 
-private fun defaultThreeSets(reps: Int, rest: Int = 60): List<CatalogSetSpec> =
-    List(3) { CatalogSetSpec(targetReps = reps, restInterval = rest) }
+private fun defaultThreeSets(
+    reps: Int,
+    rest: Int = 60,
+): List<CatalogSetSpec> = List(3) { CatalogSetSpec(targetReps = reps, restInterval = rest) }
 
 /**
  * Curated list of common gym exercises, covering every [MuscleGroup], used to speed up manual
