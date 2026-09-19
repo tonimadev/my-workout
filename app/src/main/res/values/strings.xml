@@ -72,4 +72,6 @@
     <string name="label_workout_name_placeholder">Workout Name (ex: Push Day)</string>
     <string name="label_exercise_name_placeholder">Exercise Name</string>
     <string name="seconds_label">SECONDS</string>
+    <string name="select_workout_title">SELECT A WORKOUT</string>
+    <string name="select_workout_subtitle">Choose a workout from the list to view its details</string>
 </resources>

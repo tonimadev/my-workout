@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,7 +59,9 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -82,6 +85,7 @@ import digital.tonima.myworkout.data.catalog.WorkoutTemplateCatalog
 import digital.tonima.myworkout.ui.components.templates.WorkoutTemplateList
 import digital.tonima.myworkout.ui.model.WorkoutUiModel
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,6 +97,12 @@ fun WorkoutListScreen(
 ) {
     val workouts = state.workouts
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    // Wide-but-short windows (landscape tablets/resizable devices) don't have enough vertical
+    // room for the large expanded header without crowding the list against the FAB, so fall
+    // back to a single-row app bar there.
+    val windowSizeClass = currentWindowAdaptiveInfoV2().windowSizeClass
+    val useCompactHeader =
+        windowSizeClass.isWidthAtLeastBreakpoint(600) && !windowSizeClass.isHeightAtLeastBreakpoint(900)
     var showAddDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showTemplateSheet by remember { mutableStateOf(false) }
@@ -136,104 +146,125 @@ fun WorkoutListScreen(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            LargeTopAppBar(
-                title = {
-                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val topBarActions: @Composable RowScope.() -> Unit = {
+                IconButton(
+                    onClick = { showTemplateSheet = true },
+                    colors =
+                        IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                ) {
+                    Icon(
+                        Icons.Default.AutoAwesome,
+                        contentDescription = stringResource(R.string.action_use_template),
+                    )
+                }
+
+                IconButton(
+                    onClick = { showImportDialog = true },
+                    colors =
+                        IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                ) {
+                    Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.action_import))
+                }
+
+                IconButton(
+                    onClick = { onIntent(WorkoutIntent.SyncWorkouts) },
+                    enabled = !state.isSyncing,
+                    colors =
+                        IconButtonDefaults.filledIconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
+                            contentColor = MaterialTheme.colorScheme.primary,
+                        ),
+                ) {
+                    if (state.isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp,
+                        )
+                    } else {
+                        Icon(
+                            Icons.Default.Sync,
+                            contentDescription = stringResource(R.string.action_sync_wearable),
+                        )
+                    }
+                }
+            }
+            val topBarColors =
+                TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    titleContentColor = MaterialTheme.colorScheme.onBackground,
+                )
+
+            if (useCompactHeader) {
+                TopAppBar(
+                    title = {
                         Text(
                             text = stringResource(R.string.workout_list_title).uppercase(),
-                            style = MaterialTheme.typography.headlineLarge,
+                            style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = (-1.5).sp,
+                            letterSpacing = (-1).sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            // Accent bar - a small graphic anchor for the bold/energetic identity,
-                            // echoed by the same gradient on every workout card below.
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(width = 20.dp, height = 3.dp)
-                                        .clip(RoundedCornerShape(2.dp))
-                                        .background(MaterialTheme.colorScheme.primary),
-                            )
-                            Spacer(Modifier.width(8.dp))
+                    },
+                    actions = topBarActions,
+                    scrollBehavior = scrollBehavior,
+                    colors = topBarColors,
+                )
+            } else {
+                LargeTopAppBar(
+                    title = {
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = stringResource(R.string.workout_list_subtitle),
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium,
+                                text = stringResource(R.string.workout_list_title).uppercase(),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Black,
+                                letterSpacing = (-1.5).sp,
                             )
-                            if (workouts.isNotEmpty()) {
-                                Text(
-                                    text = " · ",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Accent bar - a small graphic anchor for the bold/energetic identity,
+                                // echoed by the same gradient on every workout card below.
+                                Box(
+                                    modifier =
+                                        Modifier
+                                            .size(width = 20.dp, height = 3.dp)
+                                            .clip(RoundedCornerShape(2.dp))
+                                            .background(MaterialTheme.colorScheme.primary),
                                 )
+                                Spacer(Modifier.width(8.dp))
                                 Text(
-                                    text = stringResource(R.string.workout_count_label, workouts.size),
+                                    text = stringResource(R.string.workout_list_subtitle),
                                     style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    color = MaterialTheme.colorScheme.primary,
                                     fontWeight = FontWeight.Medium,
                                 )
+                                if (workouts.isNotEmpty()) {
+                                    Text(
+                                        text = " · ",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.workout_count_label, workouts.size),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        fontWeight = FontWeight.Medium,
+                                    )
+                                }
                             }
                         }
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { showTemplateSheet = true },
-                        colors =
-                            IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                                contentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                    ) {
-                        Icon(
-                            Icons.Default.AutoAwesome,
-                            contentDescription = stringResource(R.string.action_use_template),
-                        )
-                    }
-
-                    IconButton(
-                        onClick = { showImportDialog = true },
-                        colors =
-                            IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                                contentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                    ) {
-                        Icon(Icons.Default.Upload, contentDescription = stringResource(R.string.action_import))
-                    }
-
-                    IconButton(
-                        onClick = { onIntent(WorkoutIntent.SyncWorkouts) },
-                        enabled = !state.isSyncing,
-                        colors =
-                            IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
-                                contentColor = MaterialTheme.colorScheme.primary,
-                            ),
-                    ) {
-                        if (state.isSyncing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Sync,
-                                contentDescription = stringResource(R.string.action_sync_wearable),
-                            )
-                        }
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-                colors =
-                    TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surface,
-                        titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    ),
-            )
+                    },
+                    actions = topBarActions,
+                    scrollBehavior = scrollBehavior,
+                    colors = topBarColors,
+                )
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -259,14 +290,14 @@ fun WorkoutListScreen(
                 LazyVerticalGrid(
                     columns = GridCells.Adaptive(minSize = 340.dp),
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 80.dp),
+                    contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 112.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     itemsIndexed(workouts, key = { _, workout -> workout.id }) { index, workout ->
                         var visible by remember(workout.id) { mutableStateOf(false) }
                         LaunchedEffect(workout.id) {
-                            delay(index * 40L)
+                            delay((index * 40L).milliseconds)
                             visible = true
                         }
                         AnimatedVisibility(

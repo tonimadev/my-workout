@@ -72,4 +72,6 @@
     <string name="label_workout_name_placeholder">Nome do Treino (ex: Push Day)</string>
     <string name="label_exercise_name_placeholder">Nome do Exercício</string>
     <string name="seconds_label">SEGUNDOS</string>
+    <string name="select_workout_title">SELECIONE UM TREINO</string>
+    <string name="select_workout_subtitle">Escolha um treino na lista para ver os detalhes</string>
 </resources>
